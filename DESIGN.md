@@ -1,6 +1,6 @@
 # Money Management App — Technical Design
 
-This document describes **how** the app is built. `SPEC.md` describes **what** it does; when they disagree, the spec wins and this document is updated.
+This document describes **how** the app is built. `SPEC.md` describes **what** it does, and `UI.md` how it looks, feels and moves. When they disagree, the spec wins and the other documents are updated.
 
 ## 1. Key decisions
 
@@ -246,6 +246,7 @@ Better Auth creates and manages its own collections for users, sessions and link
 | `userId`    | string  |                                         |
 | `name`      | string  | as typed                                |
 | `nameLower` | string  | lowercase copy, for the uniqueness rule |
+| `emoji`     | string  | a single emoji, e.g. `"🍔"`             |
 | `type`      | string  | `"expense"`, `"income"` or `"both"`     |
 | `builtIn`   | boolean | true only for Lending                   |
 
@@ -430,7 +431,7 @@ Log out and log out of all devices use Better Auth's endpoints under `/api/auth/
 
 | Method | Path    | Does                                                                                   |
 | ------ | ------- | -------------------------------------------------------------------------------------- |
-| GET    | `/home` | balance, this month's totals, top 3 categories, upcoming and overdue bills, overdue lending, backup reminder flag |
+| GET    | `/home` | balance, this month's totals, top 3 categories, 5 most recent transactions, upcoming and overdue bills, overdue lending, backup reminder flag |
 
 **Categories**
 
@@ -570,6 +571,14 @@ Better Auth handles every step of the OAuth exchange. The app only adds the firs
 | Forms            | React Hook Form + the shared Zod schemas       |
 | Charts           | Recharts                                       |
 | PWA              | `vite-plugin-pwa`                              |
+| Animation        | Motion (`motion`), loaded lazily (UI 6.1)      |
+| Bottom sheets    | shadcn/ui Drawer (vaul)                        |
+| Toasts           | sonner                                         |
+| Celebrations     | `canvas-confetti`, loaded only when used       |
+| Icons            | Lucide                                         |
+| Font             | Inter, self-hosted via `@fontsource-variable/inter` |
+
+Visual design, tokens, components, motion and copy are defined in `UI.md`.
 
 ### 8.2 Folder structure
 
@@ -753,6 +762,7 @@ A task is done when:
 - [ ] Tests required by Spec Rule 16 for this area are written and pass.
 - [ ] Every CI gate passes.
 - [ ] It works on a phone-sized screen and a laptop-sized screen.
+- [ ] UI work matches `UI.md`: tokens, screen states, motion, copy and the accessibility baseline.
 - [ ] Errors are handled as in Section 9; no unhandled loading or empty states.
 
 ## 11. Deployment and environments

@@ -82,9 +82,11 @@ The first version includes:
 1. **Transactions:** add, edit and delete income and expenses (see Rule 4).
 2. **Categories:** single level, no subcategories.
    - Every category is either an **expense** or an **income** category (except the built-in Lending category, see Rule 8).
+   - Every category has an emoji icon, which I can change.
    - New users start with a default set:
-     - Expense: Food, Transport, Rent, Bills, Shopping, Health, Entertainment, Other
-     - Income: Salary, Other income
+     - Expense: 🍔 Food, 🚌 Transport, 🏠 Rent, 🧾 Bills, 🛍️ Shopping, 💊 Health, 🎬 Entertainment, 📦 Other
+     - Income: 💼 Salary, 💰 Other income
+     - Built-in: 🤝 Lending
    - I can add, rename and delete categories.
    - Category names are unique per user, ignoring upper/lower case.
    - A category's type cannot be changed once it has transactions.
@@ -346,8 +348,9 @@ The **Add** button (Rule 4) is a floating button on phones and a button in the t
 **Home:**
 
 - Overall balance (Rule 9)
-- This month's spending and income
+- This month's spending and income; this month's spending is the most prominent number on the screen
 - Top 3 spending categories this month
+- The 5 most recent transactions, with "See all"
 - Upcoming and overdue bills
 - Overdue lending records
 - Backup reminder, when due (Rule 10)

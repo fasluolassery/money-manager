@@ -44,6 +44,7 @@ body:
         - label: Tests required by Spec Rule 16 for this area are written and pass
         - label: Every CI gate passes
         - label: Works on a phone-sized and a laptop-sized screen (UI tasks)
+        - label: Matches UI.md, including tokens, states, motion, copy and the accessibility baseline (UI tasks)
         - label: Errors are handled as in DESIGN.md Section 9
         - label: SPEC.md / DESIGN.md updated if behaviour or design changed
         - label: Merged through a pull request that closes this issue
