@@ -1,0 +1,35 @@
+name: Bug
+description: Something doesn't work as SPEC.md says it should
+labels: ["type: bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen
+      description: Link the SPEC.md rule if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: e.g. Android phone, Chrome
+  - type: input
+    id: request-id
+    attributes:
+      label: Request id
+      description: Shown in small text on "Something went wrong" errors.

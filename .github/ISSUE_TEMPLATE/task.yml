@@ -1,0 +1,49 @@
+name: Task
+description: A unit of work from the backlog
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why this task exists. Link the relevant SPEC.md rules and DESIGN.md sections.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What this task includes.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checkable statements that must all be true for the task to be accepted.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this task deliberately does not include.
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Issues that must be done first, e.g. "Blocked by #3".
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of done
+      description: DESIGN.md Section 10.5
+      options:
+        - label: All acceptance criteria are met
+        - label: Tests required by Spec Rule 16 for this area are written and pass
+        - label: Every CI gate passes
+        - label: Works on a phone-sized and a laptop-sized screen (UI tasks)
+        - label: Errors are handled as in DESIGN.md Section 9
+        - label: SPEC.md / DESIGN.md updated if behaviour or design changed
+        - label: Merged through a pull request that closes this issue
