@@ -33,6 +33,7 @@ Money is stressful; the app is not.
 
 - Facts are shown neutrally. Spending a lot is shown as a number, not as a warning.
 - **Expenses** use normal text colour with no sign. **Income** is green with a `+` sign.
+- **Negative figures** (a negative balance or "left over") use normal text colour with a minus sign (−₹2,000), never red (Spec Rule 14).
 - Red or amber is used **only** for things that are actually overdue (bills, lending, goal deadlines), never for spending amounts.
 - The app never shames, scolds or judges.
 
@@ -634,7 +635,7 @@ A spinner is used **only** inside a busy button. Everything else uses skeletons.
 
 **Money and data**
 
-- **`Amount`**: the only way an amount is displayed. Handles ₹ formatting (Spec Rule 14), tabular figures, the `+` sign and `income` colour for income, and no sign for expenses. Sizes match the type styles (Section 4.2).
+- **`Amount`**: the only way an amount is displayed. Handles ₹ formatting (Spec Rule 14), tabular figures, the `+` sign and `income` colour for income, no sign for expenses, and a minus sign in normal colour for negative figures (the balance, left over). Sizes match the type styles (Section 4.2).
 - **`MoneyInput`**: ₹ prefix, native decimal keyboard (`inputmode="decimal"`), Indian digit grouping shown live as you type, converts to paise (DESIGN 8.5). In the Add sheet it uses `amount-xl`.
 - **`CategoryTile`** and **`CategoryPicker`**: emoji (28px) above the name; 4 per row on phones; at least 72px tall; selected state from 5.2. The picker orders by recent use (Spec Rule 4).
 - **`TransactionRow`**: category emoji, title (payee, or category name if no payee), subtitle (category · note), `Amount` on the right, an optional source badge. Swipe-to-delete on phones (UI 2.2).

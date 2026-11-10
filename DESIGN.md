@@ -133,6 +133,7 @@ money-manager/
 │           ├── money.ts          paise conversion and ₹ formatting
 │           └── dates.ts          calendar dates and timezone helpers
 ├── e2e/                          Playwright end-to-end tests (Section 10.2)
+├── docs/openapi.json             generated API description (Section 6.8)
 ├── .github/                      CI workflow, issue and PR templates, Dependabot, release notes config
 ├── AGENTS.md                     conventions for AI agents and humans
 ├── SPEC.md
@@ -368,6 +369,18 @@ Search by note or payee scans the user's transactions with the `userId` index. A
 
 Deleting an account (Spec Rule 10) runs in one DB transaction: delete every document with that `userId` from every app collection. Then the user's Better Auth data (user, sessions, linked accounts) is deleted through Better Auth. Both steps are safe to repeat, so if the second one fails the request returns an error and can simply be retried.
 
+### 5.6 Database validators (second safety net)
+
+Zod in the API is the main validation (Section 9.1). As a second line of defence, every app collection also has a **MongoDB `$jsonSchema` validator**, so even a buggy code path can't store bad money data:
+
+- Required fields and their BSON types (e.g. `amount` is an integer, `date` is a `YYYY-MM-DD` string, `userId` is present).
+- Money fields are integers greater than 0 (`openingBalance` excepted: signed).
+- Enum fields only accept their values (`type`, `direction`, `frequency`, `status`).
+- `version` is an integer of at least 1.
+- `validationLevel: "strict"`, `validationAction: "error"`.
+
+Validators are created and updated with each collection in `db/indexes.ts` at startup. A validator rejection is a bug: the repository lets it surface as a logged `500` (Section 9.6), never as a message to the user.
+
 ## 6. API contract
 
 ### 6.1 Conventions
@@ -537,6 +550,32 @@ Editing or deleting a bill or lending transaction directly returns `422 RULE_VIO
 | POST   | `/goals/:id/contributions`                  | add a contribution            |
 | PATCH  | `/goals/:id/contributions/:contributionId`  | edit a contribution           |
 | DELETE | `/goals/:id/contributions/:contributionId`  | delete a contribution         |
+
+### 6.6 Response shapes: no data leakage
+
+The mirror of the error discipline (Section 9.6): **only fields the client needs leave the server.**
+
+- Every endpoint has a **response schema** in `packages/shared/src/schemas/`, next to its request schema. The web app uses the same schemas as its types.
+- Repositories map database documents to plain domain objects; routes send them through the endpoint's response schema with a single `respond(schema, data)` helper. Raw MongoDB documents are never sent.
+- **Never in a response:** `userId`, `nameLower`, `idempotencyKey`, `_id` (sent as `id`, a string), BSON types, or any Better Auth data beyond the user's name and email on `GET /me`.
+- Ids are strings, money is integer paise, calendar dates are `YYYY-MM-DD`, timestamps are ISO 8601 strings (Section 6.1).
+- In development and tests, `respond` **fails** if the data has a field the schema doesn't list, so a leak is caught immediately. In production it strips unknown fields and logs a warning.
+- The backup download (`GET /me/backup`) has its own export schema; it includes ids, so a future restore can rebuild links, but still no `userId` or auth data.
+
+### 6.7 HTTP caching
+
+| Response                                  | `Cache-Control`                                   |
+| ----------------------------------------- | ------------------------------------------------- |
+| Every `/api/*` response                   | `no-store`: financial data is never cached by the browser or a proxy |
+| `index.html` and the service worker file  | `no-cache`: always checked, so new deploys are picked up |
+| Hashed build assets (`/assets/*`)         | `public, max-age=31536000, immutable`            |
+| Icons, manifest                           | `public, max-age=86400`                           |
+
+### 6.8 OpenAPI document
+
+- `docs/openapi.json` is **generated** from the shared Zod request and response schemas and the route list, never written by hand.
+- `pnpm gen:openapi` regenerates it. CI regenerates it and fails if the committed file differs, so the document can't drift from the code (Section 10.2).
+- It can be opened in any OpenAPI viewer or imported into Postman for manual testing.
 
 ## 7. Auth and sessions
 
@@ -730,6 +769,36 @@ The Vite dev server proxies `/api` to the local Express server, so development a
 - Motion's features and `canvas-confetti` are loaded on demand (UI.md 6.1).
 - These keep the initial download inside the performance budget (Section 12).
 
+### 8.11 Frontend data rules
+
+**Where state lives:**
+
+| State                                   | Lives in                                        |
+| --------------------------------------- | ----------------------------------------------- |
+| Anything from the server                | TanStack Query only; never copied into component state or a global store |
+| Filters, search, selected month, tabs   | the URL's search params (Section 8.3)           |
+| Form values                             | React Hook Form                                 |
+| Theme                                   | `localStorage` (Section 8.6)                    |
+| Short-lived UI state (a sheet is open)  | component state                                 |
+
+There is no global state library.
+
+**Query keys** come from one factory in `lib/query-keys.ts`, shaped `[feature, ...scope]`, e.g. `["transactions", "list", filters]`, `["reports", "summary", month, includeLending]`. Keys are never written inline.
+
+**Which saves refresh what.** After a successful change, these query groups are invalidated. Every mutation hook lists its groups explicitly:
+
+| Change                                    | Refreshes                                                |
+| ----------------------------------------- | -------------------------------------------------------- |
+| Any transaction create, edit, trash, restore, permanent delete | `transactions`, `reports`, `home`, `payees`  |
+| Category create, edit, delete             | `categories`, `transactions`, `reports`, `home`, `bills` |
+| Bill create, edit, delete, pause, resume  | `bills`, `home`                                          |
+| Bill pay, skip, undo                      | `bills`, `transactions`, `reports`, `home`               |
+| Lending record or repayment change        | `lending`, `transactions`, `reports`, `home`, `people`   |
+| Goal or contribution change               | `goals`                                                  |
+| Profile change (opening balance, timezone) | `me`, `home`, `reports`, `bills`, `lending`, `goals` (a new timezone changes what's overdue) |
+
+**Freshness:** queries refetch when the window regains focus, so a change made on the phone shows on the laptop when I switch back to it (Spec Rule 15, milestone 2). There's no polling.
+
 ## 9. Validation and error handling
 
 ### 9.1 Where validation happens
@@ -833,7 +902,8 @@ A change reaches production only after passing every gate below, in order.
 ### 10.1 Gate 1: before each commit (my machine)
 
 - **husky** runs a pre-commit hook, which uses **lint-staged** to run `biome check --write` on the staged files only.
-- Formatting is fixed automatically; lint errors block the commit.
+- The same hook runs **gitleaks** on the staged changes, so a password, token or API key can't be committed.
+- Formatting is fixed automatically; lint errors and detected secrets block the commit.
 
 ### 10.2 Gate 2: pull request CI (GitHub Actions)
 
@@ -842,6 +912,7 @@ A change reaches production only after passing every gate below, in order.
 | Step          | Command (via pnpm, across all workspaces)    | Fails when                                   |
 | ------------- | -------------------------------------------- | -------------------------------------------- |
 | Install       | `pnpm install --frozen-lockfile`             | the lockfile doesn't match `package.json`    |
+| Secret scan   | gitleaks over the pull request's commits     | anything that looks like a secret            |
 | Lint + format | `biome ci`                                   | any lint error or unformatted file           |
 | Type check    | `tsc --noEmit`                               | any type error                               |
 | Unit tests    | Vitest                                       | any failing test                             |
@@ -853,6 +924,7 @@ A change reaches production only after passing every gate below, in order.
 | Discipline    | `pnpm check:discipline`                      | a clock call in a domain file, or raw money arithmetic outside `money.ts` (Section 10.4) |
 | Build         | build `web` and `api`                        | the build fails                              |
 | Bundle budget | `size-limit` on the built web app            | initial JavaScript above **200 KB gzipped** (Section 12) |
+| API document  | `pnpm gen:openapi`, then compare             | `docs/openapi.json` differs from the code (Section 6.8) |
 | End-to-end    | Playwright against the built app             | any failing end-to-end test                  |
 
 API tests use `mongodb-memory-server`'s replica set mode, because MongoDB transactions (Section 4.6) only work on a replica set. No Docker needed.
@@ -919,6 +991,8 @@ A task is done when:
 - [ ] It works on a phone-sized screen and a laptop-sized screen.
 - [ ] UI work matches `UI.md`: tokens, screen states, motion, copy and the accessibility baseline.
 - [ ] Errors are handled as in Section 9, with no third-party error text reaching the user (Section 9.6); no unhandled loading or empty states.
+- [ ] API responses go through their response schemas, with no internal fields (Section 6.6).
+- [ ] Names follow Section 10.9 and the glossary; any new dependency is justified (Section 10.10).
 
 ### 10.6 Definition of ready
 
@@ -938,6 +1012,52 @@ An issue moves from **Backlog** to **Ready** only when:
 - **Squash merge only.** Each pull request becomes one commit on `main`, titled with the PR title. Merge commits and rebase merges are disabled in the repo settings.
 - Merged branches are deleted automatically.
 - **Releases:** each milestone sign-off tags `vX.Y.0` and publishes a GitHub release with **automatically generated release notes**, grouped by the `type:` labels via `.github/release.yml`.
+
+### 10.8 Testing discipline
+
+**What each kind of test uses:**
+
+| Test kind      | Real                                         | Faked                                  |
+| -------------- | -------------------------------------------- | -------------------------------------- |
+| Unit (domain, shared helpers) | everything; they're pure functions | nothing                                |
+| API            | Express, services, repositories, an in-memory MongoDB replica set | Google sign-in only (test session helper) |
+| Web unit       | components, hooks, `api-client`              | `fetch`                                |
+| End-to-end     | the production build, API and in-memory database | Google sign-in only (test route)     |
+
+- **The database is never mocked** in API tests; repositories run against the in-memory replica set, so indexes, validators and transactions are real.
+- **Test data builders:** `buildTransaction({ ...overrides })`, `buildBill(...)` and so on, in one `test-support` folder per app. Tests set only the fields they care about.
+- **Property-based tests** (fast-check) for the shared money and date helpers and every domain module: random inputs check invariants such as "parsing a formatted amount gives back the same paise", "a bill's next due date is always later and never past its month's last day", "remaining = amount − repayments, never below zero".
+- **Time is injected:** domain tests pass "today"; API tests use a fixed clock, never the real date.
+- **Names describe behaviour:** `it("rejects a repayment larger than the remaining amount")`, not `it("works")`.
+- **Flaky tests are bugs:** a test that fails intermittently is fixed or deleted in the next pull request; it's never retried until it passes.
+- Tests live next to the code they test (`*.test.ts`); end-to-end tests live in `e2e/`.
+
+### 10.9 Naming conventions
+
+| Thing                         | Convention                     | Example                                  |
+| ----------------------------- | ------------------------------ | ---------------------------------------- |
+| All files and folders         | kebab-case                     | `add-transaction-sheet.tsx`, `query-keys.ts` |
+| Backend module files          | `<feature>.<layer>.ts`         | `bills.service.ts`, `bills.domain.test.ts` |
+| React components              | PascalCase name, kebab-case file | `AddTransactionSheet` in `add-transaction-sheet.tsx` |
+| Hooks                         | `use` + camelCase              | `useCreateTransaction`                   |
+| Functions and variables       | camelCase, verbs for functions | `nextDueDate`, `payBill`                 |
+| Factories (Section 4.3)       | `create` + name                | `createBillsService`                     |
+| Types and Zod schemas         | PascalCase type, camelCase schema + `Schema` | `Transaction`, `transactionSchema` |
+| Constants                     | SCREAMING_SNAKE_CASE           | `MAX_AMOUNT_PAISE`                       |
+| Collections and API fields    | camelCase                      | `billCycles`, `nextDueDate`              |
+| URL paths                     | lowercase, plural nouns        | `/api/v1/lending/:id/repayments`         |
+| Error codes                   | SCREAMING_SNAKE_CASE           | `STALE_RECORD`                           |
+| Branches, commits             | Section 10.7                   | `12-frontend-skeleton`, `feat: …`        |
+
+Words come from the glossary in SPEC.md: it's a "lending record", never a "loan" or "debt" in code.
+
+### 10.10 Dependency policy
+
+- **Prefer what's already installed.** A new dependency needs a reason that the existing ones can't cover.
+- **Every new dependency is justified in its pull request:** what it's for, its size (and its effect on the bundle budget, Section 12, for web dependencies), how actively it's maintained, and its licence.
+- **Licences:** only permissive ones (MIT, ISC, BSD, Apache-2.0). Anything else needs a decision recorded in Section 1.
+- Versions are pinned by the lockfile; Dependabot proposes updates (Section 10.4).
+- Packages that run install scripts must be allowed explicitly in pnpm's `onlyBuiltDependencies`.
 
 ## 11. Deployment and environments
 

@@ -260,7 +260,7 @@ The Lending category cannot be renamed or deleted.
   Leading and trailing spaces are trimmed before checking.
 - **Currency:** Every amount is stored with a currency code. The first version only supports `INR`. Contributions, repayments and bill cycles use the currency of the goal, record or bill they belong to.
 - **Dates:** Transaction, contribution, repayment and due dates are calendar dates (no time of day), in the user's timezone. This keeps a late-night expense in the correct day and month.
-- **Timezone:** Each user has a timezone (default `Asia/Kolkata`). The server uses it to decide what "today" is, for date defaults, upcoming and overdue bills, and overdue goals and lending.
+- **Timezone:** Each user has a timezone (default `Asia/Kolkata`). The server uses it to decide what "today" is, for date defaults, upcoming and overdue bills, and overdue goals and lending. Changing my timezone only changes what "today" is from then on; dates already saved never change.
 - **Ownership:** Every record belongs to exactly one user (Rule 2).
 - **Editing on two devices:** if a record was changed on another device after I opened it, my save or delete is rejected with "This was changed on another device" and a **Reload** option. An edit is never silently overwritten.
 - **Timestamps:** Every record has `createdAt` and `updatedAt`.
@@ -299,6 +299,24 @@ There are no accounts. The app shows one overall balance:
 - The balance can be negative.
 - Trashed transactions do not count.
 - Savings goal contributions do not change the balance (Rule 6), so the balance includes money set aside for goals.
+
+### Counting money
+
+Every screen counts money the same way. These definitions are the single source; Home, Reports, the transaction list and the balance all use them.
+
+| Figure                       | Counts                                                                 |
+| ---------------------------- | ---------------------------------------------------------------------- |
+| **Spent** (a day, a month)   | expense transactions dated in that period, including bill payments and Lending expenses (money I lent or repaid) |
+| **Income** (a month)         | income transactions dated in that period, including Lending income (money I borrowed or was repaid) |
+| **Left over** (a month)      | income − spent; can be negative                                       |
+| **Top categories**           | categories ranked by spent; Lending can appear like any other         |
+| **Balance**                  | Rule 9's formula: every transaction on or after the opening balance date, including Lending |
+
+- **Always excluded:** trashed transactions and savings goal contributions.
+- **Transactions before the opening balance date** count in day and month figures, but not in the balance.
+- **The Lending toggle** exists only in Reports (Rule 8). When off, Reports' spent, income, left over, categories and charts leave out Lending transactions. The balance, Home and the transaction list always include them.
+- **Month comparison** uses the same "spent" definition, over the date ranges in Rule 5.
+- **Percentages** (a category's share of spending) are rounded to whole numbers, so they may not add up to exactly 100%.
 
 ### Deleting
 
@@ -398,6 +416,7 @@ The **Add** button (Rule 4) is a floating button on phones and a button in the t
 ## Rule 14: Formatting and calendar
 
 - **Money** is shown with the ₹ symbol and Indian digit grouping: ₹1,00,000. Paise are shown only when non-zero: ₹1,250 and ₹1,250.50.
+- **Negative figures** (only the balance, the opening balance and "left over" can be negative) are shown with a minus sign: −₹2,000. Expenses are never shown with a minus sign; they are positive amounts of a different type.
 - **Dates** are shown as `10 Nov 2026` in lists and `10/11/2026` (DD/MM/YYYY) in forms.
 - **Month** means the calendar month, from the 1st to the last day, in my timezone.
 - The app's language is English.
@@ -481,4 +500,30 @@ Known risks, what they would cause, and what we do about them. Reviewed at every
 | Scope creep from the secondary goals | Expense tracking ships late | Milestone order (Rule 15): bills, lending and goals only after expense tracking works |
 | I stop logging expenses | The app fails its success criteria (Rule 1) | The 5-second rule (Rule 4), and two weeks of real use after milestone 3 |
 | Solo developer, limited time | Long gaps between milestones | Small issues (size labels), each one shippable on its own |
-| A bug corrupts money data | Wrong totals, lost trust | Integer paise (Rule 9), DB transactions (Rule 11), the required tests (Rule 16) and the Trash |
+| A bug corrupts money data | Wrong totals, lost trust | Integer paise (Rule 9), DB transactions (Rule 11), the required tests (Rule 16), database validators (DESIGN 5.6) and the Trash |
+
+## Glossary
+
+One word per idea, used the same way in the docs, the code, the API and the UI.
+
+| Term | Meaning |
+| --- | --- |
+| **Transaction** | One expense or income entry. The only thing that affects totals. |
+| **Manual transaction** | A transaction I entered myself. The only kind I can edit or trash directly. |
+| **Category** | A label on a transaction, with an emoji and a type (expense or income). |
+| **Lending (category)** | The built-in category for transactions created by lending records. |
+| **Bill** | A recurring payment I want to be reminded about. |
+| **Bill cycle** | One due date of a bill, closed by paying or skipping it. |
+| **Lending record** | Money I lent to or borrowed from one person, once. |
+| **Repayment** | A partial or full payment back on a lending record. |
+| **Settled** | A lending record with nothing remaining. |
+| **Goal** | A savings target. |
+| **Contribution** | Money I put toward a goal. It's not a transaction. |
+| **Opening balance** | My starting balance, on a date I choose. |
+| **Balance** | Opening balance plus income minus spent, from the opening balance date (Rule 9). |
+| **Spent / Income / Left over** | The month figures defined in Rule 9, Counting money. |
+| **Trash** | Where deleted manual transactions wait 30 days before being removed for good. |
+| **Calendar date** | A date with no time of day, stored as `YYYY-MM-DD`. |
+| **Paise** | The unit every amount is stored in; ₹1 = 100 paise. |
+| **Version** | A record's change counter, used to reject stale edits (Rule 9). |
+| **Idempotency key** | A one-time id a form sends with a create, so retrying never creates a duplicate. |
