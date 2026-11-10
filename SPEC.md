@@ -34,6 +34,12 @@ The app must make it easy to record every expense and see clearly how much I spe
 - The phone layout must make adding an expense fast with one hand.
 - The laptop layout can show more detail (tables, summaries) at once.
 
+**Supported devices and browsers:**
+
+- **Primary devices:** an Android phone with Chrome, and a laptop. Every feature is checked on these first.
+- **Supported browsers:** the last 2 versions of Chrome, Edge, Firefox, Safari and Brave, on desktop and mobile.
+- **Installing as an app:** supported on Android (Chrome, Edge, Brave) and desktop Chrome/Edge. On iPhone the app works in Safari; installing it to the home screen is best effort.
+
 **Connectivity:** The app requires an internet connection. Offline entry is **not** part of the first version. When the device is offline, the app shows a clear "You're offline" banner.
 
 ## Rule 4: Data entry
@@ -240,6 +246,7 @@ The Lending category cannot be renamed or deleted.
 - **Dates:** Transaction, contribution, repayment and due dates are calendar dates (no time of day), in the user's timezone. This keeps a late-night expense in the correct day and month.
 - **Timezone:** Each user has a timezone (default `Asia/Kolkata`). The server uses it to decide what "today" is, for date defaults, upcoming and overdue bills, and overdue goals and lending.
 - **Ownership:** Every record belongs to exactly one user (Rule 2).
+- **Editing on two devices:** if a record was changed on another device after I opened it, my save or delete is rejected with "This was changed on another device" and a **Reload** option. An edit is never silently overwritten.
 - **Timestamps:** Every record has `createdAt` and `updatedAt`.
 
 ### Entities
@@ -416,8 +423,14 @@ After milestone 3, I use the app daily for two weeks before starting milestone 4
 
 - **Data isolation:** for every endpoint, one user can never read or change another user's data (Rule 10).
 - Multi-record actions roll back completely when one step fails (Rule 11).
+- Stale edits are rejected (Rule 9).
 
-**Tools:** a standard TypeScript test runner (e.g. Vitest) and an HTTP testing library for the API (e.g. Supertest).
+**End-to-end browser tests are required for the critical flows**, on a phone-sized and a laptop-sized screen:
+
+- Adding, editing and deleting an expense (Rule 4)
+- Paying a bill (Rule 7)
+
+**Tools:** a standard TypeScript test runner (e.g. Vitest), an HTTP testing library for the API (e.g. Supertest), and a browser automation tool for end-to-end tests (e.g. Playwright).
 
 ## Rule 17: Out of scope (first version)
 
@@ -438,3 +451,18 @@ These are deliberately **not** built in the first version. Any of them can be ad
 - Multiple currencies (Rule 9)
 - CSV export and restoring from a backup file (Rule 10)
 - Payday-based months (Rule 14)
+
+## Risks
+
+Known risks, what they would cause, and what we do about them. Reviewed at every milestone sign-off.
+
+| Risk | Impact | Response |
+| --- | --- | --- |
+| MongoDB Atlas changes or removes its free tier | Database stops or starts costing money | The JSON backup (Rule 10) keeps the data portable; a small paid tier or another MongoDB host is the fallback |
+| Atlas's free tier has no automatic backups | A mistake or outage could lose data | The Download backup button and its 30-day reminder (Rule 10) |
+| Railway raises prices above ₹500/month | Over budget | The server is a plain Node.js process, so it can move to another always-on host (DESIGN 1.1) |
+| Google changes sign-in rules or limits Testing-mode apps | Can't sign in | Better Auth supports other providers; email login is a known next step (Rule 17) |
+| Scope creep from the secondary goals | Expense tracking ships late | Milestone order (Rule 15): bills, lending and goals only after expense tracking works |
+| I stop logging expenses | The app fails its success criteria (Rule 1) | The 5-second rule (Rule 4), and two weeks of real use after milestone 3 |
+| Solo developer, limited time | Long gaps between milestones | Small issues (size labels), each one shippable on its own |
+| A bug corrupts money data | Wrong totals, lost trust | Integer paise (Rule 9), DB transactions (Rule 11), the required tests (Rule 16) and the Trash |

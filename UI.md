@@ -364,6 +364,139 @@ Bill, goal and lending details share one layout:
 
 From the `md` breakpoint up: a sidebar instead of tabs, the Add button in the top bar, and cards in two columns. Transactions becomes a table with columns for date, category, payee, note and amount.
 
+### 3.9 Sign-in and welcome (phone)
+
+```text
+┌────────────────────────────────────┐   ┌────────────────────────────────────┐
+│                                    │   │ Hi Save                            │
+│            [app icon]              │   │ Let's set up your starting point.  │
+│          Money Manager             │   │                                    │
+│                                    │   │ Opening balance                    │
+│   Know exactly where your          │   │ ┌────────────────────────────────┐ │
+│   money goes.                      │   │ │ ₹ 0                            │ │
+│                                    │   │ └────────────────────────────────┘ │
+│        [ illustration ]            │   │ As of                              │
+│                                    │   │ [Today] [Yesterday] [Pick a date]  │
+│                                    │   │                                    │
+│ ┌────────────────────────────────┐ │   │ Timezone: Asia/Kolkata (detected)  │
+│ │  G  Continue with Google       │ │   │                                    │
+│ └────────────────────────────────┘ │   │ ┌────────────────────────────────┐ │
+│                                    │   │ │           Continue             │ │
+│                                    │   │ └────────────────────────────────┘ │
+│                                    │   │            Skip for now            │
+└────────────────────────────────────┘   └────────────────────────────────────┘
+          Sign-in                                     Welcome
+```
+
+### 3.10 Bill form (sheet)
+
+```text
+┌────────────────────────────────────┐
+│              ───                   │
+│ New bill                           │
+│ Name          [ Electricity      ] │
+│ Amount        [ ₹ 1,800          ] │
+│ Category      [ 🧾 Bills       ▾ ] │  expense categories only
+│ Repeats       [ Monthly | 3 months]│
+│ Next due      [ 12 Nov 2026     📅]│
+│ Note          [                  ] │
+│ ┌────────────────────────────────┐ │
+│ │             Save               │ │
+│ └────────────────────────────────┘ │
+└────────────────────────────────────┘
+```
+
+### 3.11 Goal form (sheet)
+
+```text
+┌────────────────────────────────────┐
+│              ───                   │
+│ New goal                           │
+│ Icon          [ 🏖️ ]  tap to pick  │
+│ Name          [ Goa trip         ] │
+│ Target        [ ₹ 20,000         ] │
+│ Deadline      [ optional        📅]│
+│ ┌────────────────────────────────┐ │
+│ │             Save               │ │
+│ └────────────────────────────────┘ │
+└────────────────────────────────────┘
+```
+
+### 3.12 Lending form (sheet)
+
+```text
+┌────────────────────────────────────┐
+│              ───                   │
+│ New lending record                 │
+│ [ I lent | I borrowed ]            │
+│ Person        [ Rahul            ] │  autocomplete
+│ Amount        [ ₹ 5,000          ] │
+│ Date          [Today] [Yesterday]  │
+│ Due date      [ optional        📅]│
+│ Note          [                  ] │
+│ ┌────────────────────────────────┐ │
+│ │             Save               │ │
+│ └────────────────────────────────┘ │
+└────────────────────────────────────┘
+```
+
+### 3.13 Trash (phone)
+
+```text
+┌────────────────────────────────────┐
+│ ‹ Transactions        Trash        │
+│ Items are deleted for good after   │
+│ 30 days.                           │
+│ ┌────────────────────────────────┐ │
+│ │ 🍔 Swiggy      ₹350            │ │
+│ │ Deleted today · 30 days left   │ │
+│ │          [Restore] [Delete]    │ │  Delete asks to confirm
+│ └────────────────────────────────┘ │
+│ ┌────────────────────────────────┐ │
+│ │ 🚌 Uber        ₹120            │ │
+│ │ Deleted 3 Nov · 22 days left   │ │
+│ │          [Restore] [Delete]    │ │
+│ └────────────────────────────────┘ │
+└────────────────────────────────────┘
+```
+
+### 3.14 Category settings (phone)
+
+```text
+┌────────────────────────────────────┐
+│ ‹ Settings        Categories  ＋   │
+│ Expense                            │
+│ ┌────────────────────────────────┐ │
+│ │ 🍔 Food                     ›  │ │  tap: rename, emoji, delete
+│ │ 🚌 Transport                ›  │ │
+│ │ …                              │ │
+│ └────────────────────────────────┘ │
+│ Income                             │
+│ ┌────────────────────────────────┐ │
+│ │ 💼 Salary                   ›  │ │
+│ │ 💰 Other income             ›  │ │
+│ └────────────────────────────────┘ │
+│ Built-in                           │
+│ ┌────────────────────────────────┐ │
+│ │ 🤝 Lending           🔒         │ │  can't be edited
+│ └────────────────────────────────┘ │
+└────────────────────────────────────┘
+```
+
+### 3.15 Stale edit
+
+When a save or delete is rejected because the record changed on another device (Spec Rule 9):
+
+```text
+┌────────────────────────────────────┐
+│ This was changed on another device │
+│ Reload to see the latest version.  │
+│                          [Reload]  │
+└────────────────────────────────────┘
+```
+
+Shown as an error toast that stays until dismissed. The form keeps what I typed until I reload, so I can copy anything I need.
+
 ## 4. Design tokens
 
 Tokens are the only source of colours, sizes and shapes. They are defined once as CSS variables in the shadcn/ui theme (`apps/web/src/index.css`) and used through Tailwind classes. **Components never hard-code a hex value, pixel size or shadow.**
@@ -460,6 +593,13 @@ Illustrations appear in:
 | Bills, Goals, Lending tabs, empty       | one invitation each, e.g. "No bills yet"  |
 | Trash, empty                            | "Trash is empty"                          |
 | Page failed to load, 404                | "Something went wrong" / "Page not found" |
+
+### 4.7 App icon
+
+- A white **₹** symbol, centred on a `primary` (`#7C3AED`) rounded square, drawn as one SVG (`apps/web/public/icon.svg`).
+- The ₹ takes about 60% of the icon's height and sits inside the central safe zone, so Android's maskable crop (circle, squircle) never cuts it.
+- Exported from the same SVG: the favicon, the 192px and 512px PWA icons, and a maskable 512px icon with extra padding (DESIGN 8.7).
+- It's a placeholder that's good enough to ship; it can be replaced later without code changes.
 
 ## 5. Components and their states
 
@@ -621,6 +761,7 @@ Every change I make gets visible feedback. There is **no vibration and no sound*
 | **Undo the latest bill cycle** from its history  | **ConfirmDialog**                          |
 | **Log out of all devices**                       | **ConfirmDialog**                          |
 | **Delete account**                               | typed confirmation phrase (Spec Rule 10)   |
+| Save or delete rejected as stale                 | error toast "This was changed on another device" · **Reload** (Section 3.15) |
 
 ### 7.2 Toasts
 
@@ -698,3 +839,5 @@ shadcn/ui's components (built on Radix) handle most of the focus and keyboard be
 | Offline banner               | "You're offline. Changes won't save until you're back." |
 | Backup reminder              | "It's been a while since your last backup."             |
 | Delete account confirmation  | "Type 'delete my account' to permanently delete your account and all your data." |
+| Stale edit                   | "This was changed on another device. Reload to see the latest version." |
+| Sign-in tagline              | "Know exactly where your money goes."                   |

@@ -210,6 +210,18 @@ Some actions write to more than one feature (e.g. paying a bill creates a transa
 - A service may call **another feature's repository** for this, never another feature's routes.
 - Multi-record writes run inside `withTransaction(async (session) => { ... })` from `db/`. Every repository function accepts an optional `session`, so all writes in the block commit or roll back together (Spec Rule 11).
 
+### 4.7 Stale edits: record versions
+
+Spec Rule 9 says an edit made on one device must never silently overwrite a newer change from another device. This uses **optimistic concurrency**:
+
+- Every document has an integer `version`, starting at 1.
+- Every response that returns a record includes its `version`.
+- Every `PATCH` and `DELETE` (and actions that change a record, like pausing a bill) must send the `version` it last saw.
+- The repository updates with a filter on `{ _id, userId, version }` and increments `version` in the same write. If nothing matched but the record exists, someone else changed it first: the API returns `409 STALE_RECORD`.
+- Changes to embedded items (goal contributions, lending repayments) use the parent document's `version`.
+- The frontend shows "This was changed on another device" with **Reload**, which refetches the record (UI.md 7.1).
+- Creating records needs no version. Bill payments are protected by the unique `billCycles` index instead (Section 5.4).
+
 ## 5. Database collections and indexes
 
 ### 5.1 Conventions
@@ -321,7 +333,7 @@ Better Auth creates and manages its own collections for users, sessions and link
 | `repayments`    | array              | `{ _id, amount, date, transactionId }`         |
 | `settledAt`     | Date or null       |                                                |
 
-Every collection also has `_id`, `createdAt` and `updatedAt`.
+Every collection also has `_id`, `createdAt`, `updatedAt` and `version` (Section 4.7).
 
 ### 5.4 Indexes
 
@@ -356,6 +368,7 @@ Deleting an account (Spec Rule 10) runs in one DB transaction: delete every docu
 - **Dates:** calendar dates as `"YYYY-MM-DD"`, months as `"YYYY-MM"`, timestamps as ISO 8601 strings in UTC.
 - **Auth:** every `/api/v1` endpoint requires a valid session cookie, or returns `401`.
 - **Validation:** every request body and query is validated with the shared Zod schema before reaching the service.
+- **Versions:** every `PATCH` and `DELETE` body includes the record's `version` (Section 4.7).
 
 ### 6.2 Response envelope
 
@@ -384,6 +397,7 @@ Failure:
 | 401         | `UNAUTHENTICATED`   | no valid session                                                 |
 | 404         | `NOT_FOUND`         | record doesn't exist **or belongs to another user** (Section 4.5) |
 | 409         | `CONFLICT`          | duplicate category name, bill cycle already paid                 |
+| 409         | `STALE_RECORD`      | the record was changed since the client loaded it (Section 4.7)  |
 | 422         | `RULE_VIOLATION`    | valid input that breaks a spec rule, e.g. repayment larger than the remaining amount |
 | 429         | `RATE_LIMITED`      | too many requests                                                |
 | 500         | `INTERNAL_ERROR`    | anything unexpected; details are logged, never sent to the client |
@@ -557,6 +571,32 @@ Better Auth handles every step of the OAuth exchange. The app only adds the firs
 - One Google Cloud OAuth client, with the production and local callback URLs registered.
 - Only the basic `email` and `profile` scopes are requested.
 - The client id, client secret and Better Auth's signing secret are environment variables (Section 11), never committed.
+- **Publishing status: Testing.** Only Google accounts listed as test users can sign in (me, and family later). This needs no privacy policy or Google verification, and keeps strangers out. Moving to Production is a decision for later.
+
+### 7.6 Security hardening
+
+**HTTP security headers**, set with `helmet` on every response:
+
+| Header                       | Value                                                                  |
+| ---------------------------- | ---------------------------------------------------------------------- |
+| `Content-Security-Policy`    | `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'` |
+| `Strict-Transport-Security`  | `max-age=31536000; includeSubDomains` (production only)                |
+| `X-Content-Type-Options`     | `nosniff`                                                              |
+| `Referrer-Policy`            | `strict-origin-when-cross-origin`                                      |
+| `Permissions-Policy`         | camera, microphone, geolocation and payment disabled                   |
+| `X-Powered-By`               | removed                                                                |
+
+- Scripts are only allowed from the app itself, which blocks most injected-script (XSS) attacks. Inline **styles** are allowed because the UI libraries (Radix, vaul, Motion) set style attributes; inline **scripts** are never allowed.
+- `frame-ancestors 'none'` stops other sites showing the app in a frame (clickjacking).
+- Every font, image and script is served by the app itself (UI.md 4.2), so the policy needs no third-party domains.
+
+**Database query injection:**
+
+- MongoDB treats objects like `{ "$gt": "" }` as query operators. Every input passes a **strict** Zod schema first: unknown keys are rejected, and a field that should be a string or number can never be an object.
+- Ids from the URL are parsed into `ObjectId`s; an invalid id returns `404`.
+- Repositories build their filters from parsed, typed values only; request bodies are never passed into a query directly.
+
+**Dependencies:** CI runs `pnpm audit --prod --audit-level=high` and fails on high or critical vulnerabilities in production dependencies (Section 10.2). Dependabot opens the update pull requests (Section 10.4).
 
 ## 8. Frontend structure
 
@@ -656,6 +696,19 @@ apps/web/src/
 
 The Vite dev server proxies `/api` to the local Express server, so development also runs on one origin, exactly like production.
 
+### 8.9 Browser support
+
+- **Build target:** a `browserslist` config of the last 2 versions of Chrome, Edge, Firefox and Safari (desktop and mobile). Brave uses Chrome's engine, so it is covered by the Chrome target. Vite builds for this target.
+- **Primary test devices:** an Android phone with Chrome, and a laptop (Spec Rule 3). Every UI issue is checked on these.
+- **Safe areas:** the viewport uses `viewport-fit=cover`, and the tab bar, floating button and sheets add `env(safe-area-inset-*)` padding, so nothing sits under Android gesture bars or the iPhone home indicator.
+- **iPhone:** the app works in Safari. Installing to the home screen is best effort: iOS has no install prompt, and sign-in redirects inside an installed iOS app are not guaranteed.
+
+### 8.10 Code splitting
+
+- Each top-level route is lazy-loaded with React Router, so the first screen doesn't download Reports (Recharts) or Plan code.
+- Motion's features and `canvas-confetti` are loaded on demand (UI.md 6.1).
+- These keep the initial download inside the performance budget (Section 12).
+
 ## 9. Validation and error handling
 
 ### 9.1 Where validation happens
@@ -679,6 +732,7 @@ Errors are the one place classes are used, because JavaScript errors must extend
 | `UnauthenticatedError` | 401    | `UNAUTHENTICATED`   |
 | `NotFoundError`        | 404    | `NOT_FOUND`         |
 | `ConflictError`        | 409    | `CONFLICT`          |
+| `StaleRecordError`     | 409    | `STALE_RECORD`      |
 | `RuleViolationError`   | 422    | `RULE_VIOLATION`    |
 
 All extend `AppError`, which carries the status, code, message and optional field details. Services and domain functions throw these; they never build HTTP responses.
@@ -714,6 +768,7 @@ If the process hits an unhandled promise rejection or exception, it logs the err
 | Failed action (save, delete, pay)      | a toast with the server's message; forms keep their data and offer **Retry** |
 | A page's data can't load               | a full error screen with **Retry**, using React Router's error boundary |
 | Device offline                         | the offline banner (Spec Rule 3)                             |
+| Stale edit (`409 STALE_RECORD`)        | "This was changed on another device" with **Reload** (Section 4.7) |
 | Unexpected error (`500`)               | "Something went wrong", with the request id in small text for debugging |
 
 ## 10. Quality gates
@@ -737,9 +792,20 @@ A change reaches production only after passing every gate below, in order.
 | Unit tests    | Vitest                                       | any failing test                             |
 | Coverage      | Vitest coverage on `*.domain.ts` files       | domain line or branch coverage below **90%** |
 | API tests     | Vitest + Supertest against an in-memory MongoDB replica set | any failing test          |
+| Security audit | `pnpm audit --prod --audit-level=high`      | a high or critical vulnerability in a production dependency |
+| Token check   | `pnpm check:tokens`                          | a hard-coded hex colour in a component (UI.md 4) |
 | Build         | build `web` and `api`                        | the build fails                              |
+| Bundle budget | `size-limit` on the built web app            | initial JavaScript above **200 KB gzipped** (Section 12) |
+| End-to-end    | Playwright against the built app             | any failing end-to-end test                  |
 
 API tests use `mongodb-memory-server`'s replica set mode, because MongoDB transactions (Section 4.6) only work on a replica set. No Docker needed.
+
+**End-to-end tests** (Spec Rule 16):
+
+- Live in an `e2e/` workspace and run with Playwright against the production build, served by the API with an in-memory MongoDB.
+- Run in two browser profiles: a mid-range Android phone viewport (Chrome) and a laptop viewport (Chrome).
+- Cover only the critical flows: add, edit and delete an expense; pay a bill.
+- **Sign-in in tests:** Google can't be automated, so a test-only route creates a session for a seeded test user. It exists only when `E2E_AUTH=true`, and `config.ts` refuses to start if that flag is set in production.
 
 ### 10.3 Gate 3: branch protection on `main`
 
@@ -765,6 +831,25 @@ A task is done when:
 - [ ] UI work matches `UI.md`: tokens, screen states, motion, copy and the accessibility baseline.
 - [ ] Errors are handled as in Section 9; no unhandled loading or empty states.
 
+### 10.6 Definition of ready
+
+An issue moves from **Backlog** to **Ready** only when:
+
+- [ ] Every issue it's blocked by is done.
+- [ ] Its acceptance criteria are clear and checkable.
+- [ ] The SPEC, DESIGN and UI.md sections it needs exist and are up to date.
+- [ ] Its size is S, M or L; anything bigger is split first.
+- [ ] Open questions are answered in the issue, not left for later.
+
+### 10.7 Git conventions and releases
+
+- **One issue per branch and pull request.** Branch names: `<issue number>-<short-slug>`, e.g. `12-frontend-skeleton`.
+- **Commit messages and PR titles** use Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`, `perf:`.
+- The pull request description includes `Closes #<issue>`, so merging closes the issue and moves it to Done on the board.
+- **Squash merge only.** Each pull request becomes one commit on `main`, titled with the PR title. Merge commits and rebase merges are disabled in the repo settings.
+- Merged branches are deleted automatically.
+- **Releases:** each milestone sign-off tags `vX.Y.0` and publishes a GitHub release with **automatically generated release notes**, grouped by the `type:` labels via `.github/release.yml`.
+
 ## 11. Deployment and environments
 
 ### 11.1 Environments
@@ -774,6 +859,7 @@ A task is done when:
 | Local       | my machine (Vite + Express)     | a separate free Atlas cluster for development |
 | Production  | Railway, Hobby plan             | the production free Atlas cluster         |
 | Tests       | my machine and CI               | in-memory MongoDB (Section 10.2)          |
+| End-to-end  | my machine and CI, production build | in-memory MongoDB, with the test-only sign-in (Section 10.2) |
 
 There is no staging environment. Pull request CI and local testing cover that role.
 
@@ -818,6 +904,7 @@ flowchart LR
 | `GOOGLE_CLIENT_ID`     | from Google Cloud                                 |
 | `GOOGLE_CLIENT_SECRET` | from Google Cloud                                 |
 | `LOG_LEVEL`            | `info` in production, `debug` locally             |
+| `E2E_AUTH`             | `true` only in end-to-end tests; rejected in production (Section 10.2) |
 
 - Production values are stored in Railway's variables. Local values live in `apps/api/.env`, which is git-ignored.
 - `apps/api/.env.example` lists every variable with no real values and is committed.
@@ -838,3 +925,33 @@ flowchart LR
 | Domain                   | none; using Railway's subdomain               |
 
 Total: within the ₹500/month budget (Spec Rule 10), as long as Railway's pricing hasn't changed.
+
+### 11.7 Monitoring
+
+- **Railway email notifications** are turned on for failed deploys and crashed services. No third-party monitoring service (Spec Rule 10).
+- Logs are read in Railway's log viewer (Section 9.4). Searching by request id finds every line of a failed request.
+- Since there's no uptime alerting, a quiet outage is noticed when I next open the app. That is accepted for a personal app.
+
+### 11.8 Development sample data
+
+- `pnpm seed:dev` loads realistic sample data into the **development** database: categories, a few months of transactions, and later bills, lending records and goals as each feature arrives.
+- It includes one fixed month with hand-calculated expected totals, used to check the reports (Spec Rule 15, milestone 3).
+- The script refuses to run when `NODE_ENV=production`, or when the database name doesn't end with `-dev`. The development database is named `money-manager-dev`.
+
+## 12. Performance budget
+
+| Metric                                           | Budget            | Checked                                        |
+| ------------------------------------------------ | ----------------- | ---------------------------------------------- |
+| Initial JavaScript (gzipped)                     | ≤ 200 KB          | every pull request, by `size-limit` in CI      |
+| First screen visible (Largest Contentful Paint) on a mid-range Android phone, 4G | ≤ 2.5 s | Lighthouse mobile run at each milestone sign-off |
+| API response time, 95th percentile               | ≤ 300 ms          | from request durations in the logs, at each milestone sign-off |
+| Add expense, from tapping Add to "Saved"         | < 5 s             | timed by hand on my phone (Spec Rule 4)         |
+
+**Keeping inside the budget:**
+
+- Route-level code splitting and lazy-loaded libraries (Section 8.10).
+- Self-hosted Inter loads only the Latin subsets needed for English text and the ₹ symbol.
+- Illustrations are SVG and loaded only on the screens that use them (UI.md 4.6).
+- Reports and Home use MongoDB aggregations, never loading every transaction (Section 5.4).
+
+If a pull request breaks the JavaScript budget, it is fixed in that pull request, or the budget change is justified and recorded here.
