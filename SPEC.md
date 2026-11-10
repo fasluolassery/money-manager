@@ -53,6 +53,8 @@ The app must make it easy to record every expense and see clearly how much I spe
 
 Transfers between my own accounts are **not** part of the first version.
 
+Manual transactions can't use the built-in Lending category; Lending transactions are created only by lending records (Rule 8).
+
 **Fields:**
 
 | Field    | Required | Default |
@@ -120,7 +122,7 @@ The first version includes:
 | Name           | Yes      | —              |
 | Target amount  | Yes      | —              |
 | Deadline       | No       | None           |
-| Icon or colour | No       | A default icon |
+| Icon (emoji)   | No       | 🎯             |
 
 **Contributions:**
 
@@ -230,6 +232,7 @@ The Lending category cannot be renamed or deleted.
 
 - Editing a record or repayment updates its linked transaction.
 - The original amount cannot be lowered below the total already repaid.
+- The direction (lent or borrowed) can be changed only while the record has no repayments.
 - Deleting a repayment removes its transaction.
 - Deleting a record permanently deletes it, its repayments and all their transactions, after confirmation.
 
@@ -242,6 +245,19 @@ The Lending category cannot be renamed or deleted.
 ### General rules
 
 - **Money** is stored as an integer number of the smallest unit (paise), never as a floating-point number. ₹125.50 is stored as `12550`.
+- **Amounts:** every amount (transactions, bills, goal targets, contributions, lending records, repayments) follows Rule 4's amount validation: greater than 0, at most 2 decimal places, at most ₹1,00,00,000. The **opening balance** is the one exception: it can be zero or negative (e.g. starting in debt), down to −₹1,00,00,000.
+- **Dates of money events** (transactions, contributions, lending records, repayments, the opening balance date) can't be in the future. **Due dates and deadlines** can.
+- **Text limits:**
+
+  | Field                     | Length        |
+  | ------------------------- | ------------- |
+  | Category name             | 1–40          |
+  | Bill name, goal name      | 1–60          |
+  | Person (lending)          | 1–60          |
+  | Payee                     | up to 100     |
+  | Note                      | up to 500     |
+
+  Leading and trailing spaces are trimmed before checking.
 - **Currency:** Every amount is stored with a currency code. The first version only supports `INR`. Contributions, repayments and bill cycles use the currency of the goal, record or bill they belong to.
 - **Dates:** Transaction, contribution, repayment and due dates are calendar dates (no time of day), in the user's timezone. This keeps a late-night expense in the correct day and month.
 - **Timezone:** Each user has a timezone (default `Asia/Kolkata`). The server uses it to decide what "today" is, for date defaults, upcoming and overdue bills, and overdue goals and lending.
@@ -253,14 +269,14 @@ The Lending category cannot be renamed or deleted.
 
 **User:** id, Google account id, name, email, timezone, opening balance, opening balance date, last backup date.
 
-**Category:** id, user, name, type (expense, income or both), built-in flag.
+**Category:** id, user, name, emoji, type (expense, income or both), built-in flag.
 - Built-in categories (Lending) cannot be renamed or deleted. Lending has type "both", since it holds both expenses and income (Rule 8). User-created categories are expense or income.
 
 **Transaction:** id, user, type (expense or income), amount, currency, category, date, payee, note, source, source id, deletedAt.
 - `source` says where it came from: manual, bill or lending. `source id` points to the bill cycle, lending record or repayment that created it.
 - Transactions created by a bill or a lending record are edited and deleted from that bill or record, not directly, and never go to the Trash.
 
-**SavingsGoal:** id, user, name, target amount, currency, deadline, icon, completedAt.
+**SavingsGoal:** id, user, name, target amount, currency, deadline, icon (emoji), completedAt.
 
 **GoalContribution:** id, goal, amount, date.
 

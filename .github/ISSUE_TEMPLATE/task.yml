@@ -45,6 +45,7 @@ body:
         - label: Every CI gate passes
         - label: Works on a phone-sized and a laptop-sized screen (UI tasks)
         - label: Matches UI.md, including tokens, states, motion, copy and the accessibility baseline (UI tasks)
-        - label: Errors are handled as in DESIGN.md Section 9
-        - label: SPEC.md / DESIGN.md updated if behaviour or design changed
-        - label: Merged through a pull request that closes this issue
+        - label: Errors are handled as in DESIGN.md Section 9; no third-party error text reaches the user (9.6)
+        - label: The code rules and import boundaries in DESIGN.md 10.4 pass
+        - label: SPEC.md / DESIGN.md / UI.md updated if behaviour or design changed
+        - label: Merged through a squash-merged pull request that closes this issue

@@ -59,7 +59,7 @@ flowchart LR
     subgraph Server["App server (managed platform)"]
         Static["Static files: built React app"]
         Auth["/api/auth/*: Better Auth"]
-        API["/api/*: Express routes"]
+        API["/api/v1/*: Express routes"]
     end
     Google["Google sign-in"]
     DB[("MongoDB Atlas")]
@@ -76,13 +76,13 @@ flowchart LR
 - **App server:** one Express process that serves three things:
   - the built React app as static files, for any path not under `/api`
   - Better Auth under `/api/auth/*`, for Google sign-in, sessions and logout
-  - the app's REST API under `/api/*`
+  - the app's REST API under `/api/v1/*`, and the health check at `/api/health`
 - **MongoDB Atlas:** stores all app data and the auth sessions.
 - **Google:** only involved during sign-in.
 
 **A typical request** (adding an expense):
 
-1. The PWA sends `POST /api/transactions` with the session cookie.
+1. The PWA sends `POST /api/v1/transactions` with the session cookie.
 2. The server checks the session and finds the user.
 3. The input is validated against the shared Zod schema.
 4. The business rules run, and the transaction is written to MongoDB, owned by that user.
@@ -103,17 +103,19 @@ This means there is no scheduler to run, monitor or pay for.
 ## 3. Repo structure
 
 ```text
-money-mng/
+money-manager/
 ├── apps/
 │   ├── api/                      Express server
+│   │   ├── scripts/              seed-dev.ts, migrations/ (Sections 11.5, 11.8)
 │   │   └── src/
 │   │       ├── main.ts           starts the server
 │   │       ├── app.ts            builds the Express app (used by main.ts and API tests)
 │   │       ├── container.ts      awilix container: registers everything
-│   │       ├── config.ts         reads and validates environment variables
-│   │       ├── db/               MongoDB client, indexes, transaction helper
-│   │       ├── auth/             Better Auth setup
-│   │       ├── middleware/       requireAuth, validate, rate limit, error handler
+│   │       ├── config.ts         reads and validates environment variables (the only file that reads process.env)
+│   │       ├── errors.ts         AppError and its subclasses (Section 9.2)
+│   │       ├── db/               MongoDB client, indexes, transaction helper, driver-error translation
+│   │       ├── auth/             Better Auth setup and the auth adapter (Section 9.6)
+│   │       ├── middleware/       requireAuth, origin check, validate, rate limit, error handler
 │   │       └── modules/          one folder per feature (see section 4)
 │   │           ├── users/        signup setup, settings, backup, account deletion
 │   │           ├── categories/
@@ -127,14 +129,21 @@ money-mng/
 │   └── shared/                   used by both api and web
 │       └── src/
 │           ├── schemas/          Zod schemas and their TypeScript types
+│           ├── errors.ts         error codes and the message catalogue (Section 9.6)
 │           ├── money.ts          paise conversion and ₹ formatting
 │           └── dates.ts          calendar dates and timezone helpers
+├── e2e/                          Playwright end-to-end tests (Section 10.2)
+├── .github/                      CI workflow, issue and PR templates, Dependabot, release notes config
+├── AGENTS.md                     conventions for AI agents and humans
 ├── SPEC.md
 ├── DESIGN.md
+├── UI.md
+├── biome.json
+├── .dependency-cruiser.cjs       import boundary rules (Section 10.4)
 └── pnpm-workspace.yaml
 ```
 
-**What goes in `packages/shared`:** only code that both the frontend and backend need: Zod schemas, money and date helpers. Business rules that only the server runs stay in `apps/api`.
+**What goes in `packages/shared`:** only code that both the frontend and backend need: Zod schemas, the error catalogue, money and date helpers. Business rules that only the server runs stay in `apps/api`.
 
 ## 4. Backend layers and patterns
 
@@ -159,10 +168,10 @@ A feature with no complex rules (e.g. categories) may have no `domain.ts`.
 | -------------- | ------------------------------------------------------------ | ---------------------------------------- |
 | **Routes**     | Parse the request, validate input with Zod, call one service function, send the response | Touch the database or contain business rules |
 | **Service**    | Run a use case: load data, apply domain rules, save, wrap multi-record writes in a DB transaction | Use `req` / `res`                       |
-| **Repository** | Read and write one collection, always filtered by user       | Contain business rules                  |
-| **Domain**     | Pure functions: same input, same output, no database, no clock | Import from any other layer            |
+| **Repository** | Read and write one collection, always filtered by user; translate driver errors into domain errors (Section 9.6) | Contain business rules, or let a MongoDB error escape |
+| **Domain**     | Pure functions: same input, same output, no database, no clock | Import anything except `packages/shared`, `errors.ts` and its own module's types |
 
-Allowed calls go one way: routes → service → repository and domain.
+Allowed calls go one way: routes → service → repository and domain. These boundaries are enforced by dependency-cruiser in CI (Section 10.4).
 
 **Domain examples** (Spec Rule 16 tests live here):
 
@@ -216,7 +225,7 @@ Spec Rule 9 says an edit made on one device must never silently overwrite a newe
 
 - Every document has an integer `version`, starting at 1.
 - Every response that returns a record includes its `version`.
-- Every `PATCH` and `DELETE` (and actions that change a record, like pausing a bill) must send the `version` it last saw.
+- **Every request that changes an existing document** must send the `version` it last saw: every `PATCH` and `DELETE`, and every `POST` action on an existing record (paying, skipping, undoing, pausing or resuming a bill; restoring from the Trash; adding a repayment or contribution, which changes the parent document).
 - The repository updates with a filter on `{ _id, userId, version }` and increments `version` in the same write. If nothing matched but the record exists, someone else changed it first: the API returns `409 STALE_RECORD`.
 - Changes to embedded items (goal contributions, lending repayments) use the parent document's `version`.
 - The frontend shows "This was changed on another device" with **Reload**, which refetches the record (UI.md 7.1).
@@ -228,7 +237,7 @@ Spec Rule 9 says an edit made on one device must never silently overwrite a newe
 
 - **Ids:** MongoDB `ObjectId` for every document and every embedded item. Sent to the frontend as strings.
 - **Owner:** every app collection has a `userId` field (Section 4.5).
-- **Money:** whole numbers of paise, always positive. Whether money comes in or goes out is decided by `type` or `direction`, never by a minus sign. Zod checks every amount is an integer.
+- **Money:** whole numbers of paise, always positive. Whether money comes in or goes out is decided by `type` or `direction`, never by a minus sign. Zod checks every amount is an integer. The one exception is `openingBalance`, which is signed (Spec Rule 9).
 - **Calendar dates** (transaction date, due dates, deadlines): `"YYYY-MM-DD"` strings. They never shift with timezones, and they sort and compare correctly as plain strings.
 - **Timestamps** (`createdAt`, `updatedAt`, `deletedAt`, `completedAt`, `settledAt`, `lastBackupAt`): MongoDB `Date` values, in UTC.
 - **Indexes** are created by `db/indexes.ts` when the server starts.
@@ -245,7 +254,7 @@ Better Auth creates and manages its own collections for users, sessions and link
 | -------------------- | ------------- | ------------------------- |
 | `userId`             | string        | Better Auth user id       |
 | `timezone`           | string        | e.g. `"Asia/Kolkata"`     |
-| `openingBalance`     | integer paise | may be 0                  |
+| `openingBalance`     | integer paise | signed: may be zero or negative |
 | `openingBalanceDate` | date string   |                           |
 | `currency`           | string        | `"INR"`                   |
 | `lastBackupAt`       | Date or null  |                           |
@@ -276,7 +285,7 @@ Better Auth creates and manages its own collections for users, sessions and link
 | `note`       | string or null  |                                                        |
 | `source`     | object          | `{ kind: "manual" }`, `{ kind: "bill", billCycleId }`, `{ kind: "lending", recordId, repaymentId? }` |
 | `deletedAt`  | Date or null    | set when moved to the Trash                            |
-| `requestId`  | string or null  | client-generated id, prevents duplicate saves on retry (Section 6.4) |
+| `idempotencyKey` | string or null | client-generated UUID, prevents duplicate saves on retry (Section 6.4) |
 
 **`goals`** — contributions are embedded.
 
@@ -287,8 +296,8 @@ Better Auth creates and manages its own collections for users, sessions and link
 | `targetAmount`  | integer paise      |                                        |
 | `currency`      | string             |                                        |
 | `deadline`      | date string or null|                                        |
-| `icon`          | string             |                                        |
-| `contributions` | array              | `{ _id, amount, date }`                |
+| `icon`          | string             | a single emoji, default `"🎯"`         |
+| `contributions` | array              | `{ _id, amount, date, idempotencyKey }`     |
 | `completedAt`   | Date or null       |                                        |
 
 **`bills`**
@@ -330,10 +339,10 @@ Better Auth creates and manages its own collections for users, sessions and link
 | `dueDate`       | date string or null|                                                |
 | `note`          | string or null     |                                                |
 | `transactionId` | ObjectId           | the transaction for the original lend/borrow   |
-| `repayments`    | array              | `{ _id, amount, date, transactionId }`         |
+| `repayments`    | array              | `{ _id, amount, date, transactionId, idempotencyKey }` |
 | `settledAt`     | Date or null       |                                                |
 
-Every collection also has `_id`, `createdAt`, `updatedAt` and `version` (Section 4.7).
+Every collection also has `_id`, `createdAt`, `updatedAt` and `version` (Section 4.7). `categories`, `bills`, `goals` and `lendingRecords` also have a `idempotencyKey`, like `transactions` (Section 6.4).
 
 ### 5.4 Indexes
 
@@ -345,7 +354,8 @@ Every collection also has `_id`, `createdAt`, `updatedAt` and `version` (Section
 | `transactions`   | `{ userId: 1, categoryId: 1, date: -1 }` | category filters and reports                               |
 | `transactions`   | `{ userId: 1, payee: 1 }`                | payee autocomplete                                         |
 | `transactions`   | `{ deletedAt: 1 }` TTL, 30 days          | empties the Trash automatically (Spec Rule 9)              |
-| `transactions`   | `{ userId: 1, requestId: 1 }` unique, only where `requestId` is set | a retried save can't create a duplicate (Section 6.4) |
+| `transactions`   | `{ userId: 1, deletedAt: -1 }`           | the Trash list, newest deletion first                      |
+| `transactions`, `categories`, `bills`, `goals`, `lendingRecords` | `{ userId: 1, idempotencyKey: 1 }` unique, only where `idempotencyKey` is set | a retried create can't make a duplicate (Section 6.4) |
 | `goals`          | `{ userId: 1, completedAt: 1 }`          | active and completed lists                                 |
 | `bills`          | `{ userId: 1, nextDueDate: 1 }`          | upcoming and overdue bills                                 |
 | `billCycles`     | `{ billId: 1, dueDate: 1 }` unique       | history; **makes paying the same cycle twice impossible**  |
@@ -356,7 +366,7 @@ Search by note or payee scans the user's transactions with the `userId` index. A
 
 ### 5.5 Deleting an account
 
-Deleting an account (Spec Rule 10) runs in one DB transaction: delete every document with that `userId` from every app collection, then delete the user's Better Auth data.
+Deleting an account (Spec Rule 10) runs in one DB transaction: delete every document with that `userId` from every app collection. Then the user's Better Auth data (user, sessions, linked accounts) is deleted through Better Auth. Both steps are safe to repeat, so if the second one fails the request returns an error and can simply be retried.
 
 ## 6. API contract
 
@@ -368,7 +378,8 @@ Deleting an account (Spec Rule 10) runs in one DB transaction: delete every docu
 - **Dates:** calendar dates as `"YYYY-MM-DD"`, months as `"YYYY-MM"`, timestamps as ISO 8601 strings in UTC.
 - **Auth:** every `/api/v1` endpoint requires a valid session cookie, or returns `401`.
 - **Validation:** every request body and query is validated with the shared Zod schema before reaching the service.
-- **Versions:** every `PATCH` and `DELETE` body includes the record's `version` (Section 4.7).
+- **Versions:** every request that changes an existing document includes its `version` in the body (Section 4.7).
+- **Body size:** JSON bodies are limited to 100 KB; larger ones get `413 PAYLOAD_TOO_LARGE`.
 
 ### 6.2 Response envelope
 
@@ -393,16 +404,19 @@ Failure:
 
 | HTTP status | `error.code`        | When                                                             |
 | ----------- | ------------------- | ---------------------------------------------------------------- |
-| 400         | `VALIDATION_ERROR`  | input fails the Zod schema                                       |
+| 400         | `VALIDATION_ERROR`  | input fails the Zod schema, or the body isn't valid JSON         |
 | 401         | `UNAUTHENTICATED`   | no valid session                                                 |
+| 403         | `FORBIDDEN`         | a changing request without the app's own `Origin` (Section 7.4)  |
 | 404         | `NOT_FOUND`         | record doesn't exist **or belongs to another user** (Section 4.5) |
 | 409         | `CONFLICT`          | duplicate category name, bill cycle already paid                 |
 | 409         | `STALE_RECORD`      | the record was changed since the client loaded it (Section 4.7)  |
+| 413         | `PAYLOAD_TOO_LARGE` | body larger than 100 KB                                          |
 | 422         | `RULE_VIOLATION`    | valid input that breaks a spec rule, e.g. repayment larger than the remaining amount |
 | 429         | `RATE_LIMITED`      | too many requests                                                |
 | 500         | `INTERNAL_ERROR`    | anything unexpected; details are logged, never sent to the client |
+| —           | `NETWORK_ERROR`     | frontend only: the request never got a response (offline, timeout) |
 
-Section 9 covers how errors are raised and handled in code.
+This list is **closed**: these are the only codes, defined once in `packages/shared/src/errors.ts` (Section 9.6). Every failure response also includes the request id from the `X-Request-Id` header, as `error.requestId`, so a bug report can be matched to the logs. Section 9 covers how errors are raised and handled in code.
 
 ### 6.3 Pagination
 
@@ -410,15 +424,17 @@ Lists that can grow large (transactions, Trash) use cursor pagination:
 
 - Request: `?limit=50&cursor=<opaque string>`. Default limit 50, maximum 100.
 - Response: `{ "items": [...], "nextCursor": "..." }`. `nextCursor` is `null` on the last page.
-- Sorted by `date` descending, then `_id` descending. The cursor encodes both, so adding new transactions never shifts or repeats items.
+- Transactions are sorted by `date` descending, then `_id` descending; the Trash by `deletedAt` descending, then `_id`. The cursor encodes the sort values, so adding new items never shifts or repeats them.
 
 Small lists (categories, bills, goals, lending records) are returned whole, without pagination.
 
 ### 6.4 Duplicate protection
 
-`POST /transactions` accepts an optional `requestId`, a UUID the form generates once when it opens. If a request with the same `requestId` was already saved, the server returns the existing transaction instead of creating another. This makes **Retry** after a failed save safe (Spec Rule 4).
+**Every create request** accepts an optional `idempotencyKey`, a UUID the form generates once when it opens: transactions, categories, bills, goals, lending records, and the embedded repayments and contributions. If a request with the same `idempotencyKey` was already saved, the server returns the existing item instead of creating another. This makes **Retry** after a failed save safe (Spec Rule 4).
 
-The same protection exists for bill payments through the unique `billCycles` index (Section 5.4).
+- Top-level documents are protected by the unique `{ userId, idempotencyKey }` indexes (Section 5.4).
+- Embedded items (repayments, contributions) are checked by the service: if the parent already has an item with that `idempotencyKey`, it's returned before the version check, so a retry never shows a false "changed on another device".
+- Bill payments are also protected by the unique `billCycles` index (Section 5.4).
 
 ### 6.5 Endpoints
 
@@ -453,7 +469,7 @@ Log out and log out of all devices use Better Auth's endpoints under `/api/auth/
 | ------ | ----------------- | --------------------------------------------------------------------- |
 | GET    | `/categories`     | all categories                                                        |
 | POST   | `/categories`     | create                                                                |
-| PATCH  | `/categories/:id` | rename                                                                |
+| PATCH  | `/categories/:id` | change name, emoji, or type (type only while unused)                  |
 | DELETE | `/categories/:id` | delete; body `{ moveToCategoryId }` required if it has transactions or bills |
 
 **Transactions**
@@ -563,8 +579,8 @@ Better Auth handles every step of the OAuth exchange. The app only adds the firs
 ### 7.4 Protecting the API
 
 - **`requireAuth` middleware** on every `/api/v1` route: reads the session through Better Auth, puts the user id on the request, and returns `401 UNAUTHENTICATED` if there is none. Services receive this id as `userId` (Section 4.5).
-- **Cross-site request protection:** `SameSite=Lax` stops the browser sending the cookie with requests from other sites. In addition, every `POST`, `PATCH` and `DELETE` must have an `Origin` header matching the app's own origin, or it is rejected.
-- **Rate limits:** Better Auth's built-in limiter on `/api/auth/*`; `express-rate-limit` on `/api/v1`, keyed by user id when signed in and by IP address otherwise. Limits are set in config.
+- **Cross-site request protection:** `SameSite=Lax` stops the browser sending the cookie with requests from other sites. In addition, every `POST`, `PATCH` and `DELETE` must have an `Origin` header matching the app's own origin, or it gets `403 FORBIDDEN`.
+- **Rate limits:** Better Auth's built-in limiter on `/api/auth/*`; `express-rate-limit` on `/api/v1`, keyed by user id when signed in and by IP address otherwise. Defaults, adjustable in config: **300 requests per 5 minutes per user** on `/api/v1`, and **30 per 5 minutes per IP** on `/api/auth/*`.
 
 ### 7.5 Google setup
 
@@ -636,10 +652,11 @@ apps/web/src/
 │       └── pages/            route screens (TransactionsPage, TrashPage)
 ├── components/
 │   ├── ui/                   shadcn/ui components
-│   └── ...                   shared app components: MoneyInput, DateInput, CategoryPicker, EmptyState
+│   └── ...                   shared app components (UI.md 5.3): Amount, MoneyInput, DateField, CategoryPicker, EmptyState...
 └── lib/
     ├── api-client.ts         fetch wrapper (Section 8.4)
-    └── query-keys.ts         all TanStack Query keys in one place
+    ├── query-keys.ts         all TanStack Query keys in one place
+    └── motion.ts             motion tokens and helpers (UI.md 6.2)
 ```
 
 ### 8.3 Routes
@@ -656,6 +673,8 @@ apps/web/src/
 | `/plan/goals`, `/plan/goals/:id`     | goals list and detail    |
 | `/plan/lending`, `/plan/lending/:id` | lending list and detail  |
 | `/settings`, `/settings/categories`  | Settings                 |
+| `/dev/ui`               | tokens and components showcase; **development builds only** |
+| any other path          | 404 page                              |
 
 **Route guards:** not signed in → `/sign-in`. Signed in but `onboardedAt` is null → `/welcome`. Everyone else reaches the app.
 
@@ -666,11 +685,13 @@ apps/web/src/
 - `api-client.ts` is the only place that calls `fetch`. It:
   - sends requests to `/api/v1` on the same origin, with cookies
   - unwraps `{ success, data }` and returns `data`
-  - turns `{ success: false, error }` into a thrown `ApiError` with the code, message and field details
+  - turns `{ success: false, error }` into a thrown `ApiError` with the code, message, field details and request id
+  - turns **every other failure** into an `ApiError` too, so the UI never sees a raw browser or proxy error: no response at all becomes `NETWORK_ERROR`; a response that isn't the app's envelope (e.g. a proxy's HTML error page) becomes `INTERNAL_ERROR`. Messages come from the catalogue (Section 9.6)
   - on `401`, sends the user to `/sign-in`
+  - on `409 STALE_RECORD`, lets the shared handler show "This was changed on another device" (Section 4.7)
 - Every feature's `api.ts` wraps the client in TanStack Query hooks. Components never call the client directly.
 - **Caching:** after a change succeeds, the related queries are invalidated and refetched. For example, creating a transaction refreshes transactions, reports and Home.
-- **Retries:** reads retry automatically up to 2 times. Writes never retry automatically; the form shows **Retry** and reuses its `requestId` (Section 6.4).
+- **Retries:** reads retry automatically up to 2 times. Writes never retry automatically. **Every create form** (transaction, category, bill, goal, lending record, repayment, contribution) generates an `idempotencyKey` when it opens; on failure it shows **Retry** and reuses that key (Section 6.4). `STALE_RECORD`, `VALIDATION_ERROR` and `RULE_VIOLATION` are never retried, because retrying can't fix them.
 - **No optimistic updates** in the first version: the screen shows what the server saved, never a guess.
 
 ### 8.5 Forms and money input
@@ -718,7 +739,7 @@ The Vite dev server proxies `/api` to the local Express server, so development a
 | Frontend form         | shared Zod schema, for instant feedback                    | inline field errors           |
 | API `validate` middleware | the same Zod schema, on body, query and params; **this is the authority** | `400 VALIDATION_ERROR` |
 | Service and domain    | spec rules that need data: repayment ≤ remaining, category type matches, linked transactions can't be edited directly | `422 RULE_VIOLATION` |
-| Database              | unique indexes: category names, bill cycles, request ids   | `409 CONFLICT`                |
+| Database              | unique indexes: category names, bill cycles, idempotency keys; the repository translates the violation (Section 9.6) | `409 CONFLICT`, or the existing record for an idempotency key |
 
 The frontend check is only for convenience. The server never trusts the client.
 
@@ -726,16 +747,19 @@ The frontend check is only for convenience. The server never trusts the client.
 
 Errors are the one place classes are used, because JavaScript errors must extend `Error`. They live in `apps/api/src/errors.ts`:
 
-| Error                  | Status | Code                |
-| ---------------------- | ------ | ------------------- |
-| `ValidationError`      | 400    | `VALIDATION_ERROR`  |
-| `UnauthenticatedError` | 401    | `UNAUTHENTICATED`   |
-| `NotFoundError`        | 404    | `NOT_FOUND`         |
-| `ConflictError`        | 409    | `CONFLICT`          |
-| `StaleRecordError`     | 409    | `STALE_RECORD`      |
-| `RuleViolationError`   | 422    | `RULE_VIOLATION`    |
+| Error                    | Status | Code                |
+| ------------------------ | ------ | ------------------- |
+| `ValidationError`        | 400    | `VALIDATION_ERROR`  |
+| `UnauthenticatedError`   | 401    | `UNAUTHENTICATED`   |
+| `ForbiddenError`         | 403    | `FORBIDDEN`         |
+| `NotFoundError`          | 404    | `NOT_FOUND`         |
+| `ConflictError`          | 409    | `CONFLICT`          |
+| `StaleRecordError`       | 409    | `STALE_RECORD`      |
+| `PayloadTooLargeError`   | 413    | `PAYLOAD_TOO_LARGE` |
+| `RuleViolationError`     | 422    | `RULE_VIOLATION`    |
+| `RateLimitedError`       | 429    | `RATE_LIMITED`      |
 
-All extend `AppError`, which carries the status, code, message and optional field details. Services and domain functions throw these; they never build HTTP responses.
+All extend `AppError`, which carries the status, code, message and optional field details. Services and domain functions throw these; they never build HTTP responses. Failures are **thrown**, never returned: there are no `Result` types and no `null`-means-error returns.
 
 ### 9.3 Error middleware
 
@@ -744,11 +768,12 @@ The server uses **Express 5**, which passes errors from async route handlers to 
 | Error caught                         | Response                                  |
 | ------------------------------------ | ----------------------------------------- |
 | `AppError`                           | its own status, code and message          |
-| `ZodError`                           | `400 VALIDATION_ERROR` with field details |
-| MongoDB duplicate key (code `11000`) | `409 CONFLICT`                            |
-| Anything else                        | `500 INTERNAL_ERROR`, message "Something went wrong" |
+| `ZodError`                           | `400 VALIDATION_ERROR` with the schema's field messages |
+| Body parser: invalid JSON            | `400 VALIDATION_ERROR`, catalogue message |
+| Body parser: body too large          | `413 PAYLOAD_TOO_LARGE`, catalogue message |
+| Anything else                        | `500 INTERNAL_ERROR`, catalogue message "Something went wrong" |
 
-For a `500`, the full error and stack trace are logged, but the client only sees the generic message and the request id.
+For a `500`, the full error and stack trace are logged, but the client only sees the catalogue message and the request id. A MongoDB error reaching the middleware is treated as "anything else": it means a repository failed to translate it (Section 9.6), and it's logged as a bug.
 
 If the process hits an unhandled promise rejection or exception, it logs the error and exits; the hosting platform restarts it.
 
@@ -757,7 +782,9 @@ If the process hits an unhandled promise rejection or exception, it logs the err
 - **pino** with `pino-http`, writing JSON lines to standard output, where the hosting platform collects them.
 - Every request gets a **request id**, included in every log line for that request and returned in an `X-Request-Id` response header.
 - Each request logs: method, path, status, duration and user id.
-- **Never logged:** cookies, auth headers, request and response bodies. Bodies contain financial data, and logs are less protected than the database.
+- **Levels:** `error` for every `5xx` (with the stack trace), `warn` for `401`, `403` and `429`, `info` for everything else. `debug` only locally.
+- **Never logged:** cookies, auth headers, request and response bodies, email addresses and names. Bodies contain financial data, and logs are less protected than the database. The user id is enough to investigate.
+- Only the logger writes output; `console` is banned in app code (Section 10.4).
 - No error tracking service: logs only, keeping Spec Rule 10's no-third-party rule.
 
 ### 9.5 Showing errors in the app
@@ -770,6 +797,34 @@ If the process hits an unhandled promise rejection or exception, it logs the err
 | Device offline                         | the offline banner (Spec Rule 3)                             |
 | Stale edit (`409 STALE_RECORD`)        | "This was changed on another device" with **Reload** (Section 4.7) |
 | Unexpected error (`500`)               | "Something went wrong", with the request id in small text for debugging |
+
+### 9.6 Error discipline
+
+**Only the app's own errors reach the user.** No message, code, stack trace or detail from a library (MongoDB, Better Auth, Zod defaults, Express, the browser) is ever sent to the client or shown on screen.
+
+**1. One catalogue.** `packages/shared/src/errors.ts` defines the closed list of error codes (Section 6.2) as a TypeScript union, and a default message for each, written per UI.md 9.2. Both the API and the web app import it. A specific error may carry a more precise message (e.g. "A category called Food already exists"), but it is still written by us.
+
+**2. Translate at the boundary.** Third-party errors are converted into domain errors at the layer that talks to the library, and nowhere else:
+
+| Boundary            | Third-party error                          | Becomes                                         |
+| ------------------- | ------------------------------------------ | ----------------------------------------------- |
+| Repository (`db/`)  | MongoDB duplicate key on a unique index    | `ConflictError` with a specific message, or the existing record for an idempotency key |
+| Repository (`db/`)  | Any other MongoDB or network error         | rethrown untouched, so it becomes a logged `500` |
+| Auth adapter (`auth/`) | Better Auth errors used by app code (session lookup, revoking sessions, deleting the user) | `UnauthenticatedError` or a logged `500` |
+| `validate` middleware | `ZodError`                               | `ValidationError` with our field messages       |
+| Body parser         | invalid JSON, body too large               | `ValidationError`, `PayloadTooLargeError`       |
+| Rate limiter        | limit reached                              | `RateLimitedError`                              |
+| Web `api-client`    | `TypeError` from `fetch`, non-envelope responses | `ApiError` with `NETWORK_ERROR` or `INTERNAL_ERROR` |
+
+Services, domain functions and routes never see a library error type; they only see `AppError` subclasses.
+
+**3. Our validation messages.** Every shared Zod schema defines plain-English messages for its rules ("Amount must be more than ₹0", "Note can be up to 500 characters"). A global Zod error map is the fallback: any rule without a message becomes "This value isn't valid", never Zod's default text.
+
+**4. The UI only shows catalogue or server messages.** Components display `ApiError.message` (which came from our server or catalogue) or a catalogue message, never `error.message` from anything else. The React error boundary shows the catalogue message for `INTERNAL_ERROR`.
+
+**5. Better Auth's own endpoints.** Responses from `/api/auth/*` aren't in the app's envelope. The web auth client maps any failure there to a catalogue message ("Couldn't sign you in. Try again.").
+
+**6. Tests.** API tests force a raw MongoDB error and a Better Auth failure, and check the response contains only a catalogue message and the request id. A web unit test does the same for `fetch` failures and non-envelope responses.
 
 ## 10. Quality gates
 
@@ -794,6 +849,8 @@ A change reaches production only after passing every gate below, in order.
 | API tests     | Vitest + Supertest against an in-memory MongoDB replica set | any failing test          |
 | Security audit | `pnpm audit --prod --audit-level=high`      | a high or critical vulnerability in a production dependency |
 | Token check   | `pnpm check:tokens`                          | a hard-coded hex colour in a component (UI.md 4) |
+| Boundaries    | `pnpm check:boundaries` (dependency-cruiser) | an import that crosses a forbidden boundary, or a circular import (Section 10.4) |
+| Discipline    | `pnpm check:discipline`                      | a clock call in a domain file, or raw money arithmetic outside `money.ts` (Section 10.4) |
 | Build         | build `web` and `api`                        | the build fails                              |
 | Bundle budget | `size-limit` on the built web app            | initial JavaScript above **200 KB gzipped** (Section 12) |
 | End-to-end    | Playwright against the built app             | any failing end-to-end test                  |
@@ -809,6 +866,8 @@ API tests use `mongodb-memory-server`'s replica set mode, because MongoDB transa
 
 ### 10.3 Gate 3: branch protection on `main`
 
+GitHub enforces this on private repositories only with a paid plan; issue #6 decides how it's handled, and records the decision here.
+
 - Direct pushes to `main` are blocked; changes arrive only through pull requests.
 - Every CI step above must pass before merging.
 - No required reviewer, since I'm the only developer. Instead, a pull request template has a self-review checklist (the definition of done below).
@@ -816,20 +875,50 @@ API tests use `mongodb-memory-server`'s replica set mode, because MongoDB transa
 
 ### 10.4 Code rules enforced by tooling
 
-- TypeScript `strict` mode in every workspace.
-- Biome's `noExplicitAny` rule is an error.
+Every rule below fails CI. A rule is only switched off for a line with a comment explaining why, and that's reviewed in the pull request.
+
+| Rule                                                    | Enforced by                                       |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| TypeScript `strict`, `noUncheckedIndexedAccess`, `noFallthroughCasesInSwitch` | `tsconfig.base.json`             |
+| No `any`                                                | Biome `noExplicitAny`                             |
+| No `console`; use the logger (Section 9.4)              | Biome `noConsole`                                 |
+| Named exports only. Exceptions: tool config files that require a default export (`vite.config.ts`, `playwright.config.ts` and similar) | Biome `noDefaultExport`, with an override for config files |
+| `process.env` read only in `apps/api/src/config.ts` (and the web's Vite config) | Biome `noProcessEnv`, with an override for those files |
+| No un-awaited promises                                  | Biome `noFloatingPromises`                        |
+| No `dangerouslySetInnerHTML`                            | Biome `noDangerouslySetInnerHtml`                 |
+| Exhaustive handling of unions (error codes, statuses, transaction types) | an `assertNever` helper in `packages/shared` in every `switch` default, checked by the compiler; plus Biome `useExhaustiveSwitchCases` |
+| **Import boundaries** (below)                           | dependency-cruiser                                |
+| No clock in domain files: no `Date.now()` or `new Date()` without arguments in `*.domain.ts` | `check:discipline` script |
+| No raw money arithmetic (`* 100`, `/ 100`, `toFixed`, `parseFloat` on amounts) outside `packages/shared/src/money.ts` | `check:discipline` script |
+
+Some Biome rules above are newer and may be in its "nursery" group; issue #3 confirms each one exists in the installed version, and records a replacement if one doesn't.
+
+**Import boundaries** (`.dependency-cruiser.cjs`):
+
+| From                             | May not import                                                     |
+| -------------------------------- | ------------------------------------------------------------------ |
+| `packages/shared`                | `apps/*`                                                           |
+| `apps/web`                       | `apps/api`                                                         |
+| `apps/api`                       | `apps/web`                                                         |
+| `*.domain.ts`                    | anything except `packages/shared`, `apps/api/src/errors.ts` and its own module's types |
+| `*.routes.ts`                    | repositories, `db/`, `mongodb`                                     |
+| `*.service.ts`                   | `express`, `mongodb` (only repositories and `db/` touch the driver) |
+| anything except repositories and `db/` | `mongodb`                                                    |
+| web `components/`, `pages/`      | `lib/api-client.ts` (only each feature's `api.ts` may)             |
+| any file                         | itself through a cycle (no circular imports)                       |
+
 - **Dependabot** opens weekly pull requests for dependency updates, which go through the same CI.
 
 ### 10.5 Definition of done
 
 A task is done when:
 
-- [ ] It does what the spec says, and `SPEC.md` / `DESIGN.md` are updated if behaviour or design changed.
+- [ ] It does what the spec says, and `SPEC.md` / `DESIGN.md` / `UI.md` are updated if behaviour or design changed.
 - [ ] Tests required by Spec Rule 16 for this area are written and pass.
 - [ ] Every CI gate passes.
 - [ ] It works on a phone-sized screen and a laptop-sized screen.
 - [ ] UI work matches `UI.md`: tokens, screen states, motion, copy and the accessibility baseline.
-- [ ] Errors are handled as in Section 9; no unhandled loading or empty states.
+- [ ] Errors are handled as in Section 9, with no third-party error text reaching the user (Section 9.6); no unhandled loading or empty states.
 
 ### 10.6 Definition of ready
 
@@ -867,7 +956,7 @@ Atlas allows one free cluster per project, so development and production use **t
 
 ### 11.2 Production setup
 
-- **Railway**, one service in the **Singapore** region, on the platform's free subdomain (e.g. `money-mng.up.railway.app`).
+- **Railway**, one service in the **Singapore** region, on the platform's free subdomain (e.g. `money-manager.up.railway.app`).
 - **Atlas** production cluster in the same or the nearest region, to keep database round trips short.
 - **Build:** `pnpm build` builds `web` and `api`. **Start:** one Node process runs the API, which also serves `web`'s built files (Section 1.2).
 - **Health check:** `GET /api/health` (no auth) returns `200` when the server can reach the database. Railway uses it to decide whether a new deployment is healthy before switching traffic to it.
@@ -898,8 +987,8 @@ flowchart LR
 | ---------------------- | ------------------------------------------------- |
 | `NODE_ENV`             | `development` or `production`                     |
 | `PORT`                 | set by Railway in production                      |
-| `APP_URL`              | the app's origin, used by Better Auth and the Origin check (Section 7.4) |
-| `MONGODB_URI`          | Atlas connection string                           |
+| `APP_URL`              | the app's origin, used by Better Auth and the Origin check (Section 7.4). Locally it's the Vite dev server's origin (`http://localhost:5173`), since that's what the browser sees |
+| `MONGODB_URI`          | Atlas connection string; database `money-manager` in production, `money-manager-dev` locally |
 | `BETTER_AUTH_SECRET`   | long random string                                |
 | `GOOGLE_CLIENT_ID`     | from Google Cloud                                 |
 | `GOOGLE_CLIENT_SECRET` | from Google Cloud                                 |

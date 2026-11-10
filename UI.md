@@ -814,7 +814,7 @@ shadcn/ui's components (built on Radix) handle most of the focus and keyboard be
 
 - **Buttons say what they do:** "Save", "Pay bill", "Delete goal", never "OK", "Submit" or "Yes".
 - **Toasts name the thing in the past tense:** "Electricity paid", "Moved to Trash".
-- **Errors say what happened and what to do next,** without blame or technical words: "Couldn't save. Check your connection and try again." Never "Error 500" or "Invalid input".
+- **Errors say what happened and what to do next,** without blame or technical words: "Couldn't save. Check your connection and try again." Never "Error 500" or "Invalid input". Error messages are written once, in the error catalogue (DESIGN 9.6), and library error text is never shown.
 - **Confirmations state the consequence:** "Delete Goa trip? Its 6 contributions will be deleted too. This can't be undone."
 - **Sentence case** everywhere ("Upcoming bills", not "Upcoming Bills").
 - **Numbers and dates** follow Spec Rule 14. Relative dates where they're clearer: "Today", "Yesterday", "in 2 days", "3 days overdue".
