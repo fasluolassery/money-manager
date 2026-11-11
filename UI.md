@@ -526,6 +526,7 @@ Semantic tokens: components use the meaning (`income`, `alert`), never the raw c
 - Expense amounts use `text`. They are never red.
 - `income` is used only for income amounts.
 - `alert` is used only for overdue items and destructive buttons (Delete, Delete account).
+- Negative figures (a negative balance or "left over") use `text` with a minus sign, never `alert` (Spec Rule 14).
 - "Upcoming" is not a problem, so it uses `primary-soft`, not `alert`.
 
 **Chart palette** (categories in charts, in this order): violet `#8B5CF6`, teal `#14B8A6`, amber `#F59E0B`, pink `#EC4899`, sky `#0EA5E9`, lime `#84CC16`, orange `#F97316`, slate `#64748B`. Red and green are deliberately left out so charts never look like "bad" and "good" money. Categories beyond 8 are grouped as "Other" in the pie chart.

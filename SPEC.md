@@ -416,7 +416,7 @@ The **Add** button (Rule 4) is a floating button on phones and a button in the t
 ## Rule 14: Formatting and calendar
 
 - **Money** is shown with the ₹ symbol and Indian digit grouping: ₹1,00,000. Paise are shown only when non-zero: ₹1,250 and ₹1,250.50.
-- **Negative figures** (only the balance, the opening balance and "left over" can be negative) are shown with a minus sign: −₹2,000. Expenses are never shown with a minus sign; they are positive amounts of a different type.
+- **Negative figures** (only the balance, the opening balance and "left over" can be negative) are shown with a minus sign, in the normal text colour, never red: −₹2,000. Expenses are never shown with a minus sign; they are positive amounts of a different type.
 - **Dates** are shown as `10 Nov 2026` in lists and `10/11/2026` (DD/MM/YYYY) in forms.
 - **Month** means the calendar month, from the 1st to the last day, in my timezone.
 - The app's language is English.
