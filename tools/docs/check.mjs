@@ -82,7 +82,27 @@ const headings = (text) => new Set([...text.matchAll(/^#{2,3} (?:Rule )?(\d+(?:\
 const D = headings(design);
 const U = headings(ui);
 const S = headings(spec);
-const refFiles = { ...sources, ".github/ISSUE_TEMPLATE/task.yml": read(".github/ISSUE_TEMPLATE/task.yml") };
+const refFiles = {
+  ...sources,
+  "AGENTS.md": read("AGENTS.md"),
+  ".github/ISSUE_TEMPLATE/task.yml": read(".github/ISSUE_TEMPLATE/task.yml"),
+};
+
+// Markdown links to headings, e.g. [DESIGN 4.2](DESIGN.md#42-layers), must point at a real heading (GitHub's anchor rules).
+const slug = (heading) =>
+  heading
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s/g, "-");
+const anchors = Object.fromEntries(
+  ["SPEC.md", "DESIGN.md", "UI.md"].map((file) => [file, new Set([...read(file).matchAll(/^#{1,6} (.+)$/gm)].map((m) => slug(m[1])))]),
+);
+for (const [file, text] of Object.entries(refFiles)) {
+  for (const m of text.matchAll(/\]\(((?:SPEC|DESIGN|UI)\.md)#([^)\s]+)\)/g)) {
+    if (!anchors[m[1]].has(m[2])) problems.push(`${file}: link to ${m[1]}#${m[2]} points at no heading`);
+  }
+}
 for (const [file, text] of Object.entries(refFiles)) {
   for (const m of text.matchAll(/DESIGN(?:\.md)?(?: Sections?)? (\d+(?:\.\d+)?)/g)) if (!D.has(m[1])) problems.push(`${file}: DESIGN ${m[1]} doesn't exist`);
   for (const m of text.matchAll(/UI(?:\.md)?(?: Section)? (\d+(?:\.\d+)?)/g)) if (!U.has(m[1])) problems.push(`${file}: UI.md ${m[1]} doesn't exist`);
