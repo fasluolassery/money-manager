@@ -74,6 +74,10 @@ The latest stable major of each tool and library, chosen when the project starte
 | Node.js | 24 |
 | pnpm | 10 |
 | TypeScript | 7 |
+| Biome | 2 |
+| Vitest | 5 |
+| fast-check | 4 |
+| Zod | 4 |
 
 ## Repository layout
 

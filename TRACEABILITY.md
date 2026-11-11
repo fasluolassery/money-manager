@@ -9,7 +9,7 @@
 | Requirements | 150 (149 Must, 1 Should) |
 | With at least one issue | 150 |
 | With a module | 150 |
-| With at least one test | 0 |
+| With at least one test | 12 |
 | Finished milestones | none yet |
 
 ## Requirements
@@ -106,14 +106,14 @@
 | FR-8.14 | Must | Deleting a record permanently deletes it, its repayments and all their transactions, after confirmation. | #42 | lending | not yet |
 | FR-8.15 | Must | In spending views: The monthly summary, spent, income and left over, charts and month comparison include Le… | #31, #32 | reports | not yet |
 | FR-8.16 | Must | View: A single list of records, filterable by direction and by open or settled. A per-person summary is not… | #42, #44 | lending | not yet |
-| FR-9.1 | Must | Money is stored as an integer number of the smallest unit (paise), never as a floating-point number. ₹125.5… | #7, #20 | transactions | not yet |
-| FR-9.2 | Must | Amounts: every amount (transactions, bills, goal targets, contributions, lending records, repayments) follo… | #7 | packages/shared | not yet |
-| FR-9.3 | Must | Dates of money events (transactions, contributions, lending records, repayments, the opening balance date) … | #7, #20 | transactions | not yet |
-| FR-9.4 | Must | Due dates and deadlines can be in the future, with these limits: | #7, #36, #42, #48 | packages/shared | not yet |
-| FR-9.5 | Must | Text limits: | #7 | packages/shared, **Normalize input once**, at the boundary: trim text and apply Unicode **NFC** normalization before any check or comparison (SPEC FR-9.5), so "Café" typed two ways is one name. | not yet |
+| FR-9.1 | Must | Money is stored as an integer number of the smallest unit (paise), never as a floating-point number. ₹125.5… | #7, #20 | transactions | packages/shared/src/money.test.ts |
+| FR-9.2 | Must | Amounts: every amount (transactions, bills, goal targets, contributions, lending records, repayments) follo… | #7 | packages/shared | packages/shared/src/money.test.ts<br>packages/shared/src/schemas/common.test.ts |
+| FR-9.3 | Must | Dates of money events (transactions, contributions, lending records, repayments, the opening balance date) … | #7, #20 | transactions | packages/shared/src/schemas/common.test.ts |
+| FR-9.4 | Must | Due dates and deadlines can be in the future, with these limits: | #7, #36, #42, #48 | packages/shared | packages/shared/src/schemas/common.test.ts |
+| FR-9.5 | Must | Text limits: | #7 | packages/shared, **Normalize input once**, at the boundary: trim text and apply Unicode **NFC** normalization before any check or comparison (SPEC FR-9.5), so "Café" typed two ways is one name. | packages/shared/src/schemas/common.test.ts |
 | FR-9.6 | Must | Currency: Every amount is stored with a currency code. The first version only supports INR. Contributions, … | #20 | transactions | not yet |
-| FR-9.7 | Must | Dates: Transaction, contribution, repayment and due dates are calendar dates (no time of day), in the user'… | #7, #20 | transactions | not yet |
-| FR-9.8 | Must | Timezone: Each user has a timezone (default Asia/Kolkata). The server uses it to decide what "today" is, fo… | #7, #18, #27 | users | not yet |
+| FR-9.7 | Must | Dates: Transaction, contribution, repayment and due dates are calendar dates (no time of day), in the user'… | #7, #20 | transactions | packages/shared/src/dates.test.ts<br>packages/shared/src/schemas/common.test.ts |
+| FR-9.8 | Must | Timezone: Each user has a timezone (default Asia/Kolkata). The server uses it to decide what "today" is, fo… | #7, #18, #27 | users | packages/shared/src/dates.test.ts<br>packages/shared/src/schemas/common.test.ts |
 | FR-9.9 | Must | Ownership: Every record belongs to exactly one user (Rule 2). | #10 | db/ | not yet |
 | FR-9.10 | Must | Editing on two devices: if a record was changed on another device after I opened it, my save or delete is r… | #62 | transactions | not yet |
 | FR-9.11 | Must | Timestamps: Every record has createdAt and updatedAt. | #10 | db/ | not yet |
@@ -160,11 +160,11 @@
 | FR-13.2 | Must | The welcome screen shows the timezone detected from my device (I can change it) and asks for an opening bal… | #18 | users | not yet |
 | FR-13.3 | Must | Continue saves all three. Skip saves only the timezone; I can set the opening balance later in Settings. | #18 | users | not yet |
 | FR-13.4 | Must | I land on the Home screen. The welcome screen never appears again. | #18 | users | not yet |
-| FR-14.1 | Must | Money is shown with the ₹ symbol and Indian digit grouping: ₹1,00,000. Paise are shown only when non-zero: … | #7, #58 | packages/shared | not yet |
-| FR-14.2 | Must | Negative figures (only the balance, the opening balance and "left over" can be negative) are shown with a m… | #7, #58 | packages/shared | not yet |
-| FR-14.3 | Must | Signs: income amounts get a + (in the income colour). "Left over" is a difference, so it gets + when positi… | #7, #58 | packages/shared | not yet |
-| FR-14.4 | Must | Dates are shown as 10 Nov 2026 in lists and 10/11/2026 (DD/MM/YYYY) in forms. | #7 | packages/shared | not yet |
-| FR-14.5 | Must | Month means the calendar month, from the 1st to the last day, in my timezone. | #7 | packages/shared | not yet |
+| FR-14.1 | Must | Money is shown with the ₹ symbol and Indian digit grouping: ₹1,00,000. Paise are shown only when non-zero: … | #7, #58 | packages/shared | packages/shared/src/money.test.ts |
+| FR-14.2 | Must | Negative figures (only the balance, the opening balance and "left over" can be negative) are shown with a m… | #7, #58 | packages/shared | packages/shared/src/money.test.ts |
+| FR-14.3 | Must | Signs: income amounts get a + (in the income colour). "Left over" is a difference, so it gets + when positi… | #7, #58 | packages/shared | packages/shared/src/money.test.ts |
+| FR-14.4 | Must | Dates are shown as 10 Nov 2026 in lists and 10/11/2026 (DD/MM/YYYY) in forms. | #7 | packages/shared | packages/shared/src/dates.test.ts |
+| FR-14.5 | Must | Month means the calendar month, from the 1st to the last day, in my timezone. | #7 | packages/shared | packages/shared/src/dates.test.ts |
 | FR-14.6 | Must | The app's language is English. | #58 | packages/shared | not yet |
 
 ## Decisions
