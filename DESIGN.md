@@ -63,7 +63,7 @@ Technical decisions, `D-28` onward; product decisions `D-01`–`D-27` are in SPE
 
 - **ID:** D-33. **Decided:** 2026-11-11.
 - **Chosen:**
-  - **Node.js 24 LTS** (pinned in `.nvmrc`, `engines.node` and CI) and **pnpm 10** (pinned with `packageManager`).
+  - **Node.js 24 LTS** (pinned in `.nvmrc`, `engines.node` and CI) and **pnpm 10** (pinned with `packageManager`). `.npmrc` sets `engine-strict=true`, so installing on any other Node version fails with a clear message instead of half-working.
   - **The latest stable major version of every library** when issue #2 starts, including React 19, Tailwind CSS 4 (configured in CSS with `@theme`, as current shadcn/ui expects), Zod 4, React Router 7 in data mode (`createBrowserRouter`), Express 5 and Biome 2. Exact versions live in the lockfile; the README lists the majors.
   - **ES modules everywhere** (`"type": "module"`), TypeScript `strict`.
   - **TypeScript project references, built with `tsc -b`:** `packages/shared` and `apps/api` compile to their own `dist/` folders (JavaScript plus type declarations). The API uses `moduleResolution: "NodeNext"`; the web app uses `"Bundler"` and Vite builds it, reading `shared` through its package exports.
@@ -1210,6 +1210,7 @@ An issue moves from **Backlog** to **Ready** only when:
 - **One issue per branch and pull request.** Branch names: `<issue number>-<short-slug>`, e.g. `12-frontend-skeleton`.
 - **Commit messages and PR titles** use Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`, `perf:`.
 - The pull request description includes `Closes #<issue>`, so merging closes the issue and moves it to Done on the board.
+- **The pull request description is the verification record.** It has an **Acceptance criteria** section and a **Definition of done** section (Section 10.5, as listed in the issue). Each line is ticked with its evidence (a command and its result, a test name, a screenshot), or marked **N/A with a reason**. An unmet line stays unticked and says what's missing. **Checkboxes in issues stay unticked:** issues are generated from `tools/backlog/issues.md`, and editing them on GitHub would make the verification script report them.
 - **Squash merge only.** Each pull request becomes one commit on `main`, titled with the PR title. Merge commits and rebase merges are disabled in the repo settings.
 - Merged branches are deleted automatically.
 - **Releases:** each milestone sign-off tags `vX.Y.0` and publishes a GitHub release with **automatically generated release notes**, grouped by the `type:` labels via `.github/release.yml`.
