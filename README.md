@@ -51,6 +51,16 @@ Run from the repository root. Each runs across every workspace that defines it.
 | `node tools/docs/check.mjs` | check docs, IDs and references; regenerate `TRACEABILITY.md` (`--ci` only checks) |
 | `node tools/backlog/create-issues.mjs --verify` | check every GitHub issue matches `tools/backlog/issues.md` |
 
+## Major versions
+
+The latest stable major of each tool and library, chosen when the project started ([DESIGN 1.6](DESIGN.md#16-versions-and-build)). Exact versions are in `pnpm-lock.yaml`; this list grows as each issue adds its libraries.
+
+| Tool or library | Major |
+| --- | --- |
+| Node.js | 24 |
+| pnpm | 10 |
+| TypeScript | 7 |
+
 ## Repository layout
 
 ```text
