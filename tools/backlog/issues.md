@@ -219,7 +219,7 @@ Gate 3 (DESIGN 10.3): changes reach `main` only through pull requests with green
 ## Scope
 
 - Branch protection or a ruleset on `main` (if the plan allows): require a pull request, require the `ci` status check, block force pushes and deletion. No required reviewers.
-- `.github/pull_request_template.md`: summary, `Closes #`, and the definition-of-done checklist from DESIGN 10.5.
+- `.github/pull_request_template.md`: summary, `Closes #`, then the verification record from DESIGN 10.7: an **Acceptance criteria** section and a **Definition of done** section, where each line is ticked with its evidence or marked N/A with a reason.
 - `.github/dependabot.yml`: weekly updates for npm (pnpm lockfile) and GitHub Actions.
 - Repo settings (DESIGN 10.7): squash merge only (merge commits and rebase merges disabled), PR title as the squash commit title, automatically delete merged branches.
 - `.github/release.yml`: groups generated release notes by the `type:` labels.
@@ -2121,3 +2121,30 @@ decisions: D-49
 - [ ] With #68 closed, `--verify` passes and reports the open and closed counts.
 - [ ] A closed issue whose body differs from `tools/backlog/issues.md` is still reported.
 - [ ] An issue on GitHub that isn't in the backlog is still reported.
+
+@@@ issue
+key: verification-record
+title: Record verification in pull requests, and document engine-strict
+milestone: m1
+labels: type: docs | area: ci | size: S
+implements: none
+decisions: D-33, D-45
+flags: nocode
+
+## Context
+
+Issues #1 and #2 were verified, but nothing showed it: the issue checkboxes stayed unticked, and the pull requests listed only acceptance criteria, not the definition of done. Ticking checkboxes in issues isn't an option, because issues are generated from `tools/backlog/issues.md` and the verification script would report the edited body. Separately, #2 added `.npmrc` with `engine-strict=true` without mentioning it in DESIGN 1.6.
+
+## Scope
+
+- DESIGN 10.7: the pull request description is the **verification record**: an Acceptance criteria section and a Definition of done section, each line ticked with its evidence or marked N/A with a reason. Issue checkboxes stay unticked.
+- AGENTS.md: the same rule in "Before opening a pull request".
+- DESIGN 1.6: `.npmrc` with `engine-strict=true` makes installing on another Node version fail.
+- {{protection}}: its pull request template carries the two sections.
+
+## Acceptance criteria
+
+- [ ] DESIGN 10.7 and AGENTS.md describe the verification record and say issue checkboxes stay unticked.
+- [ ] DESIGN 1.6 mentions `engine-strict`.
+- [ ] This issue's own pull request uses the verification record.
+- [ ] `node tools/docs/check.mjs --ci` and `node tools/backlog/create-issues.mjs --verify` pass.

@@ -61,6 +61,7 @@ Each line links to the full rule. Read the section before touching that area.
 ## Before opening a pull request
 
 - The issue's acceptance criteria and the definition of done hold ([DESIGN 10.5](DESIGN.md#105-definition-of-done)).
+- **The pull request description is the verification record** ([DESIGN 10.7](DESIGN.md#107-git-conventions-and-releases)): an Acceptance criteria section and a Definition of done section, copied from the issue, each line ticked **with its evidence** or marked **N/A with a reason**; anything unmet stays unticked and says why. New dependencies are justified there too ([10.10](DESIGN.md#1010-dependency-policy)). **Never tick checkboxes in the issue itself.**
 - These pass locally:
   - `node tools/docs/check.mjs --ci`: references, IDs and traceability.
   - `node tools/backlog/create-issues.mjs --verify`: every GitHub issue matches `tools/backlog/issues.md`.

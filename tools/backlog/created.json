@@ -66,5 +66,6 @@
   "api-contract": 66,
   "docs-checks": 67,
   "shadcn-map": 68,
-  "verify-closed": 70
+  "verify-closed": 70,
+  "verification-record": 74
 }
