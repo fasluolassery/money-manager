@@ -1,7 +1,7 @@
 // Checks that SPEC.md, DESIGN.md, UI.md, the backlog source and the tests agree, and generates TRACEABILITY.md.
 //   node tools/docs/check.mjs        regenerate TRACEABILITY.md and report problems
 //   node tools/docs/check.mjs --ci   report problems, and fail if TRACEABILITY.md is out of date
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -49,7 +49,11 @@ for (const line of spec.split("\n")) {
       .replace(/\|/g, "/")
       .trim()
       .replace(/^[:—-]\s*/, "");
-    requirements.set(id, { id, kind: should ? "Should" : "Must", summary: summary.length > 110 ? `${summary.slice(0, 107)}…` : summary });
+    requirements.set(id, {
+      id,
+      kind: should ? "Should" : "Must",
+      summary: summary.length > 110 ? `${summary.slice(0, 107)}…` : summary,
+    });
   }
 }
 
@@ -66,19 +70,31 @@ for (const line of design.split("\n")) {
   const d = line.match(/^- \*\*ID:\*\* (D-\d{2})\./);
   if (d) {
     if (decisions.has(d[1])) problems.push(`${d[1]} is defined twice`);
-    decisions.set(d[1], { id: d[1], title: heading.replace(/^\d+\.\d+ /, ""), where: `DESIGN ${heading.split(" ")[0]}` });
+    decisions.set(d[1], {
+      id: d[1],
+      title: heading.replace(/^\d+\.\d+ /, ""),
+      where: `DESIGN ${heading.split(" ")[0]}`,
+    });
   }
 }
 
 // Every mention of a requirement or decision ID must exist.
-const sources = { "SPEC.md": spec, "DESIGN.md": design, "UI.md": ui, "tools/backlog/issues.md": backlog };
+const sources = {
+  "SPEC.md": spec,
+  "DESIGN.md": design,
+  "UI.md": ui,
+  "tools/backlog/issues.md": backlog,
+};
 for (const [file, text] of Object.entries(sources)) {
-  for (const id of expandIds(text)) if (!requirements.has(id)) problems.push(`${file}: unknown requirement ${id}`);
-  for (const m of text.matchAll(/\bD-(\d{2})\b/g)) if (!decisions.has(`D-${m[1]}`)) problems.push(`${file}: unknown decision D-${m[1]}`);
+  for (const id of expandIds(text))
+    if (!requirements.has(id)) problems.push(`${file}: unknown requirement ${id}`);
+  for (const m of text.matchAll(/\bD-(\d{2})\b/g))
+    if (!decisions.has(`D-${m[1]}`)) problems.push(`${file}: unknown decision D-${m[1]}`);
 }
 
 // Section references between the documents.
-const headings = (text) => new Set([...text.matchAll(/^#{2,3} (?:Rule )?(\d+(?:\.\d+)?)[.:]?\s/gm)].map((m) => m[1]));
+const headings = (text) =>
+  new Set([...text.matchAll(/^#{2,3} (?:Rule )?(\d+(?:\.\d+)?)[.:]?\s/gm)].map((m) => m[1]));
 const D = headings(design);
 const U = headings(ui);
 const S = headings(spec);
@@ -96,20 +112,31 @@ const slug = (heading) =>
     .replace(/[^\p{L}\p{N}\s-]/gu, "")
     .replace(/\s/g, "-");
 const anchors = Object.fromEntries(
-  ["SPEC.md", "DESIGN.md", "UI.md"].map((file) => [file, new Set([...read(file).matchAll(/^#{1,6} (.+)$/gm)].map((m) => slug(m[1])))]),
+  ["SPEC.md", "DESIGN.md", "UI.md"].map((file) => [
+    file,
+    new Set([...read(file).matchAll(/^#{1,6} (.+)$/gm)].map((m) => slug(m[1]))),
+  ]),
 );
 for (const [file, text] of Object.entries(refFiles)) {
   for (const m of text.matchAll(/\]\(((?:SPEC|DESIGN|UI)\.md)#([^)\s]+)\)/g)) {
-    if (!anchors[m[1]].has(m[2])) problems.push(`${file}: link to ${m[1]}#${m[2]} points at no heading`);
+    if (!anchors[m[1]].has(m[2]))
+      problems.push(`${file}: link to ${m[1]}#${m[2]} points at no heading`);
   }
 }
 for (const [file, text] of Object.entries(refFiles)) {
-  for (const m of text.matchAll(/DESIGN(?:\.md)?(?: Sections?)? (\d+(?:\.\d+)?)/g)) if (!D.has(m[1])) problems.push(`${file}: DESIGN ${m[1]} doesn't exist`);
-  for (const m of text.matchAll(/UI(?:\.md)?(?: Section)? (\d+(?:\.\d+)?)/g)) if (!U.has(m[1])) problems.push(`${file}: UI.md ${m[1]} doesn't exist`);
-  for (const m of text.matchAll(/(?:Spec|SPEC) Rule (\d+)/g)) if (!S.has(m[1])) problems.push(`${file}: Spec Rule ${m[1]} doesn't exist`);
+  for (const m of text.matchAll(/DESIGN(?:\.md)?(?: Sections?)? (\d+(?:\.\d+)?)/g))
+    if (!D.has(m[1])) problems.push(`${file}: DESIGN ${m[1]} doesn't exist`);
+  for (const m of text.matchAll(/UI(?:\.md)?(?: Section)? (\d+(?:\.\d+)?)/g))
+    if (!U.has(m[1])) problems.push(`${file}: UI.md ${m[1]} doesn't exist`);
+  for (const m of text.matchAll(/(?:Spec|SPEC) Rule (\d+)/g))
+    if (!S.has(m[1])) problems.push(`${file}: Spec Rule ${m[1]} doesn't exist`);
   const own = file === "DESIGN.md" ? D : file === "UI.md" ? U : null;
-  if (own) for (const m of text.matchAll(/\(Sections? (\d+(?:\.\d+)?)/g)) if (!own.has(m[1])) problems.push(`${file}: its own Section ${m[1]} doesn't exist`);
-  if (file === "SPEC.md") for (const m of text.matchAll(/\(Rule (\d+)/g)) if (!S.has(m[1])) problems.push(`SPEC.md: Rule ${m[1]} doesn't exist`);
+  if (own)
+    for (const m of text.matchAll(/\(Sections? (\d+(?:\.\d+)?)/g))
+      if (!own.has(m[1])) problems.push(`${file}: its own Section ${m[1]} doesn't exist`);
+  if (file === "SPEC.md")
+    for (const m of text.matchAll(/\(Rule (\d+)/g))
+      if (!S.has(m[1])) problems.push(`SPEC.md: Rule ${m[1]} doesn't exist`);
 }
 
 // Module map: DESIGN.md section 14 tables, first column = module or part.
@@ -142,19 +169,21 @@ for (const block of backlog.split(/^@@@ issue\s*$/m).slice(1)) {
 
 // Tests: files named *.test.* or *.spec.* whose text contains "[FR-x.y]".
 const tests = new Map();
+const recordTestIds = (file) => {
+  for (const m of readFileSync(file, "utf8").matchAll(/\[(FR-\d+\.\d+)\]/g)) {
+    if (!requirements.has(m[1]))
+      problems.push(`${relative(root, file)}: test names unknown requirement ${m[1]}`);
+    if (!tests.has(m[1])) tests.set(m[1], new Set());
+    tests.get(m[1]).add(relative(root, file));
+  }
+};
 const walk = (dir) => {
   if (!existsSync(dir)) return;
   for (const name of readdirSync(dir)) {
     if (name === "node_modules" || name === "dist" || name.startsWith(".")) continue;
     const full = join(dir, name);
     if (statSync(full).isDirectory()) walk(full);
-    else if (/\.(test|spec)\.[cm]?[tj]sx?$/.test(name)) {
-      for (const m of readFileSync(full, "utf8").matchAll(/\[(FR-\d+\.\d+)\]/g)) {
-        if (!requirements.has(m[1])) problems.push(`${relative(root, full)}: test names unknown requirement ${m[1]}`);
-        if (!tests.has(m[1])) tests.set(m[1], new Set());
-        tests.get(m[1]).add(relative(root, full));
-      }
-    }
+    else if (/\.(test|spec)\.[cm]?[tj]sx?$/.test(name)) recordTestIds(full);
   }
 };
 for (const dir of ["apps", "packages", "e2e"]) walk(join(root, dir));
@@ -165,7 +194,8 @@ for (const r of requirements.values()) {
   if (!issues.has(r.id)) problems.push(`${r.id} (Must) is implemented by no issue`);
   if (!modules.has(r.id)) problems.push(`${r.id} (Must) belongs to no module in DESIGN 14`);
   const inFinished = (issues.get(r.id) ?? []).some((i) => finished.includes(i.milestone));
-  if (inFinished && !tests.has(r.id)) problems.push(`${r.id} (Must) is in a finished milestone but no test carries its ID`);
+  if (inFinished && !tests.has(r.id))
+    problems.push(`${r.id} (Must) is in a finished milestone but no test carries its ID`);
 }
 
 // Generate TRACEABILITY.md (deterministic: no dates).
@@ -199,20 +229,28 @@ for (const id of ids) {
   lines.push(`| ${id} | ${r.kind} | ${r.summary} | ${iss} | ${mods} | ${tst} |`);
 }
 lines.push("", "## Decisions", "", "| ID | Decision | Recorded in |", "| --- | --- | --- |");
-for (const d of [...decisions.values()].sort((a, b) => a.id.localeCompare(b.id))) lines.push(`| ${d.id} | ${d.title} | ${d.where} |`);
+for (const d of [...decisions.values()].sort((a, b) => a.id.localeCompare(b.id)))
+  lines.push(`| ${d.id} | ${d.title} | ${d.where} |`);
 const generated = `${lines.join("\n")}\n`;
 
 const tracePath = join(root, "TRACEABILITY.md");
 if (ci) {
-  if (!existsSync(tracePath) || readFileSync(tracePath, "utf8") !== generated) problems.push("TRACEABILITY.md is out of date: run node tools/docs/check.mjs");
+  if (!existsSync(tracePath) || readFileSync(tracePath, "utf8") !== generated)
+    problems.push("TRACEABILITY.md is out of date: run node tools/docs/check.mjs");
 } else {
   writeFileSync(tracePath, generated);
 }
 
 const unique = [...new Set(problems)];
-console.log(`${ids.length} requirements, ${decisions.size} decisions, ${issues.size} requirements with issues, ${tests.size} with tests.`);
+console.log(
+  `${ids.length} requirements, ${decisions.size} decisions, ${issues.size} requirements with issues, ${tests.size} with tests.`,
+);
 if (unique.length) {
   console.log(`\n${unique.length} problem(s):\n- ${unique.join("\n- ")}`);
   process.exit(1);
 }
-console.log(ci ? "OK: docs, IDs, references and traceability are consistent." : "OK: TRACEABILITY.md regenerated; everything is consistent.");
+console.log(
+  ci
+    ? "OK: docs, IDs, references and traceability are consistent."
+    : "OK: TRACEABILITY.md regenerated; everything is consistent.",
+);

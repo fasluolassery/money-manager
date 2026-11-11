@@ -11,9 +11,18 @@
     "dev": "pnpm -r --parallel --if-present run dev",
     "build": "pnpm -r --if-present run build",
     "typecheck": "pnpm -r --if-present run typecheck",
-    "test": "pnpm -r --if-present run test"
+    "test": "pnpm -r --if-present run test",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.6",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
     "typescript": "7.0.2"
   }
 }

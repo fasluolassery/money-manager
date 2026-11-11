@@ -1,0 +1,50 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!**/*.md", "!tools/backlog/created.json"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "assist": { "enabled": true, "actions": { "source": { "organizeImports": "on" } } },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": { "maxAllowedComplexity": 15 }
+        }
+      },
+      "nursery": {
+        "noFloatingPromises": "error",
+        "useExhaustiveSwitchCases": "error"
+      },
+      "security": { "noDangerouslySetInnerHtml": "error" },
+      "style": { "noDefaultExport": "error", "noProcessEnv": "error" },
+      "suspicious": { "noExplicitAny": "error", "noConsole": "error" }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.config.ts", "**/*.config.mjs", "**/*.config.js"],
+      "linter": { "rules": { "style": { "noDefaultExport": "off" } } }
+    },
+    {
+      "includes": ["apps/api/src/config.ts", "apps/web/vite.config.ts"],
+      "linter": { "rules": { "style": { "noProcessEnv": "off" } } }
+    },
+    {
+      "includes": ["tools/**"],
+      "linter": {
+        "rules": { "suspicious": { "noConsole": "off" }, "style": { "noProcessEnv": "off" } }
+      }
+    }
+  ]
+}

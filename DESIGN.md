@@ -1093,6 +1093,8 @@ A change reaches production only after passing every gate below, in order.
 - **husky** runs a pre-commit hook, which uses **lint-staged** to run `biome check --write` on the staged files only.
 - The same hook runs **gitleaks** on the staged changes, so a password, token or API key can't be committed. gitleaks is a separate program installed on the machine (README prerequisites); if it's missing, the hook stops with a message saying how to install it, rather than silently skipping the scan.
 - Formatting is fixed automatically; lint errors and detected secrets block the commit.
+- Biome checks code and JSON. It skips Markdown, because two docs files are generator inputs or outputs (`tools/backlog/issues.md` becomes every issue's body; `TRACEABILITY.md` is generated), and it skips the generated `tools/backlog/created.json`.
+- The hooks install themselves on `pnpm install` (husky's `prepare` script); the configuration is in `biome.json`, `.husky/pre-commit` and the `lint-staged` field of the root `package.json`.
 
 ### 10.2 Gate 2: pull request CI (GitHub Actions)
 
@@ -1158,7 +1160,7 @@ Every rule below fails CI. A rule is only switched off for a line with a comment
 | No clock in domain files: no `Date.now()` or `new Date()` without arguments in `*.domain.ts` | `check:discipline` script |
 | No raw money arithmetic (`* 100`, `/ 100`, `toFixed`, `parseFloat` on amounts) outside `packages/shared/src/money.ts` | `check:discipline` script |
 
-Some Biome rules above are newer and may be in its "nursery" group; issue #3 confirms each one exists in the installed version, and records a replacement if one doesn't.
+**Biome rules, confirmed in Biome 2.6.6 (issue #3):** every rule above exists, so none needed a replacement. `noFloatingPromises` and `useExhaustiveSwitchCases` are in Biome's **nursery** group (still experimental), so Biome is pinned to an exact version, and an upgrade checks Biome's release notes for changes to those two rules. The scripts in `tools/` are command-line programs, so `noConsole` and `noProcessEnv` are off there; every other rule applies to them.
 
 **Import boundaries** (`.dependency-cruiser.cjs`):
 

@@ -1,0 +1,10 @@
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks isn't installed, so staged changes can't be scanned for secrets." >&2
+  echo "Install it (README, Prerequisites): https://github.com/gitleaks/gitleaks#installing" >&2
+  exit 1
+fi
+gitleaks git --pre-commit --staged --redact --no-banner --verbose || {
+  echo "pre-commit: gitleaks found what looks like a secret. Remove it from the staged changes." >&2
+  exit 1
+}
+pnpm exec lint-staged
