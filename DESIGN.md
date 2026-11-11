@@ -1140,7 +1140,14 @@ API tests use `mongodb-memory-server`'s replica set mode, because MongoDB transa
 
 ### 10.3 Gate 3: branch protection on `main`
 
-GitHub enforces this on private repositories only with a paid plan; issue #6 decides how it's handled, and records the decision here.
+**Decided 2026-11-11 (SPEC Q-02, issue #6): the repository is public**, because GitHub enforces branch rules on private repositories only with a paid plan.
+
+- **Before the switch, a pre-publication audit:**
+  - gitleaks over every commit reachable from `main` and from every pull request's refs found no leaks.
+  - A search of the tracked files and of every issue, pull request and comment found no email addresses, phone numbers or real financial data. The rupee amounts in the docs are made-up examples.
+  - Accepted: earlier commits show the owner's personal email as author. Commits from then on use the GitHub noreply address.
+- GitHub secret scanning and push protection are on.
+- A **ruleset** on `main` enforces the rules below, with no bypass, not even for the owner.
 
 - Direct pushes to `main` are blocked; changes arrive only through pull requests.
 - Every CI step above must pass before merging.
@@ -1233,6 +1240,7 @@ An issue moves from **Backlog** to **Ready** only when:
 - **A pull request that changes `tools/backlog/issues.md` syncs the issues from its branch** (`create-issues.mjs --update --only <keys>`) and re-runs CI before merging. CI compares the live issues with the branch's backlog, so it stays red until they agree.
 - **Squash merge only.** Each pull request becomes one commit on `main`, titled with the PR title. Merge commits and rebase merges are disabled in the repo settings.
 - Merged branches are deleted automatically.
+- **Every pull request carries its issue's `type:` label,** because generated release notes group pull requests by their own labels.
 - **Releases:** each milestone sign-off tags `vX.Y.0` and publishes a GitHub release with **automatically generated release notes**, grouped by the `type:` labels via `.github/release.yml`.
 - **The version number** lives in the root `package.json`. The sign-off pull request bumps it to the release's `X.Y.0` before tagging. Vite injects it into the web build as a constant, and Settings shows it (UI.md 4.11).
 

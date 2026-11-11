@@ -2240,6 +2240,7 @@ DESIGN 10.7 makes the pull request description the verification record. Nothing 
 - `tools/pr/check-record.mjs`, run by a step in the `ci` job on `pull_request` events, reads the pull request and its linked issue through the GitHub API with a read-only token. It checks that:
   - the title follows Conventional Commits (DESIGN 10.7);
   - the branch is `<issue>-<slug>`, and the description says `Closes #<same issue>`;
+  - the pull request carries the issue's `type:` label (DESIGN 10.7: release notes group by it);
   - the description has an **Acceptance criteria** and a **Definition of done** section, containing every checkbox line of the issue's sections of the same names, word for word;
   - every ticked line has evidence after it, and every unticked line says why.
 - Whether a pull request mixes a refactor with a behaviour change stays with the pre-merge check (DESIGN 10.7), because a script can't judge it reliably.
@@ -2249,7 +2250,7 @@ DESIGN 10.7 makes the pull request description the verification record. Nothing 
 
 ## Acceptance criteria
 
-- [ ] Each failure is shown on a throwaway pull request, one at a time: a bad title, a mismatched `Closes #`, a missing definition-of-done line, a tick without evidence, an unticked line without a reason. Each fails with a message naming the line.
+- [ ] Each failure is shown on a throwaway pull request, one at a time: a bad title, a mismatched `Closes #`, a missing `type:` label, a missing definition-of-done line, a tick without evidence, an unticked line without a reason. Each fails with a message naming the line.
 - [ ] Editing the description to fix it turns the check green without a new commit.
 - [ ] A Dependabot pull request isn't blocked by it.
 - [ ] The step's token has only `contents: read`, `pull-requests: read` and `issues: read`.
