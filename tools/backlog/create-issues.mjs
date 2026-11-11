@@ -176,6 +176,8 @@ function render(issue) {
       "Names follow DESIGN.md 10.9 and the SPEC glossary; any new dependency is justified (10.10)",
     !has("nocode") &&
       "Follows the engineering principles in DESIGN.md 15: size guidance, no listed code smells, no speculative code, composition, branded types",
+    "Refactors are in their own pull request, never mixed with behaviour changes (DESIGN.md 15.8)",
+    "No decision (`D-…`) was changed silently; a changed decision was updated in SPEC.md or DESIGN.md 1 first",
     "SPEC.md / DESIGN.md / UI.md updated if behaviour or design changed",
     "Merged through a squash-merged pull request that closes this issue",
   ]

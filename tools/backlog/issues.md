@@ -2149,3 +2149,37 @@ Issues #1 and #2 were verified, but nothing showed it: the issue checkboxes stay
 - [ ] DESIGN 1.6 mentions `engine-strict`.
 - [ ] This issue's own pull request uses the verification record.
 - [ ] `node tools/docs/check.mjs --ci` and `node tools/backlog/create-issues.mjs --verify` pass.
+
+@@@ issue
+key: rule-checks
+title: Check the rules before coding and before merging
+milestone: m1
+labels: type: docs | area: ci | size: S
+implements: none
+decisions: D-45, D-50
+flags: nocode
+
+## Context
+
+Issues #3–#5 were verified by running things, but some definition-of-done lines were ticked from memory instead of from the rule's text. Re-reading found three gaps:
+
+- #3's pull request mixed a refactor into a behaviour change (DESIGN 15.8).
+- DESIGN 10.3 still describes the pull request template as a plain definition-of-done checklist, not the verification record (10.7).
+- The definition of done generated into every issue is missing two lines of DESIGN 10.5: "no decision changed silently", and "refactors are in their own pull request".
+
+## Scope
+
+- DESIGN 10.7 and AGENTS.md:
+  - A **pre-flight check** before coding: re-read the live issue, every section and decision its Traceability and Scope name, DESIGN 10.5–10.7 and 15, and AGENTS.md.
+  - A **pre-merge check** before merging: re-read the rule behind each definition-of-done line before ticking it; review the diff against DESIGN 15.7 and the matching rows of the audit checklist (DESIGN 13); keep refactors and behaviour changes apart; check that CI is green on the last commit.
+- DESIGN 10.3: the pull request template carries the verification record.
+- `tools/backlog/create-issues.mjs`: the generated definition of done matches DESIGN 10.5. Every issue on GitHub is re-synced.
+- A note on #3's pull request recording the refactor that went into it.
+
+## Acceptance criteria
+
+- [ ] AGENTS.md and DESIGN 10.7 describe the pre-flight and pre-merge checks.
+- [ ] DESIGN 10.3 matches DESIGN 10.7.
+- [ ] Every generated definition of done includes "no decision changed silently" and "refactors are in their own pull request"; all issues on GitHub match (`--verify`).
+- [ ] #3's pull request has a note about the mixed refactor.
+- [ ] This pull request's own record shows the pre-flight and pre-merge checks.

@@ -1144,7 +1144,7 @@ GitHub enforces this on private repositories only with a paid plan; issue #6 dec
 
 - Direct pushes to `main` are blocked; changes arrive only through pull requests.
 - Every CI step above must pass before merging.
-- No required reviewer, since I'm the only developer. Instead, a pull request template has a self-review checklist (the definition of done below).
+- No required reviewer, since I'm the only developer. Instead, the pull request template carries the verification record (Section 10.7): the issue's acceptance criteria and definition of done, each line ticked with evidence or marked N/A with a reason.
 - Force pushes to `main` are blocked.
 
 ### 10.4 Code rules enforced by tooling
@@ -1221,6 +1221,15 @@ An issue moves from **Backlog** to **Ready** only when:
 - **Commit messages and PR titles** use Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`, `perf:`.
 - The pull request description includes `Closes #<issue>`, so merging closes the issue and moves it to Done on the board.
 - **The pull request description is the verification record.** It has an **Acceptance criteria** section and a **Definition of done** section (Section 10.5, as listed in the issue). Each line is ticked with its evidence (a command and its result, a test name, a screenshot), or marked **N/A with a reason**. An unmet line stays unticked and says what's missing. **Checkboxes in issues stay unticked:** issues are generated from `tools/backlog/issues.md`, and editing them on GitHub would make the verification script report them.
+- **Pre-flight check, before writing code:** re-read the issue as it is on GitHub now, every section and decision named in its Scope and Traceability, Sections 10.5–10.7 and 15, and `AGENTS.md`. Rules are checked against their current text, never from memory. A conflict found here stops the work until it's resolved (`AGENTS.md`, "Stop and ask").
+- **Pre-merge check, before merging:**
+  - Re-read the rule behind each definition-of-done line before ticking it, and quote the evidence.
+  - Review the whole diff against the code smells in Section 15.7 and the rows of the audit checklist (Section 13) for the areas it touches.
+  - Confirm that refactors and behaviour changes aren't mixed (Section 15.8).
+  - Confirm that the docs changed with the code.
+  - Confirm that CI is green on the last commit.
+  - Tooling changes are also verified in a fresh clone.
+  - Anything found is fixed in the pull request or recorded unticked with the reason.
 - **Squash merge only.** Each pull request becomes one commit on `main`, titled with the PR title. Merge commits and rebase merges are disabled in the repo settings.
 - Merged branches are deleted automatically.
 - **Releases:** each milestone sign-off tags `vX.Y.0` and publishes a GitHub release with **automatically generated release notes**, grouped by the `type:` labels via `.github/release.yml`.

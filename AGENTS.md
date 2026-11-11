@@ -6,7 +6,8 @@ How to work in this repository, for AI agents and humans. This file only points 
 
 1. **Read the sources of truth.** `SPEC.md` (what and why: requirements `FR-…`, decisions `D-01`–`D-27`, assumptions `A-…`, open questions `Q-…`, scope, glossary), `DESIGN.md` (how it's built: decisions `D-28` onward) and `UI.md` (how it looks, feels and reads). Their order of precedence is the table at the top of `SPEC.md`: **the spec wins** when they disagree.
 2. **Work only from a GitHub issue** that is in **Ready** on the board and meets the definition of ready ([DESIGN 10.6](DESIGN.md#106-definition-of-ready)). The issue's scope, acceptance criteria and **Traceability** section (requirement and decision IDs) define the work.
-3. **Stop and ask the user** instead of guessing when:
+3. **Pre-flight check** ([DESIGN 10.7](DESIGN.md#107-git-conventions-and-releases)): re-read the issue as it is on GitHub now, every section and decision named in its Scope and Traceability, [DESIGN 10.5–10.7](DESIGN.md#105-definition-of-done) and [15](DESIGN.md#15-engineering-principles), and this file. Check rules against their current text, never from memory.
+4. **Stop and ask the user** instead of guessing when:
    - an assumption (`A-…`) looks wrong, or an open question (`Q-…`) blocks the work;
    - the work would change a decision (`D-…`); decisions bind until their entry is changed first, with a new date;
    - the docs contradict each other, or the issue contradicts the docs;
@@ -66,6 +67,15 @@ Each line links to the full rule. Read the section before touching that area.
   - `node tools/docs/check.mjs --ci`: references, IDs and traceability.
   - `node tools/backlog/create-issues.mjs --verify`: every GitHub issue matches `tools/backlog/issues.md`.
   - From issue #2 onward, the workspace checks listed in the README (type check, lint, tests, build). Don't invent commands that don't exist yet.
+
+## Before merging
+
+**Pre-merge check** ([DESIGN 10.7](DESIGN.md#107-git-conventions-and-releases)):
+
+- Re-read the rule behind each definition-of-done line before ticking it, and quote the evidence.
+- Review the whole diff against the code smells ([DESIGN 15.7](DESIGN.md#157-code-smells-that-are-not-allowed)) and the audit checklist rows for the areas it touches ([13](DESIGN.md#13-audit-checklist)).
+- No refactor mixed with a behaviour change ([15.8](DESIGN.md#158-refactoring)). Docs changed with the code.
+- CI is green on the last commit. Tooling changes are also verified in a fresh clone.
 
 ## Where things live
 
