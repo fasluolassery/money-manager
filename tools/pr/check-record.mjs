@@ -10,7 +10,7 @@ const BOT_AUTHORS = new Set(["dependabot[bot]"]);
 const gh = (args) => execFileSync("gh", args, { encoding: "utf8" }).trim();
 const api = (path) => JSON.parse(gh(["api", path]));
 
-function section(markdown, heading) {
+function findSection(markdown, heading) {
   const lines = (markdown ?? "").split(/\r?\n/);
   const start = lines.findIndex((line) => line.trim() === `## ${heading}`);
   if (start === -1) return null;
@@ -18,14 +18,13 @@ function section(markdown, heading) {
   return lines.slice(start + 1, end === -1 ? undefined : end);
 }
 
-const plain = (text) => text.replaceAll("**", "").trim();
+const stripBold = (text) => text.replaceAll("**", "").trim();
 
-// Checkbox items with their continuation lines (indented lines that follow them).
-function items(lines) {
+function parseItems(lines) {
   const found = [];
   for (const line of lines) {
     const box = line.match(/^- \[( |x|X)\] (.*)$/);
-    if (box) found.push({ ticked: box[1] !== " ", text: plain(box[2]), more: [] });
+    if (box) found.push({ ticked: box[1] !== " ", text: stripBold(box[2]), more: [] });
     else if (found.length && /^\s+\S/.test(line)) found.at(-1).more.push(line.trim());
   }
   return found;
@@ -46,15 +45,15 @@ function checkLine(expected, prItems, heading) {
 function checkSections(prBody, issueBody) {
   const problems = [];
   for (const heading of SECTIONS) {
-    const issueLines = section(issueBody, heading);
-    const prLines = section(prBody, heading);
+    const issueLines = findSection(issueBody, heading);
+    const prLines = findSection(prBody, heading);
     if (!issueLines) continue;
     if (!prLines) {
       problems.push(`the description has no "## ${heading}" section`);
       continue;
     }
-    const prItems = items(prLines);
-    for (const expected of items(issueLines).map((item) => item.text)) {
+    const prItems = parseItems(prLines);
+    for (const expected of parseItems(issueLines).map((item) => item.text)) {
       const problem = checkLine(expected, prItems, heading);
       if (problem) problems.push(problem);
     }
