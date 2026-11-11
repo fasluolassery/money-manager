@@ -1542,3 +1542,5 @@ Besides the tool-enforced rules in Section 10.4, review rejects:
 - A refactor changes structure, not behaviour, and goes in its **own pull request** with a `refactor:` title; tests pass unchanged before and after.
 - Behaviour changes and refactors are never mixed in one pull request, so each review asks one question.
 - Small clean-ups in the code an issue touches are welcome in that issue's pull request; anything wider gets its own issue.
+
+Probe: see DESIGN 99.9 and FR-99.1.
