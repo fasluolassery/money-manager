@@ -398,7 +398,7 @@ There are no accounts. The app shows one overall balance:
 
 - Server-side backups rely on whatever the hosting provider offers automatically. Free database tiers may offer none (check MongoDB Atlas's current free-tier limits, Q-04), so the JSON download is treated as the real backup.
 - **FR-10.3** The app has a **Download backup** button that downloads all my data as one JSON file.
-- **FR-10.4** The file includes a format version number and the export date, so a restore feature can be added later.
+- **FR-10.4** The file includes a format version number and the export date and time, so a restore feature can be added later.
 - **FR-10.5** If I haven't downloaded a backup in 30 days, the Home screen shows a reminder.
 - Restoring from a backup file is **not** part of the first version. CSV export is **not** part of the first version.
 
