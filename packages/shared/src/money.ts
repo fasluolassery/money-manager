@@ -54,7 +54,7 @@ const COMPACT_UNITS = [
 
 // The unit is chosen by the amount's size; rounding up to a whole next unit
 // (₹999.96 → 10000 tenths of a rupee) moves to that unit, so it reads ₹1K, not ₹1,000.
-function compactUnit(magnitude: number) {
+function pickCompactUnit(magnitude: number) {
   const found = COMPACT_UNITS.findIndex((unit) => magnitude >= unit.paise);
   const position = found === -1 ? COMPACT_UNITS.length - 1 : found;
   const unit = COMPACT_UNITS[position] ?? RUPEE;
@@ -69,7 +69,7 @@ function compactUnit(magnitude: number) {
 /** Chart axes: ₹950, ₹18.5K, ₹1.2L, ₹1.5Cr, with at most one decimal (UI.md 4.10). */
 export function formatRupeesCompact(paise: Paise): string {
   const sign = paise < 0 ? MINUS : "";
-  const { suffix, tenths } = compactUnit(Math.abs(paise));
+  const { suffix, tenths } = pickCompactUnit(Math.abs(paise));
   const whole = indianGrouping.format(Math.trunc(tenths / 10));
   const decimal = tenths % 10 ? `.${tenths % 10}` : "";
   return `${sign}₹${whole}${decimal}${suffix}`;

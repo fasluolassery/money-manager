@@ -23,10 +23,10 @@ const MONTH_NAMES = [
 ] as const;
 const THIRTY_DAY_MONTHS = new Set([4, 6, 9, 11]);
 
-const pad2 = (value: number) => String(value).padStart(2, "0");
+const padTwoDigits = (value: number) => String(value).padStart(2, "0");
 const isLeapYear = (year: number) => (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 
-function daysInMonth(year: number, month: number): number {
+function countDaysInMonth(year: number, month: number): number {
   if (month === 2) return isLeapYear(year) ? 29 : 28;
   return THIRTY_DAY_MONTHS.has(month) ? 30 : 31;
 }
@@ -38,7 +38,7 @@ export function isCalendarDate(value: unknown): value is CalendarDate {
   const match = CALENDAR_DATE.exec(value);
   if (!match) return false;
   const [year, month, day] = match.slice(1).map(Number) as [number, number, number];
-  return isMonthNumber(month) && day >= 1 && day <= daysInMonth(year, month);
+  return isMonthNumber(month) && day >= 1 && day <= countDaysInMonth(year, month);
 }
 
 export function isMonth(value: unknown): value is Month {
@@ -77,8 +77,11 @@ export function monthOf(date: CalendarDate): Month {
 
 /** The first and last day of a calendar month (Spec Rule 14). */
 export function monthBounds(month: Month): { first: CalendarDate; last: CalendarDate } {
-  const last = daysInMonth(Number(month.slice(0, 4)), Number(month.slice(5, 7)));
-  return { first: `${month}-01` as CalendarDate, last: `${month}-${pad2(last)}` as CalendarDate };
+  const last = countDaysInMonth(Number(month.slice(0, 4)), Number(month.slice(5, 7)));
+  return {
+    first: `${month}-01` as CalendarDate,
+    last: `${month}-${padTwoDigits(last)}` as CalendarDate,
+  };
 }
 
 function splitDate(date: CalendarDate) {

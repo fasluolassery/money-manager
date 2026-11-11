@@ -12,7 +12,7 @@ export const TEXT_LIMITS = {
   note: 500,
 } as const;
 
-const textMessages = (label: string, max: number) => ({
+const buildTextMessages = (label: string, max: number) => ({
   empty: `${label} can't be empty`,
   tooLong: `${label} can be up to ${max} characters`,
 });
@@ -31,12 +31,12 @@ export const VALIDATION_MESSAGES = {
   dateInPast: "Date can't be in the past",
   month: "Enter a valid month",
   timezone: "Choose a valid timezone",
-  categoryName: textMessages("Category name", TEXT_LIMITS.categoryName),
-  billName: textMessages("Bill name", TEXT_LIMITS.billName),
-  goalName: textMessages("Goal name", TEXT_LIMITS.goalName),
-  person: textMessages("Name", TEXT_LIMITS.person),
-  payee: textMessages("Payee", TEXT_LIMITS.payee),
-  note: textMessages("Note", TEXT_LIMITS.note),
+  categoryName: buildTextMessages("Category name", TEXT_LIMITS.categoryName),
+  billName: buildTextMessages("Bill name", TEXT_LIMITS.billName),
+  goalName: buildTextMessages("Goal name", TEXT_LIMITS.goalName),
+  person: buildTextMessages("Name", TEXT_LIMITS.person),
+  payee: buildTextMessages("Payee", TEXT_LIMITS.payee),
+  note: buildTextMessages("Note", TEXT_LIMITS.note),
 } as const;
 
 const M = VALIDATION_MESSAGES;
@@ -44,16 +44,17 @@ const M = VALIDATION_MESSAGES;
 // Any rule without its own message falls back to ours, never Zod's text (DESIGN 9.6).
 z.config({ customError: () => M.invalid });
 
-const wholePaise = () => z.number({ error: M.amountMissing }).int({ error: M.amountNotWhole });
+const wholePaiseSchema = () =>
+  z.number({ error: M.amountMissing }).int({ error: M.amountNotWhole });
 
 /** A positive amount in paise, at most ₹1,00,00,000 (FR-9.2). */
-export const amountSchema = wholePaise()
+export const amountSchema = wholePaiseSchema()
   .min(1, { error: M.amountTooSmall })
   .max(MAX_AMOUNT_PAISE, { error: M.amountTooLarge })
   .brand<"Paise">();
 
 /** The opening balance may be zero or negative, down to −₹1,00,00,000 (FR-9.2). */
-export const openingBalanceSchema = wholePaise()
+export const openingBalanceSchema = wholePaiseSchema()
   .min(-MAX_AMOUNT_PAISE, { error: M.openingBalanceTooLow })
   .max(MAX_AMOUNT_PAISE, { error: M.openingBalanceTooHigh })
   .brand<"Paise">();
@@ -70,32 +71,32 @@ export const dateNotInFutureSchema = (today: CalendarDate) =>
 export const dateNotInPastSchema = (today: CalendarDate) =>
   calendarDateSchema.refine((date) => date >= today, { error: M.dateInPast });
 
-const cleanText = () => z.string().trim().normalize("NFC");
+const cleanTextSchema = () => z.string().trim().normalize("NFC");
 
-const requiredText = (max: number, messages: { empty: string; tooLong: string }) =>
-  cleanText().min(1, { error: messages.empty }).max(max, { error: messages.tooLong });
+const requiredTextSchema = (max: number, messages: { empty: string; tooLong: string }) =>
+  cleanTextSchema().min(1, { error: messages.empty }).max(max, { error: messages.tooLong });
 
 // Empty optional text is stored as null, never "" (DESIGN 5.1).
-const optionalText = (max: number, messages: { tooLong: string }) =>
-  cleanText()
+const optionalTextSchema = (max: number, messages: { tooLong: string }) =>
+  cleanTextSchema()
     .max(max, { error: messages.tooLong })
     .transform((text) => text || null)
     .nullable();
 
-export const categoryNameSchema = requiredText(TEXT_LIMITS.categoryName, M.categoryName);
-export const billNameSchema = requiredText(TEXT_LIMITS.billName, M.billName);
-export const goalNameSchema = requiredText(TEXT_LIMITS.goalName, M.goalName);
-export const personSchema = requiredText(TEXT_LIMITS.person, M.person);
-export const payeeSchema = optionalText(TEXT_LIMITS.payee, M.payee);
-export const noteSchema = optionalText(TEXT_LIMITS.note, M.note);
+export const categoryNameSchema = requiredTextSchema(TEXT_LIMITS.categoryName, M.categoryName);
+export const billNameSchema = requiredTextSchema(TEXT_LIMITS.billName, M.billName);
+export const goalNameSchema = requiredTextSchema(TEXT_LIMITS.goalName, M.goalName);
+export const personSchema = requiredTextSchema(TEXT_LIMITS.person, M.person);
+export const payeeSchema = optionalTextSchema(TEXT_LIMITS.payee, M.payee);
+export const noteSchema = optionalTextSchema(TEXT_LIMITS.note, M.note);
 
-const objectId = () => z.string().regex(/^[0-9a-f]{24}$/i, { error: M.invalid });
+const objectIdSchema = () => z.string().regex(/^[0-9a-f]{24}$/i, { error: M.invalid });
 
-export const transactionIdSchema = objectId().brand<"TransactionId">();
-export const categoryIdSchema = objectId().brand<"CategoryId">();
-export const billIdSchema = objectId().brand<"BillId">();
-export const goalIdSchema = objectId().brand<"GoalId">();
-export const lendingRecordIdSchema = objectId().brand<"LendingRecordId">();
+export const transactionIdSchema = objectIdSchema().brand<"TransactionId">();
+export const categoryIdSchema = objectIdSchema().brand<"CategoryId">();
+export const billIdSchema = objectIdSchema().brand<"BillId">();
+export const goalIdSchema = objectIdSchema().brand<"GoalId">();
+export const lendingRecordIdSchema = objectIdSchema().brand<"LendingRecordId">();
 // Better Auth decides the user id's format (SPEC Q-06, issue #16), so only presence is checked.
 export const userIdSchema = z.string().min(1, { error: M.invalid }).brand<"UserId">();
 
