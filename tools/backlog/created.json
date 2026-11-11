@@ -71,5 +71,6 @@
   "rule-checks": 79,
   "enforcement-plan": 81,
   "pr-record": 82,
-  "size-limits": 83
+  "size-limits": 83,
+  "split-backlog-script": 90
 }
