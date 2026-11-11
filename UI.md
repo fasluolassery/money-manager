@@ -622,7 +622,7 @@ Tailwind's default breakpoints, with exactly three layouts:
 | 1024px and up (`lg`) | Wide     | sidebar, Add button in the top bar  | two columns of cards; transactions as a table (UI 3.8)         |
 
 - Content never grows wider than 1120px (Section 4.3); wider screens add space around it.
-- Sheets become centred dialogs from `md` up (Section 5.3, `ResponsiveSheet`).
+- Sheets become centred dialogs from `md` up (Section 5.3, `ResponsiveDrawer`).
 - Layout depends only on width, never on the device type.
 - **Wording used across SPEC.md, DESIGN.md, this document and the issues:** "on phones" means the phone layout (below `md`) and "on laptops" means `md` and up, unless a sentence names the wide layout (`lg`). The exception is **input behaviour**, which follows the input method, not the width: swipe gestures and the number keypad apply to touch input, hover menus to a mouse.
 
@@ -668,7 +668,7 @@ If the name changes, every row here, the manifest, the Google consent screen (DE
 
 ## 5. Components and their states
 
-All components live in `apps/web/src/components/` and are built on shadcn/ui (DESIGN 8.2). A screen never re-implements something a component below already does.
+All components live in `apps/web/src/components/` and are built on shadcn/ui (DESIGN 8.2), using exactly the primitives mapped in Section 5.5. A screen never re-implements something a component below already does.
 
 ### 5.1 Screen states
 
@@ -711,12 +711,12 @@ A spinner is used **only** inside a busy button. Everything else uses skeletons.
 - **`TextField`** and **`TextArea`**: label above, error message below in `alert`, a character counter near the limit, using the limits in Spec Rule 9.
 - **`DateField`**: quick chips **Today** and **Yesterday**, plus **Pick a date**, which opens a calendar. Future dates are disabled where the spec forbids them (Spec Rule 4).
 - **`Autocomplete`**: for payee and person; built on shadcn/ui's Command; suggestions appear under the field.
-- **`SegmentedControl`**: Expense / Income, and the Plan tabs.
+- **`SegmentedControl`**: choosing one value from two or three: Expense / Income, I lent / I borrowed, Open / Settled, Monthly / 3 months. Switching between the Plan screen's panels uses Tabs instead (Section 5.5).
 - **`EmojiPicker`**: for category emoji and goal icons (Section 5.4).
 
 **Containers**
 
-- **`ResponsiveSheet`**: shadcn/ui **Drawer** (built on vaul; drag to dismiss) below the `md` breakpoint, centred **Dialog** from `md` up (Section 4.8). Every create and edit form uses it (Section 1.6).
+- **`ResponsiveDrawer`**: shadcn/ui **Drawer** (built on vaul; drag to dismiss) below the `md` breakpoint, centred **Dialog** from `md` up (Section 4.8). Every create and edit form uses it (Section 1.6).
 - **`Card`**: `surface`, `radius-lg`, card padding (Section 4.3). A tappable card shows the pressed state.
 - **`ConfirmDialog`**: a title saying what will happen, a sentence on the consequence, a destructive button labelled with the action ("Delete bill", never just "OK"), and **Cancel**, which has focus by default.
 
@@ -742,11 +742,43 @@ A screen or sheet has **at most one** `primary` button.
 
 Used to choose a category's emoji and a goal's icon. No emoji picker library is used: they ship the full emoji data set, which is far more than this app needs and works against the performance budget (DESIGN 12). A curated list plus the device's own emoji keyboard covers every case.
 
-- Opens in a `ResponsiveSheet`.
+- Opens in a `ResponsiveDrawer`.
 - **A curated grid** of about 80 emoji in labelled groups: Food & drink, Transport, Home & bills, Shopping, Health, Fun, Money & work, Travel & goals. Tiles are at least 44×44px.
 - **"Use another emoji"**: a text field that accepts any single emoji typed from the device's emoji keyboard.
 - Validation is the same as the server's: exactly one emoji (Spec Rule 5); anything else shows a field error.
 - The current choice is shown selected (Section 5.2). The list lives in one file, `apps/web/src/components/emoji-picker/emoji-groups.ts`.
+
+### 5.5 shadcn/ui primitives
+
+Every app component and UI need maps to **exactly one** shadcn/ui primitive, so the same job always looks and behaves the same way. shadcn/ui copies a component's source into `apps/web/src/components/ui/`; each one is restyled to the tokens in Section 4 when it's added.
+
+| App component or need | shadcn/ui primitive |
+| --- | --- |
+| Every button, including the `fab` Add button (Section 5.3, Buttons) | Button |
+| `ResponsiveDrawer` | Drawer below `md`; Dialog from `md` up |
+| `ConfirmDialog` | AlertDialog |
+| `TextField`, `TextArea`, `MoneyInput` | Input or Textarea, with Label |
+| `DateField` | Calendar inside a Popover (inside the Drawer on phones) |
+| `Autocomplete` (payee, person), the timezone picker | Command inside a Popover: a searchable list |
+| `SegmentedControl` | ToggleGroup, single selection |
+| Plan screen panels (Bills, Goals, Lending) | Tabs |
+| Lending toggle in Reports | Switch |
+| Theme choice in Settings | RadioGroup |
+| ⋯ menus on rows and detail screens | DropdownMenu |
+| `ProgressBar` | Progress |
+| `Badge`, `Card`, `Skeleton` | Badge, Card, Skeleton |
+| Transactions table in the wide layout (Section 4.8) | Table |
+| `Toast` | Sonner |
+| Charts (Section 4.10) | Chart, shadcn/ui's wrapper around Recharts, so chart colours come from the tokens |
+| Labels on icon-only buttons, for mouse users | Tooltip (the button still has an accessible name, Section 8) |
+| `EmojiPicker`, `CategoryTile`, `CategoryPicker`, `TransactionRow`, `Amount`, `EmptyState`, `ErrorState`, `OfflineBanner` | no single primitive: built from the ones above with Tailwind and tokens |
+
+**Rules:**
+
+- **Add a shadcn/ui primitive only when a screen needs it,** and add it to this table in the same pull request (DESIGN 15.3).
+- **Never build by hand** anything this table lists: no custom button, dialog, menu, input, toggle, tooltip or table.
+- **shadcn/ui's Sheet (a side panel) isn't used.** Every slide-in panel is the Drawer, through `ResponsiveDrawer`.
+- **One primitive per job:** if a need seems to fit two rows, the table decides; if it fits none, add a row before building.
 
 ## 6. Motion
 

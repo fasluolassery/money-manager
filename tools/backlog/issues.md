@@ -500,7 +500,7 @@ Spec Rule 12, DESIGN 8.3 and 8.6, and UI.md 3.1, 3.8 and 6.3: five sections, a b
 
 - The three layouts from UI.md 4.8 (phone, medium, wide), following the wireframes in UI.md 3.1 and 3.8, and the navigation icons from UI.md 4.9.
 - Routes from DESIGN 8.3 with placeholder pages; Plan has Bills, Goals and Lending tabs.
-- Add button (`fab` variant, UI.md 5.3): floating on phones, in the top bar on laptops; opens an empty `ResponsiveSheet` placeholder. It always adds a transaction, on every screen (UI.md 3.5).
+- Add button (`fab` variant, UI.md 5.3): floating on phones, in the top bar on laptops; opens an empty `ResponsiveDrawer` placeholder. It always adds a transaction, on every screen (UI.md 3.5).
 - Page transitions from UI.md 6.3: cross-fade between tabs, slide-in for detail screens.
 - `OfflineBanner` driven by the browser's online/offline events.
 - Error boundary page (`ErrorState` with **Retry**) and a 404 page, with their illustrations and copy (UI.md 4.6, 9.3).
@@ -871,7 +871,7 @@ Spec Rule 4 (Speed, Validation, Failed saves), DESIGN 8.4 and 8.5, and UI.md 2.1
 
 ## Scope
 
-- The Add button opens a `ResponsiveSheet`: Drawer below `md`, centred Dialog from `md` up (UI.md 4.8, 5.3). Layout from the wireframe in UI.md 3.2.
+- The Add button opens a `ResponsiveDrawer`: Drawer below `md`, centred Dialog from `md` up (UI.md 4.8, 5.3). Layout from the wireframe in UI.md 3.2.
 - `SegmentedControl` **Expense | Income**, default Expense.
 - `MoneyInput` at `amount-xl`, focused on open, with the decimal keypad on phones.
 - `CategoryPicker`: a grid of `CategoryTile`s, 4 per row; only categories of the selected type, ordered by most recent use among the latest 100 transactions, then alphabetically. Lending is never shown. Selecting a tile plays the selection pop (UI.md 6.3).
@@ -962,7 +962,7 @@ Spec Rule 12 (Settings) and Spec Rule 5 (Categories).
 
 ## Scope
 
-- `/settings` (layout from UI.md 3.7): opening balance and date (via `PATCH /me`), timezone picker (IANA names; changing it never changes saved dates, Spec Rule 9), theme control, logout, and the app version at the bottom (UI.md 4.11, DESIGN 10.7).
+- `/settings` (layout from UI.md 3.7): opening balance and date (via `PATCH /me`), timezone picker (a searchable Command list of IANA names; changing it never changes saved dates, Spec Rule 9), theme control (RadioGroup), logout, and the app version at the bottom (UI.md 4.11, DESIGN 10.7).
 - `/settings/categories`: lists by type with each emoji; add, rename and change emoji (with `EmojiPicker`, UI.md 5.4); delete with a "move transactions to" picker in a `ConfirmDialog` when needed. Lending is shown as built-in and locked.
 
 ## Acceptance criteria
@@ -1097,9 +1097,9 @@ Spec Rules 5, 8 and 12: the main "where does my money go" screen (Spec Rule 1).
 - Chart formatting from UI.md 4.10: compact axis labels, full amounts in tooltips and lists, dark-theme palette.
 - Monthly summary: each category with emoji, amount and share of the total.
 - Spent, income and **left over**, with left over's `+`/`−` sign from Spec Rule 14.
-- Pie chart for the month and bar chart for the last 6 months (Recharts), using the chart palette from UI.md 4.1; categories beyond the 8 largest are grouped as "Everything else" in the pie (not "Other", which is a real category).
+- Pie chart for the month and bar chart for the last 6 months (Recharts through shadcn/ui's Chart, UI.md 5.5), using the chart palette from UI.md 4.1; categories beyond the 8 largest are grouped as "Everything else" in the pie (not "Other", which is a real category).
 - Comparison with increase/decrease indicators in **neutral grey**, never red or green (UI.md 1.4, 3.4).
-- Lending toggle applying to every section, stored in the URL.
+- Lending toggle (Switch) applying to every section, stored in the URL.
 - Empty states.
 
 ## Acceptance criteria
@@ -1786,7 +1786,7 @@ key: ui-components
 title: Build the shared core UI components
 milestone: m1
 labels: type: feature | area: web | size: L
-deps: ui-tokens, ui-motion
+deps: ui-tokens, ui-motion, shadcn-map
 flags: ui
 implements: FR-14.1, FR-14.2, FR-14.3, FR-14.6
 decisions: D-24, D-43
@@ -1802,7 +1802,8 @@ Components from UI.md 5.3, on top of shadcn/ui, each shown on the `/dev/ui` page
 - `Amount`: ₹ formatting and signs exactly as Spec Rule 14 (income `+` in the income colour; no sign for expenses and totals; `+`/`−` in normal colour for "left over"; `−` in normal colour for a negative balance), tabular figures.
 - Buttons: `primary`, `secondary`, `ghost`, `destructive`, `danger-ghost`, `fab`, with the busy state (UI.md 5.2, 5.3).
 - `Card`, `Badge` (upcoming, overdue, paused, source).
-- `ResponsiveSheet`: shadcn/ui Drawer (vaul) below `md`, centred Dialog from `md` up (UI.md 4.8).
+- `ResponsiveDrawer`: shadcn/ui Drawer (vaul) below `md`, centred Dialog from `md` up (UI.md 4.8).
+- Every component uses exactly the shadcn/ui primitive mapped in UI.md 5.5; each primitive is added only when one of these components needs it.
 - `ConfirmDialog` following UI.md 5.3 and 9.2.
 - Toasts: sonner configured per UI.md 7.2 (placement, durations, one at a time, actions).
 - `Skeleton` and a `useDelayedLoading` hook that shows skeletons only after 300ms (UI.md 5.1).
@@ -1814,7 +1815,7 @@ Components from UI.md 5.3, on top of shadcn/ui, each shown on the `/dev/ui` page
 - [ ] Every component above is on `/dev/ui` in all its states, in both themes.
 - [ ] `Amount` unit tests: expense, income, zero, a negative balance, positive and negative "left over", paise and lakh/crore grouping.
 - [ ] A load that finishes in under 300ms never shows a skeleton.
-- [ ] `ResponsiveSheet` and `ConfirmDialog` trap focus and return it on close; `ConfirmDialog` focuses Cancel by default.
+- [ ] `ResponsiveDrawer` and `ConfirmDialog` trap focus and return it on close; `ConfirmDialog` focuses Cancel by default.
 - [ ] Every component meets the accessibility baseline (UI.md 8).
 
 ## Out of scope
@@ -1826,7 +1827,7 @@ key: ui-inputs
 title: Build the shared input components
 milestone: m1
 labels: type: feature | area: web | size: M
-deps: ui-components
+deps: ui-components, shadcn-map
 flags: ui
 implements: FR-5.3
 decisions: D-43
@@ -1840,7 +1841,8 @@ UI.md 5.3 (Inputs): the form components every create and edit form uses.
 - `TextField` and `TextArea`: label above, error below, character counter where there's a limit.
 - `DateField`: **Today** and **Yesterday** chips plus **Pick a date** with a calendar; can disable future dates.
 - `Autocomplete`: built on shadcn/ui Command, for payee and person.
-- `SegmentedControl`.
+- `SegmentedControl` (ToggleGroup, single selection).
+- Every component uses exactly the shadcn/ui primitive mapped in UI.md 5.5.
 - `ProgressBar`: animated fill (UI.md 6.3) with the value as text.
 - `EmojiPicker` (UI.md 5.4): curated grid of about 80 emoji in groups, plus "Use another emoji"; validates exactly one emoji.
 - All wired to React Hook Form, with errors shown when a field loses focus or on Save (UI.md 7.3).
@@ -2066,3 +2068,33 @@ SPEC.md ("How these documents fit together"), DESIGN 1.22 (D-49) and DESIGN 10.2
 ## Out of scope
 
 - Writing to issues from CI; updates stay a deliberate local command.
+
+@@@ issue
+key: shadcn-map
+title: Map app components to shadcn/ui primitives
+milestone: m1
+labels: type: docs | area: web | size: S
+implements: none
+decisions: D-43, D-50
+flags: nocode
+
+## Context
+
+UI.md 1.6 and 5 say every component is built on shadcn/ui and that one component does one job, but they don't say **which** shadcn/ui primitive each app component uses. Without that, two people can build the same control from different primitives (for example the Expense / Income switch from Tabs in one place and ToggleGroup in another), which breaks visual and behavioural consistency. The name `ResponsiveSheet` also suggests shadcn/ui's side-panel Sheet, which the app doesn't use.
+
+## Scope
+
+- A table in UI.md 5 mapping every app component and UI need to exactly one shadcn/ui primitive.
+- Rules: add a shadcn/ui component only when a screen needs it, and record it in the table; never build by hand anything the table lists; shadcn/ui's side-panel Sheet isn't used (the Drawer covers that job).
+- Rename `ResponsiveSheet` to `ResponsiveDrawer` in UI.md, DESIGN.md and the backlog source, so the name matches the primitive it uses.
+- Charts use shadcn/ui's Chart components, which wrap Recharts (D-43), so chart colours come from the tokens.
+
+## Acceptance criteria
+
+- [ ] UI.md 5 has the mapping table, and every component in UI.md 5.3 appears in it.
+- [ ] No document or issue refers to `ResponsiveSheet` any more, except this issue's own description of the rename.
+- [ ] `node tools/docs/check.mjs --ci` passes, and every live issue matches `tools/backlog/issues.md`.
+
+## Out of scope
+
+- Adding any shadcn/ui component to code; that happens in {{ui-components}} and {{ui-inputs}}.

@@ -64,5 +64,6 @@
   "seed-dev": 64,
   "boundaries": 65,
   "api-contract": 66,
-  "docs-checks": 67
+  "docs-checks": 67,
+  "shadcn-map": 68
 }
