@@ -57,6 +57,8 @@ Transfers between my own accounts are **not** part of the first version.
 
 Manual transactions can't use the built-in Lending category; Lending transactions are created only by lending records (Rule 8).
 
+When I edit a manual transaction I can switch its type between expense and income; I then have to pick a category of the new type.
+
 **Fields:**
 
 | Field    | Required | Default |
@@ -104,7 +106,8 @@ The first version includes:
 3. **Views:** all views work on calendar months (Rule 14).
    - **Transaction list:** filter by date range and category, search by note or payee.
    - **Monthly summary:** total spent per category for a chosen month.
-   - **Income vs expense:** totals for the chosen month and the difference between them.
+   - **Spent, income and left over:** the chosen month's totals, as defined in Rule 9, Counting money.
+   - **Which months:** Reports can show any month from the earliest month with data (the month of my first transaction or of my opening balance date, whichever is earlier) up to the current month.
    - **Charts:**
      - Pie chart of spending by category for the chosen month.
      - Bar chart of total spending per month for the last 6 months.
@@ -146,6 +149,7 @@ The first version includes:
 - The contribution that reaches the target may exceed it. Completed goals accept no new contributions.
 - If I lower the target to or below the saved amount, the goal becomes completed.
 - If editing or deleting contributions brings the saved amount back below the target, the goal becomes active again.
+- If I raise the target of a completed goal above the saved amount, it becomes active again. Completed goals can be edited like any other goal.
 - Deleting a goal deletes it and its contributions permanently, after confirmation.
 
 ## Rule 7: Recurring bills and subscriptions
@@ -170,6 +174,7 @@ If the Bills category has been deleted, I must pick an expense category myself.
 - A bill remembers the **day of the month** from its first due date (e.g. the 31st).
 - Each next due date is one or three months later, on that same day. If the month is shorter, it falls on the month's last day: a bill due on the 31st is due on 28 or 29 February, then 31 March again.
 - The next due date always moves forward from the **due date**, never from the date I paid. Paying late does not shift the schedule.
+- If I change a bill's next due date by hand (when editing or resuming it), the remembered day of the month becomes that date's day.
 
 **Reminders:**
 
@@ -238,7 +243,7 @@ The Lending category cannot be renamed or deleted.
 - Deleting a repayment removes its transaction.
 - Deleting a record permanently deletes it, its repayments and all their transactions, after confirmation.
 
-**In spending views:** The monthly summary, income vs expense, charts and month comparison include Lending transactions by default. Each of these views has a toggle to hide them.
+**In spending views:** The monthly summary, spent, income and left over, charts and month comparison include Lending transactions by default. Each of these views has a toggle to hide them.
 
 **View:** A single list of records, filterable by direction and by open or settled. A per-person summary is **not** part of the first version.
 
@@ -404,7 +409,7 @@ The **Add** button (Rule 4) is a floating button on phones and a button in the t
 
 **Transactions:** the transaction list (Rule 5), grouped by date with a daily total, plus a link to the Trash.
 
-**Reports:** a month picker, the monthly summary, income vs expense, charts and month comparison (Rule 5), with the Lending toggle (Rule 8).
+**Reports:** a month picker, the monthly summary, spent, income and left over, charts and month comparison (Rule 5), with the Lending toggle (Rule 8).
 
 **Plan:** the bills (Rule 7), goals (Rule 6) and lending (Rule 8) lists, each with its own add button.
 
@@ -459,6 +464,7 @@ After milestone 3, I use the app daily for two weeks before starting milestone 4
 - Goal statuses (Rule 6)
 - Month comparison date ranges (Rule 5)
 - "Today" in the user's timezone around midnight (Rule 9)
+- The money-counting definitions: spent, income, left over, top categories, percentages, with and without Lending (Rule 9, Counting money)
 
 **API tests are required for:**
 

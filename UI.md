@@ -267,6 +267,8 @@ Trash is reached from the **⋯** menu in the header.
 
 Comparison arrows are neutral grey: more spending is not shown as bad (Section 1.4).
 
+The month picker's ‹ and › stop at the earliest month with data and at the current month (Spec Rule 5); at either end that arrow is disabled. Charts and numbers follow Section 4.10.
+
 ### 3.5 Plan (phone)
 
 ```text
@@ -365,7 +367,7 @@ Bill, goal and lending details share one layout:
 └──────────────┴──────────────────────────────────────────────────┘
 ```
 
-From the `md` breakpoint up: a sidebar instead of tabs, the Add button in the top bar, and cards in two columns. Transactions becomes a table with columns for date, category, payee, note and amount.
+This is the wide layout (`lg` and up, Section 4.8): a sidebar instead of tabs, the Add button in the top bar, and cards in two columns. Transactions becomes a table with columns for date, category, payee, note and amount. Between `md` and `lg` (tablets, small laptop windows) the sidebar is used with the phone's single-column cards and list.
 
 ### 3.9 Sign-in and welcome (phone)
 
@@ -607,6 +609,45 @@ Illustrations appear in:
 - Exported from the same SVG: the favicon, the 192px and 512px PWA icons, and a maskable 512px icon with extra padding (DESIGN 8.7).
 - It's a placeholder that's good enough to ship; it can be replaced later without code changes.
 
+### 4.8 Breakpoints and layouts
+
+Tailwind's default breakpoints, with exactly three layouts:
+
+| Width                | Layout   | Navigation                         | Content                                                        |
+| -------------------- | -------- | ---------------------------------- | -------------------------------------------------------------- |
+| below 768px          | Phone    | bottom tab bar, floating Add button | one column of cards; transaction list as rows (UI 3.1–3.7)    |
+| 768–1023px (`md`)    | Medium   | sidebar, Add button in the top bar  | one column of cards, centred; transaction list as rows         |
+| 1024px and up (`lg`) | Wide     | sidebar, Add button in the top bar  | two columns of cards; transactions as a table (UI 3.8)         |
+
+- Content never grows wider than 1120px (Section 4.3); wider screens add space around it.
+- Sheets become centred dialogs from `md` up (Section 5.3, `ResponsiveSheet`).
+- Layout depends only on width, never on the device type.
+
+### 4.9 Navigation icons
+
+Lucide icons, the same in the tab bar and the sidebar:
+
+| Section / action | Icon             |
+| ---------------- | ---------------- |
+| Home             | `house`          |
+| Transactions     | `receipt`        |
+| Reports          | `chart-pie`      |
+| Plan             | `calendar-check` |
+| Settings         | `settings`       |
+| Add              | `plus`           |
+
+The active section uses `primary` for its icon and label; the others use `text-muted`.
+
+### 4.10 Charts and numbers in charts
+
+- **Axis labels** use a compact Indian format, with at most one decimal and no trailing `.0`: ₹950, ₹18.5K, ₹1.2L (lakh), ₹1.5Cr (crore). Produced by `formatRupeesCompact` in `packages/shared/src/money.ts`.
+- **Tooltips, labels next to slices and the category list** always use the full format from Spec Rule 14 (₹18,450).
+- **Month labels** on the bar chart: `Nov`; when the 6 months span two years, `Nov '26`.
+- **Pie chart:** slices in the chart palette order (Section 4.1), largest first; the category list next to it is the accessible text version (Section 8).
+- **Bar chart:** one bar per month in `primary`; the current month is drawn the same as the others, never highlighted as "good" or "bad".
+- **Dark theme:** the same palette, except slate becomes `#94A3B8` so it stays visible; every slice and bar keeps at least 3:1 contrast with `surface`, checked when the theme is built.
+- **Empty data:** a chart with nothing to show is replaced by its `EmptyState`, never drawn as an empty circle or blank axes.
+
 ## 5. Components and their states
 
 All components live in `apps/web/src/components/` and are built on shadcn/ui (DESIGN 8.2). A screen never re-implements something a component below already does.
@@ -653,6 +694,7 @@ A spinner is used **only** inside a busy button. Everything else uses skeletons.
 - **`DateField`**: quick chips **Today** and **Yesterday**, plus **Pick a date**, which opens a calendar. Future dates are disabled where the spec forbids them (Spec Rule 4).
 - **`Autocomplete`**: for payee and person; built on shadcn/ui's Command; suggestions appear under the field.
 - **`SegmentedControl`**: Expense / Income, and the Plan tabs.
+- **`EmojiPicker`**: for category emoji and goal icons (Section 5.4).
 
 **Containers**
 
@@ -677,6 +719,16 @@ A spinner is used **only** inside a busy button. Everything else uses skeletons.
 | `fab`         | `primary`, `radius-full`, 56px, shadow | the floating Add button                   |
 
 A screen or sheet has **at most one** `primary` button.
+
+### 5.4 Emoji picker
+
+Used to choose a category's emoji and a goal's icon. No emoji picker library is used: they ship the full emoji data set, which is far more than this app needs and works against the performance budget (DESIGN 12). A curated list plus the device's own emoji keyboard covers every case.
+
+- Opens in a `ResponsiveSheet`.
+- **A curated grid** of about 80 emoji in labelled groups: Food & drink, Transport, Home & bills, Shopping, Health, Fun, Money & work, Travel & goals. Tiles are at least 44×44px.
+- **"Use another emoji"**: a text field that accepts any single emoji typed from the device's emoji keyboard.
+- Validation is the same as the server's: exactly one emoji (Spec Rule 5); anything else shows a field error.
+- The current choice is shown selected (Section 5.2). The list lives in one file, `apps/web/src/components/emoji-picker/emoji-groups.ts`.
 
 ## 6. Motion
 

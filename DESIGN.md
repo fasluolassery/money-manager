@@ -49,6 +49,27 @@ Each decision records what was chosen, why, and what was rejected. Changing a de
 - **Why:** frontend and backend share types and validation through a shared package. One install, one CI pipeline, and a change across both sides lands in one commit.
 - **Rejected:** *npm workspaces:* works, but pnpm is faster and stricter about undeclared dependencies.
 
+### 1.6 Versions and build
+
+- **Chosen:**
+  - **Node.js 24 LTS** (pinned in `.nvmrc`, `engines.node` and CI) and **pnpm 10** (pinned with `packageManager`).
+  - **The latest stable major version of every library** when issue #2 starts, including React 19, Tailwind CSS 4 (configured in CSS with `@theme`, as current shadcn/ui expects), Zod 4, React Router 7 in data mode (`createBrowserRouter`), Express 5 and Biome 2. Exact versions live in the lockfile; the README lists the majors.
+  - **ES modules everywhere** (`"type": "module"`), TypeScript `strict`.
+  - **TypeScript project references, built with `tsc -b`:** `packages/shared` and `apps/api` compile to their own `dist/` folders (JavaScript plus type declarations). The API uses `moduleResolution: "NodeNext"`; the web app uses `"Bundler"` and Vite builds it, reading `shared` through its package exports.
+  - **Production start:** `node apps/api/dist/main.js`.
+  - **Dates:** no date library. "Today in a timezone" uses the built-in `Intl.DateTimeFormat` with `timeZone`; calendar dates are `YYYY-MM-DD` strings with their arithmetic in `packages/shared/src/dates.ts` (Section 5.1).
+- **Why:**
+  - Node 24 is the active LTS line; Node 22 is in maintenance and reaches end of life in April 2027, during this project.
+  - pnpm 10 blocks dependency install scripts unless allowed, which the dependency policy relies on (Section 10.10).
+  - Tailwind 4 and Zod 4 change how tokens and validation messages are written (UI.md 4, Section 9.6), so the choice is made before code exists.
+  - `tsc -b` needs no extra build tool, and the same compiled code runs in tests and production.
+  - Dates here are plain calendar strings plus one "today" lookup, which `Intl` covers without adding a dependency.
+- **Rejected:**
+  - *Node 22 + pnpm 9:* would need a runtime upgrade within months.
+  - *Bundling the API with tsup or esbuild:* one more tool for no benefit at this size.
+  - *Running TypeScript directly in production:* production would run different code from what's type-checked.
+  - *date-fns or Luxon:* adds weight to the web bundle for arithmetic a few small functions cover.
+
 ## 2. Architecture overview
 
 ```mermaid
@@ -239,7 +260,7 @@ Spec Rule 9 says an edit made on one device must never silently overwrite a newe
 - **Ids:** MongoDB `ObjectId` for every document and every embedded item. Sent to the frontend as strings.
 - **Owner:** every app collection has a `userId` field (Section 4.5).
 - **Money:** whole numbers of paise, always positive. Whether money comes in or goes out is decided by `type` or `direction`, never by a minus sign. Zod checks every amount is an integer. The one exception is `openingBalance`, which is signed (Spec Rule 9).
-- **Calendar dates** (transaction date, due dates, deadlines): `"YYYY-MM-DD"` strings. They never shift with timezones, and they sort and compare correctly as plain strings.
+- **Calendar dates** (transaction date, due dates, deadlines): `"YYYY-MM-DD"` strings. They never shift with timezones, and they sort and compare correctly as plain strings. All date arithmetic lives in `packages/shared/src/dates.ts`, with no date library (Section 1.6).
 - **Timestamps** (`createdAt`, `updatedAt`, `deletedAt`, `completedAt`, `settledAt`, `lastBackupAt`): MongoDB `Date` values, in UTC.
 - **Indexes and validators** are created by `db/indexes.ts` when the server starts (Sections 5.4, 5.6).
 - **Text** is stored trimmed (Spec Rule 9); empty optional text is stored as `null`, never `""`.
@@ -507,7 +528,7 @@ Editing or deleting a bill or lending transaction directly returns `422 RULE_VIO
 
 | Method | Path                               | Does                                                     |
 | ------ | ---------------------------------- | -------------------------------------------------------- |
-| GET    | `/reports/summary?month=`          | spent per category with shares, plus spent, income and left over, for the month (Spec Rule 9, Counting money) |
+| GET    | `/reports/summary?month=`          | spent per category with shares, plus spent, income and left over, for the month (Spec Rule 9, Counting money); also `firstMonth` and `lastMonth`, the range the month picker may show (Spec Rule 5). A month outside that range returns `400` |
 | GET    | `/reports/trend?months=6`          | spent per month, for the bar chart (maximum 12 months)   |
 | GET    | `/reports/comparison?month=`       | per-category comparison with the previous month, same date range |
 
@@ -621,6 +642,8 @@ Better Auth handles every step of the OAuth exchange. The app only adds the firs
 
 - **`requireAuth` middleware** on every `/api/v1` route: reads the session through Better Auth, puts the user id on the request, and returns `401 UNAUTHENTICATED` if there is none. Services receive this id as `userId` (Section 4.5).
 - **Cross-site request protection:** `SameSite=Lax` stops the browser sending the cookie with requests from other sites. In addition, every `POST`, `PATCH` and `DELETE` must have an `Origin` header matching the app's own origin, or it gets `403 FORBIDDEN`.
+- **Behind Railway's proxy:** Express runs with `trust proxy` set to `1`, so it sees the real client IP (for rate limits and logs) and knows the original request was HTTPS (for `Secure` cookies). It trusts exactly one proxy hop, so a client can't fake its IP with its own `X-Forwarded-For` header.
+- **No CORS:** the app and the API share one origin (Section 1.2), so no CORS middleware is installed; cross-origin requests get no permissive headers.
 - **Rate limits:** Better Auth's built-in limiter on `/api/auth/*`; `express-rate-limit` on `/api/v1`, keyed by user id when signed in and by IP address otherwise. Defaults, adjustable in config: **300 requests per 5 minutes per user** on `/api/v1`, and **30 per 5 minutes per IP** on `/api/auth/*`.
 
 ### 7.5 Google setup
@@ -644,6 +667,10 @@ Better Auth handles every step of the OAuth exchange. The app only adds the firs
 | `X-Powered-By`               | removed                                                                |
 
 - Scripts are only allowed from the app itself, which blocks most injected-script (XSS) attacks. Inline **styles** are allowed because the UI libraries (Radix, vaul, Motion) set style attributes; inline **scripts** are never allowed.
+- **No inline scripts anywhere,** including the two places that usually have them:
+  - The theme is applied before first paint by a small external file, `apps/web/public/theme-init.js`, loaded synchronously in `<head>`, so there's no flash of the wrong theme (Section 8.6).
+  - The service worker is registered from an external file, never an inline snippet (Section 8.7).
+  - A test checks the built `index.html` contains no inline `<script>`.
 - `frame-ancestors 'none'` stops other sites showing the app in a frame (clickjacking).
 - Every font, image and script is served by the app itself (UI.md 4.2), so the policy needs no third-party domains.
 
@@ -745,12 +772,12 @@ apps/web/src/
 
 - **Responsive:** below Tailwind's `md` breakpoint, a bottom tab bar and a floating Add button; from `md` up, a sidebar and an Add button in the top bar (Spec Rule 12).
 - **Add transaction** opens as a bottom sheet on phones and a dialog on laptops, from any screen.
-- **Theme:** follow device, light or dark, chosen in Settings and stored in the device's `localStorage` (it isn't sensitive). Implemented with shadcn/ui's CSS variables and a `dark` class on `<html>`.
+- **Theme:** follow device, light or dark, chosen in Settings and stored in the device's `localStorage` (it isn't sensitive). Implemented with shadcn/ui's CSS variables and a `dark` class on `<html>`, set before first paint by `theme-init.js` (Section 7.6).
 - **Accessibility:** shadcn/ui components are built on accessible primitives; every input has a label.
 
 ### 8.7 PWA
 
-- `vite-plugin-pwa` generates the manifest, icons and service worker.
+- `vite-plugin-pwa` generates the manifest, icons and service worker. The service worker is registered from an external script file, never inline (Section 7.6).
 - The service worker caches only the app's own files (HTML, JS, CSS, icons). It **never caches `/api` responses**, so the app never shows stale money data (Spec Rule 3).
 - When a new version is deployed, the app shows the "update available" message from UI.md 9.3 with a **Reload** button.
 
@@ -1172,3 +1199,24 @@ Total: within the ₹500/month budget (Spec Rule 10), as long as Railway's prici
 - Reports and Home use MongoDB aggregations, never loading every transaction (Section 5.4).
 
 If a pull request breaks the JavaScript budget, it is fixed in that pull request, or the budget change is justified and recorded here.
+
+## 13. Audit checklist
+
+CI enforces what tools can check (Section 10). This checklist covers the rest, run **at every milestone sign-off** on the code built so far, and on any pull request that changes the area in question. Each finding becomes an issue labelled `type: bug` or `type: chore`, or is fixed before the sign-off closes.
+
+| Area | Check |
+| --- | --- |
+| Architecture | Routes contain no business rules; services contain no HTTP or driver code; domain functions are pure (Section 4.2). Boundary rules still match the folders (Section 10.4). |
+| Ownership and security | Every repository query filters by `userId` (Section 4.5); every endpoint has an isolation test; security headers, CSP and cookie flags are as in Sections 7.3 and 7.6; rate limits answer `429`; `trust proxy` is `1`; no secret in code, logs or the backup file. |
+| Money | Amounts are integer paise from form to database and back; no float arithmetic outside `money.ts`; fixture totals match Spec Rule 9, Counting money, with and without Lending; every multi-record write runs in a DB transaction (Section 4.6). |
+| Duplicates and concurrency | Every create accepts an idempotency key (Section 6.4); every change sends `version` and stale ones are rejected (Section 4.7); paying a bill cycle twice is impossible. |
+| Dates | Money-event dates use "today" in the user's timezone; tests cover midnight IST and month ends; no `Date` without a timezone in date logic. |
+| Database | Indexes and validators match Sections 5.4 and 5.6; no query loads a whole collection; TTL index on `deletedAt` is present. |
+| API contract | `docs/openapi.json` matches the code; responses carry no internal fields (Section 6.6); only catalogue error codes are returned (Section 9.6). |
+| Errors and logs | No library error text reaches a response or the screen; logs contain no bodies, cookies, names or emails (Section 9.4). |
+| UI | Only design tokens are used; every screen handles loading, empty, error and offline (UI.md 5.1); copy matches UI.md 9; amounts use `Amount`; the accessibility baseline holds (UI.md 8) on a phone and a laptop. |
+| Performance | Bundle within budget; Lighthouse mobile LCP and API p95 within Section 12. |
+| Tests | Spec Rule 16's required tests exist; domain coverage ≥ 90%; no flaky or skipped tests; end-to-end tests pass on both viewports. |
+| Deployment | Health check and rollback work (Section 11.3); environment variables match Section 11.4; cost within budget (Section 11.6). |
+| Dependencies | `pnpm audit` is clean; every dependency added since the last sign-off is justified and permissively licensed (Section 10.10); nothing unused remains. |
+| Documentation | SPEC, DESIGN and UI.md describe what was built; the Risks section in SPEC.md is reviewed. |

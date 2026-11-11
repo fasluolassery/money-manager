@@ -5,7 +5,7 @@ body:
     id: context
     attributes:
       label: Context
-      description: Why this task exists. Link the relevant SPEC.md rules and DESIGN.md sections.
+      description: Why this task exists. Link the relevant SPEC.md rules, DESIGN.md sections and UI.md sections.
     validations:
       required: true
   - type: textarea
