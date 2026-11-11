@@ -210,6 +210,14 @@ Technical decisions, `D-28` onward; product decisions `D-01`–`D-27` are in SPE
 - **Rejected:** *a hand-written traceability table; keeping the checks on one machine; a separate spec repository with a pinned version* (the spec and code share one repository, so they're versioned together).
 - **Binds:** `tools/backlog/` and `tools/docs/` live in the repository; test names carry requirement IDs (Section 10.8).
 
+### 1.23 Engineering principles as checkable rules
+
+- **ID:** D-50. **Decided:** 2026-11-11.
+- **Chosen:** single responsibility, no duplication, YAGNI, composition, strong types and defensive engineering written as checkable rules (Section 15): cognitive complexity at most 15; copy-paste detection with jscpd; size limits checked in review; branded types for money, dates and ids; timeouts; tighter limits on expensive endpoints.
+- **Why:** principles only hold when something checks them; slogans like "production grade" don't.
+- **Rejected:** *a stricter complexity limit of 10; review-only duplication checks; no numeric size guidance; plain `number` and `string` for money and ids; one rate limit for everything.*
+- **Binds:** Section 15; the tools in Section 10.4; the definition of done (Section 10.5).
+
 ## 2. Architecture overview
 
 ```mermaid
@@ -407,7 +415,8 @@ Spec Rule 9 says an edit made on one device must never silently overwrite a newe
 - **Calendar dates** (transaction date, due dates, deadlines): `"YYYY-MM-DD"` strings. They never shift with timezones, and they sort and compare correctly as plain strings. All date arithmetic lives in `packages/shared/src/dates.ts`, with no date library (Section 1.6).
 - **Timestamps** (`createdAt`, `updatedAt`, `deletedAt`, `completedAt`, `settledAt`, `lastBackupAt`): MongoDB `Date` values, in UTC.
 - **Indexes and validators** are created by `db/indexes.ts` when the server starts (Sections 5.4, 5.6).
-- **Text** is stored trimmed (Spec Rule 9); empty optional text is stored as `null`, never `""`.
+- **Text** is stored trimmed and Unicode-normalized (NFC) (Spec Rule 9); empty optional text is stored as `null`, never `""`. Uniqueness checks (`nameLower`) compare the normalized, lowercased form.
+- **Types:** money, dates and ids have branded TypeScript types (Section 15.5), so repositories can't mix up an amount, a date and an id.
 
 ### 5.2 Auth collections
 
@@ -788,7 +797,7 @@ Better Auth handles every step of the OAuth exchange. The app only adds the firs
 - **Cross-site request protection:** `SameSite=Lax` stops the browser sending the cookie with requests from other sites. In addition, every `POST`, `PATCH` and `DELETE` must have an `Origin` header matching the app's own origin, or it gets `403 FORBIDDEN`.
 - **Behind Railway's proxy:** Express runs with `trust proxy` set to `1`, so it sees the real client IP (for rate limits and logs) and knows the original request was HTTPS (for `Secure` cookies). It trusts exactly one proxy hop, so a client can't fake its IP with its own `X-Forwarded-For` header.
 - **No CORS:** the app and the API share one origin (Section 1.2), so no CORS middleware is installed; cross-origin requests get no permissive headers.
-- **Rate limits:** Better Auth's built-in limiter on `/api/auth/*`; `express-rate-limit` on `/api/v1`, keyed by user id when signed in and by IP address otherwise. Defaults, adjustable in config: **300 requests per 5 minutes per user** on `/api/v1`, and **30 per 5 minutes per IP** on `/api/auth/*`.
+- **Rate limits:** Better Auth's built-in limiter on `/api/auth/*`; `express-rate-limit` on `/api/v1`, keyed by user id when signed in and by IP address otherwise. Defaults, adjustable in config: **300 requests per 5 minutes per user** on `/api/v1`, and **30 per 5 minutes per IP** on `/api/auth/*`. Expensive or dangerous endpoints have tighter limits on top, per user: **`GET /me/backup` 10 per hour** and **`DELETE /me` 3 per hour** (FR-10.10, Section 15.6).
 
 ### 7.5 Google setup
 
@@ -899,6 +908,7 @@ apps/web/src/
   - sends requests to `/api/v1` on the same origin, with cookies
   - unwraps `{ success, data }` and returns `data`
   - turns `{ success: false, error }` into a thrown `ApiError` with the code, message, field details and request id
+  - gives up after **15 seconds** and treats it as `NETWORK_ERROR` (Section 15.6)
   - turns **every other failure** into an `ApiError` too, so the UI never sees a raw browser or proxy error: no response at all becomes `NETWORK_ERROR`; a response that isn't the app's envelope (e.g. a proxy's HTML error page) becomes `INTERNAL_ERROR`. Messages come from the catalogue (Section 9.6)
   - on `401`, sends the user to `/sign-in`
   - on `409 STALE_RECORD`, lets the shared handler show "This was changed on another device" (Section 4.7)
@@ -1101,6 +1111,7 @@ A change reaches production only after passing every gate below, in order.
 | Token check   | `pnpm check:tokens`                          | a hard-coded hex colour in a component (UI.md 4) |
 | Boundaries    | `pnpm check:boundaries` (dependency-cruiser) | an import that crosses a forbidden boundary, or a circular import (Section 10.4) |
 | Discipline    | `pnpm check:discipline`                      | a clock call in a domain file, or raw money arithmetic outside `money.ts` (Section 10.4) |
+| Duplication   | `pnpm check:duplication` (jscpd)             | a duplicated block of 10+ lines or 50+ tokens outside tests and generated files (Section 15.2) |
 | Build         | build `web` and `api`                        | the build fails                              |
 | Bundle budget | `size-limit` on the built web app            | initial JavaScript above **200 KB gzipped** (Section 12) |
 | API document  | `pnpm gen:openapi`, then compare             | `docs/openapi.json` differs from the code (Section 6.8) |
@@ -1139,6 +1150,9 @@ Every rule below fails CI. A rule is only switched off for a line with a comment
 | `process.env` read only in `apps/api/src/config.ts` (and the web's Vite config) | Biome `noProcessEnv`, with an override for those files |
 | No un-awaited promises                                  | Biome `noFloatingPromises`                        |
 | No `dangerouslySetInnerHTML`                            | Biome `noDangerouslySetInnerHtml`                 |
+| Cognitive complexity of a function at most 15 (Section 15.1) | Biome `noExcessiveCognitiveComplexity`      |
+| No duplicated blocks of 10+ lines or 50+ tokens, outside tests and generated files (Section 15.2) | jscpd (`check:duplication`) |
+| Money, dates and ids use branded types (Section 15.5)   | TypeScript                                        |
 | Exhaustive handling of unions (error codes, statuses, transaction types) | an `assertNever` helper in `packages/shared` in every `switch` default, checked by the compiler; plus Biome `useExhaustiveSwitchCases` |
 | **Import boundaries** (below)                           | dependency-cruiser                                |
 | No clock in domain files: no `Date.now()` or `new Date()` without arguments in `*.domain.ts` | `check:discipline` script |
@@ -1158,6 +1172,7 @@ Some Biome rules above are newer and may be in its "nursery" group; issue #3 con
 | `*.service.ts`                   | `express`, `mongodb` (only repositories and `db/` touch the driver) |
 | anything except repositories and `db/` | `mongodb`                                                    |
 | web `components/`, `pages/`      | `lib/api-client.ts` (only each feature's `api.ts` may)             |
+| web `features/<a>/`              | another feature's files, except its `api.ts` (Section 15.4)        |
 | any file                         | itself through a cycle (no circular imports)                       |
 
 Services still need to pass a database session into repositories (Section 4.6). `db/` re-exports it as its own `DbSession` type, so services never import `mongodb`, even for types.
@@ -1178,6 +1193,7 @@ A task is done when:
 - [ ] Names follow Section 10.9 and the glossary; any new dependency is justified (Section 10.10).
 - [ ] Tests carry the requirement IDs they prove (Section 10.8), and `TRACEABILITY.md` is regenerated.
 - [ ] No decision (`D-…`) was changed silently; a changed decision was updated in SPEC.md or Section 1 first.
+- [ ] The engineering principles in Section 15 hold: sizes, no listed code smells, no speculative code, composition, branded types; refactors are in their own pull request.
 
 ### 10.6 Definition of ready
 
@@ -1374,6 +1390,7 @@ CI enforces what tools can check (Section 10). This checklist covers the rest, r
 | Dependencies | `pnpm audit` is clean; every dependency added since the last sign-off is justified and permissively licensed (Section 10.10); nothing unused remains. |
 | Documentation | SPEC, DESIGN and UI.md describe what was built; the Risks section in SPEC.md is reviewed. |
 | Traceability | `TRACEABILITY.md` is current; every Must requirement of a finished milestone has at least one test carrying its ID (Section 10.8). |
+| Code quality | Files and functions within the size guidance; none of the smells in Section 15.7; no speculative code (15.3); utilities in their one home (15.2); composition rules (15.4); timeouts and normalization in place (15.6). |
 
 ## 14. Module map
 
@@ -1425,3 +1442,81 @@ flowchart LR
 ```
 
 **Build order** follows the same direction (SPEC Rule 15): users and categories (first sign-in), then transactions, then reports, then bills, lending and goals, then backup and account deletion.
+
+## 15. Engineering principles
+
+Each principle is turned into a rule that can be checked, and says how it's checked. A principle with no checkable rule isn't listed here. Decision D-50 (Section 1.23) binds these rules. Tool-enforced rules fail CI (Section 10.4); review-enforced rules are part of the definition of done (Section 10.5) and the audit checklist (Section 13).
+
+### 15.1 Single responsibility and readability
+
+| Rule | Checked by |
+| --- | --- |
+| A file has one job: one module layer (Section 4.1), one component, one hook, or one group of related helpers. | review |
+| **Size limits:** a file stays under about **300 lines**, a function under about **50 lines**; past that, it's split by responsibility, not by line count. | review, audit |
+| **Cognitive complexity** of a function is at most **15**. | Biome `noExcessiveCognitiveComplexity` |
+| At most **3 positional parameters**; more go in one object with named fields. | review |
+| Nesting at most **3 levels**; use early returns instead of `else` after `return`. | review, complexity limit |
+| Names say what something is or does (Section 10.9); no abbreviations except those in the glossary. | review |
+| **Comments explain why**, never what the next line does; no commented-out code; a `TODO` must name an issue (`TODO(#42): …`). | review |
+
+### 15.2 No duplication (DRY), but no premature abstraction
+
+| Rule | Checked by |
+| --- | --- |
+| Every value and rule has **one home**: limits and schemas in `packages/shared`, error messages in the catalogue, colours and sizes in tokens, motion values in `motion.ts`, query keys in `query-keys.ts`, environment in `config.ts`, money and date logic in `money.ts` and `dates.ts`. | review, `check:tokens`, `check:discipline` |
+| **Utility code lives in one place:** shared by API and web → `packages/shared`; web only → `apps/web/src/lib`; API only → the module or `apps/api/src/db`. No copies inside features. | review, jscpd |
+| **Copy-paste detection:** duplicated blocks of 10+ lines or 50+ tokens fail CI. Tests and generated files are excluded. | jscpd (`pnpm check:duplication`) |
+| **Rule of three:** duplicate twice before abstracting; extract on the third use, so abstractions come from real cases. | review |
+
+### 15.3 You aren't gonna need it (YAGNI)
+
+| Rule | Checked by |
+| --- | --- |
+| Code does what its issue requires. No options, parameters, extension points or settings "for later". | review |
+| Out-of-scope features (SPEC Rule 17) don't get partial support, hidden flags or placeholder code. | review, audit |
+| No new dependency without a current need (Section 10.10). | review |
+
+### 15.4 Composition and coupling
+
+| Rule | Checked by |
+| --- | --- |
+| **Composition over inheritance:** no class hierarchies (Section 4.3; only errors extend `Error`). Backend behaviour is composed from factory functions through the container (Section 4.4). | Biome, review |
+| **React composition:** components take `children` or named slots instead of growing configuration props; style variations use one `variant` prop (UI.md 5.3); a component with more than 3 boolean props is split. Logic that several components need goes in a hook. | review |
+| **Web features don't reach into each other:** a feature may use another feature only through its `api.ts` hooks; shared UI lives in `components/`. | dependency-cruiser (Section 10.4) |
+| **API modules don't reach into each other** beyond repositories (Section 14.3). | dependency-cruiser |
+
+### 15.5 Strong types instead of bare primitives
+
+- **Branded types** in `packages/shared` give money, dates and ids their own types: `Paise`, `CalendarDate`, `Month`, and one id type per entity (`TransactionId`, `CategoryId`, `BillId`, `GoalId`, `LendingRecordId`, `UserId`).
+- They're created **only** by the parsing and validation helpers (the Zod schemas, `parseRupees`, the date helpers), so a raw `number` can't be passed as an amount or a category id as a bill id.
+- The compiler checks every use; no `as` cast creates a branded value outside those helpers (review).
+
+### 15.6 Defensive engineering
+
+| Rule | Checked by |
+| --- | --- |
+| **Validate at every boundary** (Section 9.1); inside the boundary, trust the types. | Zod, TypeScript |
+| **Fail fast:** bad configuration stops the server at startup (Section 11.4); impossible states throw immediately (`assertNever`, domain invariants), never continue silently. | tests, `assertNever` |
+| **Normalize input once**, at the boundary: trim text and apply Unicode **NFC** normalization before any check or comparison (SPEC FR-9.5), so "Café" typed two ways is one name. | shared schemas, tests |
+| **Timeouts everywhere:** the web `api-client` gives up after **15 seconds** (`NETWORK_ERROR`, UI.md 9.3); the database driver uses a 5-second server-selection and 10-second connect timeout, and aggregations a 10-second `maxTimeMS`. | tests, `db/client.ts` |
+| **No mutation of inputs:** functions return new values; shared types are `readonly`. | review, TypeScript |
+| **Abuse limits:** rate limits, with tighter ones on expensive or dangerous endpoints (Section 7.4). | API tests |
+| **Every money write is atomic, idempotent and version-checked** (Sections 4.6, 4.7, 6.4). | API tests |
+
+### 15.7 Code smells that are not allowed
+
+Besides the tool-enforced rules in Section 10.4, review rejects:
+
+- **Magic numbers and strings:** limits, durations and codes come from named constants or tokens.
+- **Boolean flag parameters** that switch a function between two behaviours: write two functions.
+- **God objects and god components:** one thing doing several jobs (Section 15.1).
+- **Feature envy:** a function mostly using another module's data belongs in that module.
+- **Shotgun surgery:** a change that needs edits in many unrelated places means a rule has no single home (Section 15.2).
+- **Dead code:** unused exports, files, dependencies or flags are deleted, not kept "just in case".
+- **Swallowed errors:** a `catch` either handles the error, translates it (Section 9.6) or rethrows; it never ignores it.
+
+### 15.8 Refactoring
+
+- A refactor changes structure, not behaviour, and goes in its **own pull request** with a `refactor:` title; tests pass unchanged before and after.
+- Behaviour changes and refactors are never mixed in one pull request, so each review asks one question.
+- Small clean-ups in the code an issue touches are welcome in that issue's pull request; anything wider gets its own issue.

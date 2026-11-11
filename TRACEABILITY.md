@@ -110,7 +110,7 @@
 | FR-9.2 | Must | Amounts: every amount (transactions, bills, goal targets, contributions, lending records, repayments) follo… | #7 | packages/shared | not yet |
 | FR-9.3 | Must | Dates of money events (transactions, contributions, lending records, repayments, the opening balance date) … | #7, #20 | transactions | not yet |
 | FR-9.4 | Must | Due dates and deadlines can be in the future, with these limits: | #7, #36, #42, #48 | packages/shared | not yet |
-| FR-9.5 | Must | Text limits: | #7 | packages/shared | not yet |
+| FR-9.5 | Must | Text limits: | #7 | packages/shared, **Normalize input once**, at the boundary: trim text and apply Unicode **NFC** normalization before any check or comparison (SPEC FR-9.5), so "Café" typed two ways is one name. | not yet |
 | FR-9.6 | Must | Currency: Every amount is stored with a currency code. The first version only supports INR. Contributions, … | #20 | transactions | not yet |
 | FR-9.7 | Must | Dates: Transaction, contribution, repayment and due dates are calendar dates (no time of day), in the user'… | #7, #20 | transactions | not yet |
 | FR-9.8 | Must | Timezone: Each user has a timezone (default Asia/Kolkata). The server uses it to decide what "today" is, fo… | #7, #18, #27 | users | not yet |
@@ -143,7 +143,7 @@
 | FR-10.7 | Must | Access rules are enforced on the server: a user can only read or change their own data, whatever the client… | #16 | middleware/ | not yet |
 | FR-10.8 | Must | Sessions are stored in httpOnly, Secure, SameSite cookies, never in localStorage. A session expires after 3… | #16 | auth/ (adapter) | not yet |
 | FR-10.9 | Must | I can log out of all devices, which ends every session. | #53 | auth/ (adapter) | not yet |
-| FR-10.10 | Must | The API is rate limited per user and per IP address. | #16 | middleware/ | not yet |
+| FR-10.10 | Must | The API is rate limited per user and per IP address, with tighter limits on expensive or dangerous actions … | #16 | middleware/ | not yet |
 | FR-10.11 | Must | No third-party analytics or tracking. | #8 | app.ts, main.ts | not yet |
 | FR-10.12 | Must | Account deletion: I can delete my account. This permanently deletes the account and all its data, after I c… | #54 | users | not yet |
 | FR-11.1 | Must | Actions that write more than one record (paying, skipping or undoing a bill cycle, recording or changing a … | #10, #37 | db/ | not yet |
@@ -220,3 +220,4 @@
 | D-47 | Security posture | DESIGN 1.20 |
 | D-48 | Google sign-in publishing | DESIGN 1.21 |
 | D-49 | Traceability and drift checks | DESIGN 1.22 |
+| D-50 | Engineering principles as checkable rules | DESIGN 1.23 |

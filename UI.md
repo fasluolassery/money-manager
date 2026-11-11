@@ -916,6 +916,7 @@ shadcn/ui's components (built on Radix) handle most of the focus and keyboard be
 | Goal completed               | "Goa trip complete!"                                    |
 | Lending record settled       | "All settled with Rahul"                                |
 | Save failed                  | "Couldn't save. Check your connection and try again."   |
+| Request timed out            | "That took too long. Check your connection and try again." |
 | Unexpected error             | "Something went wrong. Try again in a moment."          |
 | Page not found               | "This page doesn't exist."                              |
 | Sign-in failed               | "Couldn't sign you in. Try again."                      |

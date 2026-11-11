@@ -318,7 +318,7 @@ Direction is either **I lent** (they owe me) or **I borrowed** (I owe them). **F
   | Payee                     | up to 100     |
   | Note                      | up to 500     |
 
-  Leading and trailing spaces are trimmed before checking.
+  Leading and trailing spaces are trimmed, and text is Unicode-normalized, before checking, comparing or storing, so the same name typed two different ways (for example "Café") counts as one name.
 - **FR-9.6** **Currency:** Every amount is stored with a currency code. The first version only supports `INR`. Contributions, repayments and bill cycles use the currency of the goal, record or bill they belong to.
 - **FR-9.7** **Dates:** Transaction, contribution, repayment and due dates are calendar dates (no time of day), in the user's timezone. This keeps a late-night expense in the correct day and month.
 - **FR-9.8** **Timezone:** Each user has a timezone (default `Asia/Kolkata`). The server uses it to decide what "today" is, for date defaults, upcoming and overdue bills, and overdue goals and lending. Changing my timezone only changes what "today" is from then on; dates already saved never change.
@@ -408,7 +408,7 @@ There are no accounts. The app shows one overall balance:
 - **FR-10.7** Access rules are enforced on the server: a user can only read or change their own data, whatever the client sends.
 - **FR-10.8** Sessions are stored in `httpOnly`, `Secure`, `SameSite` cookies, never in `localStorage`. A session expires after 30 days without use; using the app keeps it alive.
 - **FR-10.9** I can **log out of all devices**, which ends every session.
-- **FR-10.10** The API is rate limited per user and per IP address.
+- **FR-10.10** The API is rate limited per user and per IP address, with tighter limits on expensive or dangerous actions (downloading a backup, deleting the account).
 - **FR-10.11** No third-party analytics or tracking.
 
 **FR-10.12** **Account deletion:** I can delete my account. This permanently deletes the account and all its data, after I confirm by typing a confirmation phrase.

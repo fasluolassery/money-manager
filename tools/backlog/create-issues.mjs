@@ -121,6 +121,7 @@ function render(issue) {
     !has("nocode") && !has("preci") && "The code rules and import boundaries in DESIGN.md 10.4 pass",
     has("api") && "API responses go through their response schemas, with no internal fields (DESIGN.md 6.6)",
     !has("nocode") && "Names follow DESIGN.md 10.9 and the SPEC glossary; any new dependency is justified (10.10)",
+    !has("nocode") && "Follows the engineering principles in DESIGN.md 15: size guidance, no listed code smells, no speculative code, composition, branded types",
     "SPEC.md / DESIGN.md / UI.md updated if behaviour or design changed",
     "Merged through a squash-merged pull request that closes this issue",
   ]

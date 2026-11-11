@@ -61,5 +61,6 @@ body:
         - label: Names follow DESIGN.md 10.9 and the glossary; any new dependency is justified (10.10)
         - label: Tests carry the requirement IDs they prove (DESIGN.md 10.8), and TRACEABILITY.md is regenerated
         - label: No decision (D-…) was changed silently
+        - label: Follows the engineering principles in DESIGN.md 15 (sizes, no listed code smells, no speculative code, composition, branded types)
         - label: SPEC.md / DESIGN.md / UI.md updated if behaviour or design changed
         - label: Merged through a squash-merged pull request that closes this issue

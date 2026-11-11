@@ -38,6 +38,7 @@ Create `AGENTS.md` at the repo root that tells any agent (and any human) to:
 - Treat decisions (`D-…`) as binding; never change one silently. Stop and ask if an assumption (`A-…`) looks wrong or an open question (`Q-…`) blocks the work.
 - Put the requirement IDs (`FR-…`) a test proves into its name (DESIGN 10.8), and regenerate `TRACEABILITY.md` with `node tools/docs/check.mjs`.
 - Follow the frontend data rules (DESIGN 8.11), testing discipline (10.8), naming conventions (10.9) and dependency policy (10.10).
+- Follow the engineering principles (DESIGN 15): single responsibility and size guidance, no duplication, YAGNI, composition, branded types, defensive engineering, no listed code smells, refactors in their own pull request.
 - Build UI to `UI.md`.
 - Update `SPEC.md` / `DESIGN.md` in the same pull request when behaviour or design changes.
 
@@ -97,7 +98,7 @@ labels: type: infra | area: ci | size: S
 deps: monorepo
 flags: preci
 implements: none
-decisions: D-44
+decisions: D-44, D-50
 
 ## Context
 
@@ -105,7 +106,7 @@ Gate 1 (DESIGN 10.1) formats and lints changed files before every commit. DESIGN
 
 ## Scope
 
-- `biome.json` at the root: formatter on, recommended lint rules, and as errors: `noExplicitAny`, `noConsole`, `noDefaultExport` (override for tool config files), `noProcessEnv` (override for `apps/api/src/config.ts` and the Vite config), `noFloatingPromises`, `noDangerouslySetInnerHtml`, `useExhaustiveSwitchCases`.
+- `biome.json` at the root: formatter on, recommended lint rules, and as errors: `noExplicitAny`, `noConsole`, `noDefaultExport` (override for tool config files), `noProcessEnv` (override for `apps/api/src/config.ts` and the Vite config), `noFloatingPromises`, `noDangerouslySetInnerHtml`, `useExhaustiveSwitchCases`, and `noExcessiveCognitiveComplexity` with a maximum of 15 (DESIGN 15.1).
 - Confirm each rule exists in the installed Biome version (some may be in the nursery group). If one doesn't, record the replacement in DESIGN 10.4.
 - Root scripts: `lint` (`biome check .`) and `format` (`biome check --write .`).
 - husky + lint-staged: the pre-commit hook runs `biome check --write` on staged files only.
@@ -244,7 +245,7 @@ labels: type: feature | area: shared | size: L
 deps: vitest
 flags: property
 implements: FR-9.1, FR-9.2, FR-9.3, FR-9.4, FR-9.5, FR-9.7, FR-9.8, FR-14.1, FR-14.2, FR-14.3, FR-14.4, FR-14.5
-decisions: D-16, D-33, D-39
+decisions: D-16, D-33, D-39, D-50
 
 ## Context
 
@@ -268,7 +269,8 @@ Money and dates are the easiest places to introduce bugs. Spec Rules 9, 14 and 1
 - amount (positive integer paise ≤ max) and the **signed** opening balance (−max to +max)
 - calendar date, month and IANA timezone
 - a "not in the future" check for money-event dates, given today's date in the user's timezone (Spec Rule 9)
-- trimmed text with the limits from Spec Rule 9 (category name, bill/goal name, person, payee, note)
+- trimmed and Unicode-normalized (NFC) text with the limits from Spec Rule 9 (category name, bill/goal name, person, payee, note)
+- **branded types** (DESIGN 15.5): `Paise`, `CalendarDate`, `Month` and one id type per entity, created only by these schemas and helpers
 - every rule with a plain-English message, plus a global Zod error map whose fallback is "This value isn't valid" (DESIGN 9.6)
 
 `packages/shared/src/assert-never.ts`: the `assertNever` helper for exhaustive `switch` statements (DESIGN 10.4).
@@ -376,7 +378,7 @@ milestone: m1
 labels: type: infra | area: db | area: api | size: M
 deps: api-errors, ci
 implements: FR-2.1, FR-9.9, FR-9.11, FR-9.12, FR-11.1
-decisions: D-31, D-36
+decisions: D-31, D-36, D-50
 
 ## Context
 
@@ -384,7 +386,7 @@ DESIGN 4.6, 5.1 and 10.2: one MongoDB client, a transaction helper, indexes crea
 
 ## Scope
 
-- `db/client.ts`: one `MongoClient` connected at startup and closed on shutdown. `MONGODB_URI` added to config.
+- `db/client.ts`: one `MongoClient` connected at startup and closed on shutdown, with a 5-second server-selection and 10-second connect timeout; aggregations use a 10-second `maxTimeMS` (DESIGN 15.6). `MONGODB_URI` added to config.
 - `db/transaction.ts`: `withTransaction(async (session) => …)`.
 - `db/indexes.ts`: `ensureIndexes()` run at startup; modules register their indexes **and `$jsonSchema` validators** here (DESIGN 5.6).
 - `test-support/`: test data builders (`buildX({ ...overrides })`) and a fixed clock for API tests (DESIGN 10.8).
@@ -443,7 +445,7 @@ labels: type: infra | area: web | size: M
 deps: monorepo, api-skeleton
 flags: ui
 implements: FR-3.5
-decisions: D-34, D-42, D-43
+decisions: D-34, D-42, D-43, D-50
 
 ## Context
 
@@ -454,7 +456,7 @@ DESIGN 8.1, 8.2, 8.4, 8.6 and 8.8 define the frontend stack, folder layout, API 
 - Vite + React + TypeScript in `apps/web`, folder layout from DESIGN 8.2.
 - Tailwind CSS and shadcn/ui, with these components to start: button, input, card, sheet, dialog, toast (sonner).
 - React Router (`createBrowserRouter`) and a TanStack Query provider: reads retry up to 2 times, writes never retry automatically.
-- `lib/api-client.ts`: same-origin `/api/v1`, cookies included, unwraps `{ success, data }`, throws `ApiError` (code, message, details, request id), redirects to `/sign-in` on `401`. Every other failure also becomes an `ApiError`: no response → `NETWORK_ERROR`; a non-envelope response → `INTERNAL_ERROR`; messages from the shared catalogue (DESIGN 8.4, 9.6).
+- `lib/api-client.ts`: same-origin `/api/v1`, cookies included, unwraps `{ success, data }`, throws `ApiError` (code, message, details, request id), redirects to `/sign-in` on `401`, and gives up after 15 seconds with `NETWORK_ERROR` and the "request timed out" message (DESIGN 15.6, UI.md 9.3). Every other failure also becomes an `ApiError`: no response → `NETWORK_ERROR`; a non-envelope response → `INTERNAL_ERROR`; messages from the shared catalogue (DESIGN 8.4, 9.6).
 - `lib/query-keys.ts`: the query key factory, shaped `[feature, ...scope]` (DESIGN 8.11).
 - TanStack Query refetches on window focus; mutation hooks declare the query groups they refresh (DESIGN 8.11).
 - Vite dev server proxies `/api` to the local API.
@@ -606,7 +608,7 @@ Spec Rules 2 and 10, DESIGN 1.3 and 7: Google-only sign-in through Better Auth, 
 - `requireAuth` middleware on `/api/v1`: puts the user id on the request, or returns `401 UNAUTHENTICATED`.
 - Origin check on `POST`, `PATCH` and `DELETE`: a missing or foreign `Origin` is rejected with `403 FORBIDDEN` (`ForbiddenError`, DESIGN 6.2, 9.2).
 - Auth adapter (`auth/`): app code calls Better Auth only through it, and it translates Better Auth failures into `UnauthenticatedError` or a logged `500` (DESIGN 9.6).
-- Rate limits with the defaults from DESIGN 7.4: Better Auth's limiter on `/api/auth/*` (30 per 5 minutes per IP); `express-rate-limit` on `/api/v1` (300 per 5 minutes per user, or per IP when signed out), returning `429 RATE_LIMITED` in the envelope.
+- Rate limits with the defaults from DESIGN 7.4: Better Auth's limiter on `/api/auth/*` (30 per 5 minutes per IP); `express-rate-limit` on `/api/v1` (300 per 5 minutes per user, or per IP when signed out), returning `429 RATE_LIMITED` in the envelope. A small helper lets a route add a tighter per-user limit on top (used by {{backup}} and {{delete-account}}, DESIGN 7.4).
 - Web auth client: any failure from `/api/auth/*` shows a catalogue message, never Better Auth's text (DESIGN 9.6).
 - Config: `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 - Test helper: create a user with a valid session cookie, for API tests (used by every isolation test from now on).
@@ -797,7 +799,7 @@ labels: type: feature | area: api | size: M
 deps: tx-api
 flags: versioned, idempotent, api
 implements: FR-5.2, FR-5.3, FR-5.5, FR-5.6, FR-5.7, FR-5.8, FR-8.9
-decisions: D-10
+decisions: D-10, D-50
 
 ## Context
 
@@ -817,6 +819,7 @@ Spec Rule 5 (Categories) and DESIGN 6.5: create, rename and delete categories, w
 
 - [ ] Creating "food" when "Food" exists returns `409`.
 - [ ] An empty emoji, plain text or two emoji in the emoji field returns `400`.
+- [ ] "Café" typed with a precomposed "é" and with "e" plus a combining accent counts as the same name (`409` on the second, FR-9.5).
 - [ ] Deleting a used category without `moveToCategoryId` returns `422`; with it, all its transactions move and the category is gone.
 - [ ] A failure during reassignment leaves everything unchanged (transaction rollback test).
 - [ ] Isolation tests for every endpoint, including moving into another user's category.
@@ -1594,7 +1597,7 @@ labels: type: feature | area: api | area: web | size: M
 deps: bill-actions, repayments-api, goals-api
 flags: api
 implements: FR-10.3, FR-10.4
-decisions: D-18
+decisions: D-18, D-50
 
 ## Context
 
@@ -1602,7 +1605,7 @@ Spec Rule 10 (Backups): the JSON download is the real backup, because the free A
 
 ## Scope
 
-- `GET /me/backup`: a JSON attachment named `money-manager-backup-YYYY-MM-DD.json` with `formatVersion: 1`, `exportedAt`, the profile, categories, transactions (including trashed, with `deletedAt`), goals, bills, bill cycles and lending records, shaped by the export schema (DESIGN 6.6).
+- `GET /me/backup`: a JSON attachment named `money-manager-backup-YYYY-MM-DD.json` with `formatVersion: 1`, `exportedAt`, the profile, categories, transactions (including trashed, with `deletedAt`), goals, bills, bill cycles and lending records, shaped by the export schema (DESIGN 6.6). Limited to 10 downloads per hour per user (DESIGN 7.4).
 - No auth data (sessions, tokens, Google account details).
 - Sets `lastBackupAt`.
 - **Download backup** in Settings.
@@ -1668,7 +1671,7 @@ labels: type: feature | area: api | area: auth | area: web | size: M
 deps: backup
 flags: api
 implements: FR-10.12
-decisions: D-02
+decisions: D-02, D-50
 
 ## Context
 
@@ -1676,7 +1679,7 @@ Spec Rule 10 (Account deletion) and DESIGN 5.5.
 
 ## Scope
 
-- `DELETE /me { confirmation }`: the phrase must be exactly "delete my account".
+- `DELETE /me { confirmation }`: the phrase must be exactly "delete my account". Limited to 3 attempts per hour per user (DESIGN 7.4).
 - In one DB transaction, delete every document with the user's id from every app collection, then the Better Auth user, sessions and accounts.
 - Settings "danger zone": a suggestion to download a backup first, then the typed confirmation.
 
@@ -1974,10 +1977,10 @@ DESIGN 11.8: realistic sample data makes building and checking screens much easi
 key: boundaries
 title: Enforce import boundaries and code discipline checks
 milestone: m1
-labels: type: infra | area: ci | size: S
+labels: type: infra | area: ci | size: M
 deps: container, web-skeleton
 implements: none
-decisions: D-35, D-44
+decisions: D-35, D-44, D-50
 
 ## Context
 
@@ -1985,7 +1988,8 @@ DESIGN 4.2 and 10.4: the layer rules (routes, services, repositories, domain), t
 
 ## Scope
 
-- `dependency-cruiser` with `.dependency-cruiser.cjs` implementing every row of the import boundary table in DESIGN 10.4, including "no circular imports".
+- `dependency-cruiser` with `.dependency-cruiser.cjs` implementing every row of the import boundary table in DESIGN 10.4, including "no circular imports" and "web features use each other only through `api.ts`" (DESIGN 15.4).
+- `pnpm check:duplication`: jscpd failing on duplicated blocks of 10+ lines or 50+ tokens, excluding tests and generated files (DESIGN 15.2). A dev-only dependency, justified here per DESIGN 10.10.
 - `pnpm check:boundaries` runs it.
 - `pnpm check:discipline`: a small script that fails on `Date.now()` or argument-less `new Date()` in `*.domain.ts`, and on `* 100`, `/ 100`, `toFixed` or `parseFloat` applied to amounts outside `packages/shared/src/money.ts`.
 - Both added to the CI job ({{ci}}).
