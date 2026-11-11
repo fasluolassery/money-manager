@@ -1119,6 +1119,7 @@ A change reaches production only after passing every gate below, in order.
 | API document  | `pnpm gen:openapi`, then compare             | `docs/openapi.json` differs from the code (Section 6.8) |
 | Docs and traceability | `node tools/docs/check.mjs --ci`     | a broken section reference; a duplicate or unknown requirement or decision ID; a Must requirement with no issue; `TRACEABILITY.md` out of date; a finished milestone's Must requirement with no test |
 | Issues match docs | `node tools/backlog/create-issues.mjs --verify` (read-only, with the workflow's GitHub token) | a live issue differs from `tools/backlog/issues.md` |
+| Pull request record | `pnpm pr:check` (pull requests only; re-runs when the description or labels change) | the title, branch, `Closes #` or `type:` label is wrong, or the record lacks an issue line, or a line has no evidence or reason (Section 10.7). Dependabot's pull requests are exempt |
 | End-to-end    | Playwright against the built app             | any failing end-to-end test                  |
 
 **The workflow** (`.github/workflows/ci.yml`) is one job named `ci`, a stable name for branch protection and Railway's "wait for CI":
@@ -1227,7 +1228,7 @@ An issue moves from **Backlog** to **Ready** only when:
 - **One issue per branch and pull request.** Branch names: `<issue number>-<short-slug>`, e.g. `12-frontend-skeleton`.
 - **Commit messages and PR titles** use Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`, `perf:`.
 - The pull request description includes `Closes #<issue>`, so merging closes the issue and moves it to Done on the board.
-- **The pull request description is the verification record.** It has an **Acceptance criteria** section and a **Definition of done** section (Section 10.5, as listed in the issue). Each line is ticked with its evidence (a command and its result, a test name, a screenshot), or marked **N/A with a reason**. An unmet line stays unticked and says what's missing. **Checkboxes in issues stay unticked:** issues are generated from `tools/backlog/issues.md`, and editing them on GitHub would make the verification script report them.
+- **The pull request description is the verification record.** It has an **Acceptance criteria** section and a **Definition of done** section (Section 10.5, as listed in the issue). Each line is ticked with its evidence (a command and its result, a test name, a screenshot), or marked **N/A with a reason**. An unmet line stays unticked and says what's missing. Each line is copied from the issue word for word, so CI can match it (`pnpm pr:check`, Section 10.2); bold and a final full stop may differ. **Checkboxes in issues stay unticked:** issues are generated from `tools/backlog/issues.md`, and editing them on GitHub would make the verification script report them.
 - **Pre-flight check, before writing code:** re-read the issue as it is on GitHub now, every section and decision named in its Scope and Traceability, Sections 10.5–10.7 and 15, and `AGENTS.md`. Rules are checked against their current text, never from memory. A conflict found here stops the work until it's resolved (`AGENTS.md`, "Stop and ask").
 - **Pre-merge check, before merging:**
   - Re-read the rule behind each definition-of-done line before ticking it, and quote the evidence.

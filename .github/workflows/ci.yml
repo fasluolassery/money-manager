@@ -2,12 +2,14 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
   push:
     branches: [main]
 
 permissions:
   contents: read
   issues: read
+  pull-requests: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -56,6 +58,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: pnpm backlog:verify
+
+      - name: Pull request record
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: pnpm pr:check
 
       - name: Lint and format
         run: pnpm exec biome ci .
