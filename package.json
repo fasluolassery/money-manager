@@ -13,6 +13,7 @@
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:api": "pnpm -r --if-present run test:api",
     "lint": "biome check .",
     "format": "biome check --write .",
     "prepare": "husky"
