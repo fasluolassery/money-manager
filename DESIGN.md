@@ -937,7 +937,7 @@ A change reaches production only after passing every gate below, in order.
 ### 10.1 Gate 1: before each commit (my machine)
 
 - **husky** runs a pre-commit hook, which uses **lint-staged** to run `biome check --write` on the staged files only.
-- The same hook runs **gitleaks** on the staged changes, so a password, token or API key can't be committed.
+- The same hook runs **gitleaks** on the staged changes, so a password, token or API key can't be committed. gitleaks is a separate program installed on the machine (README prerequisites); if it's missing, the hook stops with a message saying how to install it, rather than silently skipping the scan.
 - Formatting is fixed automatically; lint errors and detected secrets block the commit.
 
 ### 10.2 Gate 2: pull request CI (GitHub Actions)
