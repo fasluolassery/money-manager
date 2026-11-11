@@ -843,11 +843,11 @@ Better Auth handles every step of the OAuth exchange. The app only adds the firs
 | Concern          | Choice                                         |
 | ---------------- | ---------------------------------------------- |
 | Styling          | Tailwind CSS                                   |
-| UI components    | shadcn/ui (copied into the repo, editable)     |
+| UI components    | shadcn/ui (copied into the repo, editable); which primitive serves which need is fixed in UI.md 5.5 |
 | Server data      | TanStack Query                                 |
 | Routing          | React Router                                   |
 | Forms            | React Hook Form + the shared Zod schemas       |
-| Charts           | Recharts                                       |
+| Charts           | Recharts, through shadcn/ui's Chart components (UI.md 5.5) |
 | PWA              | `vite-plugin-pwa`                              |
 | Animation        | Motion (`motion`), loaded lazily (UI 6.1)      |
 | Bottom sheets    | shadcn/ui Drawer (vaul)                        |
