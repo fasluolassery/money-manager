@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  issues: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -47,6 +48,14 @@ jobs:
           echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
           "$RUNNER_TEMP/gitleaks" git --redact --no-banner --verbose --log-opts="${BASE_SHA}..${HEAD_SHA}"
+
+      - name: Docs and traceability
+        run: pnpm docs:check
+
+      - name: Issues match the backlog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: pnpm backlog:verify
 
       - name: Lint and format
         run: pnpm exec biome ci .
