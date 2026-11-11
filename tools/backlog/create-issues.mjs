@@ -170,11 +170,17 @@ if (process.argv.includes("--verify")) {
     if (l.milestone !== issue.milestone) problems.push(`#${n} milestone: live "${l.milestone}" vs "${issue.milestone}"`);
     const a = [...l.labels].sort().join("|"), b = [...issue.labels].sort().join("|");
     if (a !== b) problems.push(`#${n} labels: live [${a}] vs [${b}]`);
-    if (l.state !== "open") problems.push(`#${n} is ${l.state}`);
+    if (l.state !== "open" && l.state !== "closed") problems.push(`#${n} has unexpected state "${l.state}"`);
   }
   const known = new Set(Object.values(created));
   for (const l of live) if (!known.has(l.number)) problems.push(`#${l.number} exists on GitHub but not in the backlog: ${l.title}`);
-  console.log(problems.length ? problems.join("\n") : `OK: all ${issues.length} issues match GitHub exactly`);
+  const tracked = live.filter((l) => known.has(l.number));
+  const closed = tracked.filter((l) => l.state === "closed").length;
+  console.log(
+    problems.length
+      ? problems.join("\n")
+      : `OK: all ${issues.length} issues match GitHub exactly (${tracked.length - closed} open, ${closed} closed)`,
+  );
   process.exit(problems.length ? 1 : 0);
 }
 
