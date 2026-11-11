@@ -664,7 +664,7 @@ The active section uses `primary` for its icon and label; the others use `text-m
 | Splash screen (installed app) | the app icon on the light background colour, generated from the manifest; nothing extra |
 | Version | shown at the bottom of Settings as "Version 0.3.0", from the release version (DESIGN 10.7) |
 
-If the name changes, every row here, the manifest and the Google consent screen (DESIGN 7.5) change together.
+If the name changes, every row here, the manifest, the Google consent screen (DESIGN 7.5), and the GitHub repository's description and `money-manager` topic change together. Renaming the repository itself is optional and separate.
 
 ## 5. Components and their states
 
