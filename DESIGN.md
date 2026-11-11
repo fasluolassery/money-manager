@@ -212,8 +212,8 @@ Technical decisions, `D-28` onward; product decisions `D-01`–`D-27` are in SPE
 
 ### 1.23 Engineering principles as checkable rules
 
-- **ID:** D-50. **Decided:** 2026-11-11.
-- **Chosen:** single responsibility, no duplication, YAGNI, composition, strong types and defensive engineering written as checkable rules (Section 15): cognitive complexity at most 15; copy-paste detection with jscpd; size limits checked in review; branded types for money, dates and ids; timeouts; tighter limits on expensive endpoints.
+- **ID:** D-50. **Decided:** 2026-11-11; changed 2026-11-12 (size limits move from review to Biome, issue #83).
+- **Chosen:** single responsibility, no duplication, YAGNI, composition, strong types and defensive engineering written as checkable rules (Section 15): cognitive complexity at most 15; copy-paste detection with jscpd; size limits enforced by Biome (at most 300 lines per file and 50 per function, blank lines not counted); branded types for money, dates and ids; timeouts; tighter limits on expensive endpoints.
 - **Why:** principles only hold when something checks them; slogans like "production grade" don't.
 - **Rejected:** *a stricter complexity limit of 10; review-only duplication checks; no numeric size guidance; plain `number` and `string` for money and ids; one rate limit for everything.*
 - **Binds:** Section 15; the tools in Section 10.4; the definition of done (Section 10.5).
@@ -1169,6 +1169,7 @@ Every rule below fails CI. A rule is only switched off for a line with a comment
 | No un-awaited promises                                  | Biome `noFloatingPromises`                        |
 | No `dangerouslySetInnerHTML`                            | Biome `noDangerouslySetInnerHtml`                 |
 | Cognitive complexity of a function at most 15 (Section 15.1) | Biome `noExcessiveCognitiveComplexity`      |
+| A file has at most 300 lines and a function at most 50, not counting blank lines (Section 15.1). A longer one that really needs it carries a `biome-ignore` comment saying why | Biome `noExcessiveLinesPerFile`, `noExcessiveLinesPerFunction` |
 | No duplicated blocks of 10+ lines or 50+ tokens, outside tests and generated files (Section 15.2) | jscpd (`check:duplication`) |
 | Money, dates and ids use branded types (Section 15.5)   | TypeScript                                        |
 | Exhaustive handling of unions (error codes, statuses, transaction types) | an `assertNever` helper in `packages/shared` in every `switch` default, checked by the compiler; plus Biome `useExhaustiveSwitchCases` |
@@ -1483,7 +1484,7 @@ Each principle is turned into a rule that can be checked, and says how it's chec
 | Rule | Checked by |
 | --- | --- |
 | A file has one job: one module layer (Section 4.1), one component, one hook, or one group of related helpers. | review |
-| **Size limits:** a file stays under about **300 lines**, a function under about **50 lines**; past that, it's split by responsibility, not by line count. | review, audit |
+| **Size limits:** a file has at most **300 lines**, a function at most **50 lines**, not counting blank lines; past that, it's split by responsibility, not by line count. | Biome `noExcessiveLinesPerFile`, `noExcessiveLinesPerFunction` |
 | **Cognitive complexity** of a function is at most **15**. | Biome `noExcessiveCognitiveComplexity` |
 | At most **3 positional parameters**; more go in one object with named fields. | review |
 | Nesting at most **3 levels**; use early returns instead of `else` after `return`. | review, complexity limit |
