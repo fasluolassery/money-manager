@@ -4,10 +4,11 @@ This document describes **how** the app is built. `SPEC.md` describes **what** i
 
 ## 1. Key decisions
 
-Each decision records what was chosen, why, and what was rejected. Changing a decision means updating its entry here first.
+Technical decisions, `D-28` onward; product decisions `D-01`–`D-27` are in SPEC.md. Each records its date, what was chosen, why, what was rejected, and what it **binds** in the code. A decision binds implementers until the entry itself is changed here first, with a new date; a changed decision keeps its ID.
 
 ### 1.1 Hosting: one always-on server on a paid managed platform
 
+- **ID:** D-28. **Decided:** 2026-11-10.
 - **Chosen:** a single Node.js server on Railway's Hobby plan, within ₹500/month (details in Section 11).
 - **Why:**
   - It stays always on, so there are no slow first loads (Spec Rule 4, the 5-second rule).
@@ -18,39 +19,49 @@ Each decision records what was chosen, why, and what was rejected. Changing a de
   - *A raw VPS:* cheaper, but adds Docker, a reverse proxy, TLS certificates and server maintenance.
   - *Free hosts that sleep when idle:* break the 5-second rule.
 - **Region:** the server and the database run in the same region, as close to India as the platform allows.
+- **Binds:** the server is a plain long-running Node process with no platform-specific code, so it can move hosts (SPEC Risks); `GET /api/health` exists for the platform (Section 11.2).
 
 ### 1.2 Frontend served by the same server
 
+- **ID:** D-29. **Decided:** 2026-11-10.
 - **Chosen:** the Express server serves the built React app as static files, and the API under `/api`.
 - **Why:** one deploy, one domain. The session cookie is always first-party (Spec Rule 11), and no CORS setup is needed.
 - **Rejected:** *a separate static host proxying `/api`:* two deploys to keep in sync, for no benefit at this size.
+- **Binds:** every non-`/api` path serves `index.html`; no CORS middleware (Section 7.4).
 
 ### 1.3 Auth: Better Auth with Google sign-in
 
+- **ID:** D-30. **Decided:** 2026-11-10.
 - **Chosen:** Better Auth, using its MongoDB adapter and Google provider.
 - **Why:**
   - TypeScript-first, and it runs inside the Express server.
   - Sessions are stored in the database, which makes "log out of all devices" (Spec Rule 10) a single delete.
   - It handles the OAuth flow, secure cookies and session expiry, which are easy to get wrong by hand.
-- **Rejected:** *Passport.js + express-session:* more pieces to wire up manually, older and less type-safe.
+- **Rejected:** *Passport.js + express-session:* more pieces to wire up manually, older and less type-safe. *Hosted auth (Clerk, Auth0):* least work, but a third party holds the user list.
+- **Binds:** app code calls Better Auth only through the auth adapter in `auth/` (Section 9.6); app data never lives in Better Auth's collections (Section 5.2).
 
 ### 1.4 Database access: official MongoDB driver + Zod
 
+- **ID:** D-31. **Decided:** 2026-11-10.
 - **Chosen:** MongoDB Atlas (free tier), accessed with the official `mongodb` driver. Data shapes are defined once as Zod schemas.
 - **Why:**
   - One Zod schema gives the TypeScript type, runtime validation of API input, and the same validation in the frontend form.
   - The driver is thin and close to how MongoDB actually works, which suits the learning goal.
   - Multi-document transactions (Spec Rule 11) work directly with the driver's sessions.
-- **Rejected:** *Mongoose:* its schemas would duplicate the Zod schemas, and it hides some of what the database is doing.
+- **Rejected:** *Mongoose:* its schemas would duplicate the Zod schemas, and it hides some of what the database is doing. *A backend-as-a-service (Supabase, Firebase):* less code, but building the backend is part of the learning goal (Spec Rule 11).
+- **Binds:** only repositories and `db/` import `mongodb` (Section 10.4); request and response shapes come from the shared Zod schemas.
 
 ### 1.5 Repo: pnpm workspaces monorepo
 
+- **ID:** D-32. **Decided:** 2026-11-10.
 - **Chosen:** one repository, managed with pnpm workspaces.
 - **Why:** frontend and backend share types and validation through a shared package. One install, one CI pipeline, and a change across both sides lands in one commit.
-- **Rejected:** *npm workspaces:* works, but pnpm is faster and stricter about undeclared dependencies.
+- **Rejected:** *npm workspaces:* works, but pnpm is faster and stricter about undeclared dependencies. *Separate repositories:* every shared change would need coordinated releases.
+- **Binds:** shared code lives only in `packages/shared` (Section 3); apps never import each other.
 
 ### 1.6 Versions and build
 
+- **ID:** D-33. **Decided:** 2026-11-11.
 - **Chosen:**
   - **Node.js 24 LTS** (pinned in `.nvmrc`, `engines.node` and CI) and **pnpm 10** (pinned with `packageManager`).
   - **The latest stable major version of every library** when issue #2 starts, including React 19, Tailwind CSS 4 (configured in CSS with `@theme`, as current shadcn/ui expects), Zod 4, React Router 7 in data mode (`createBrowserRouter`), Express 5 and Biome 2. Exact versions live in the lockfile; the README lists the majors.
@@ -69,6 +80,135 @@ Each decision records what was chosen, why, and what was rejected. Changing a de
   - *Bundling the API with tsup or esbuild:* one more tool for no benefit at this size.
   - *Running TypeScript directly in production:* production would run different code from what's type-checked.
   - *date-fns or Luxon:* adds weight to the web bundle for arithmetic a few small functions cover.
+- **Binds:** `.nvmrc`, `engines` and CI all say Node 24; every date calculation goes through `packages/shared/src/dates.ts`.
+
+### 1.7 Frontend: a React single-page app built with Vite
+
+- **ID:** D-34. **Decided:** 2026-11-10.
+- **Chosen:** React with Vite, as a single-page app (Section 8).
+- **Why:** everything is behind sign-in, so server rendering adds nothing; Vite is fast and simple.
+- **Rejected:** *Next.js:* server rendering and its own server model aren't needed, and they'd conflict with one Express server (D-29).
+- **Binds:** no server rendering; the web app is static files plus `/api` calls.
+
+### 1.8 Backend structure: feature modules, layers, plain functions
+
+- **ID:** D-35. **Decided:** 2026-11-10.
+- **Chosen:** one folder per feature, each with routes, service, repository and pure domain functions; plain factory functions wired by an awilix container (Sections 4.1–4.4).
+- **Why:** a feature's code lives together; pure domain functions make the money rules easy to test.
+- **Rejected:** *folders by layer* (all routes together); *classes*; *direct imports between services and repositories* (harder to swap fakes in tests).
+- **Binds:** the layer rules in Section 4.2, enforced by dependency-cruiser (Section 10.4); the module map in Section 14.
+
+### 1.9 Data modelling
+
+- **ID:** D-36. **Decided:** 2026-11-10.
+- **Chosen:** calendar dates as `YYYY-MM-DD` strings; MongoDB `ObjectId` ids; goal contributions and lending repayments embedded in their parent; bill cycles in their own collection; app settings in a `profiles` collection separate from Better Auth's users (Section 5).
+- **Why:** strings never shift with timezones; small lists are simpler embedded; bill cycles grow forever; keeping auth data separate keeps the auth library replaceable.
+- **Rejected:** *dates as midnight-UTC `Date` values; UUID ids; embedding everything; separate collections for everything; extending Better Auth's user with app fields.*
+- **Binds:** the collection layouts in Section 5.3.
+
+### 1.10 API style
+
+- **ID:** D-37. **Decided:** 2026-11-10.
+- **Chosen:** REST under `/api/v1`, a `{ success, data | error }` envelope, cursor pagination, amounts as integer paise (Section 6).
+- **Why:** a version prefix leaves room for change; one envelope for every response; cursors don't skip or repeat items when new ones arrive.
+- **Rejected:** *unwrapped responses; page-number pagination; amounts as rupee strings; no version prefix.*
+- **Binds:** every endpoint follows Sections 6.1–6.3.
+
+### 1.11 Duplicates and concurrent edits
+
+- **ID:** D-38. **Decided:** 2026-11-11.
+- **Chosen:** an idempotency key on every create, and a version number checked on every change (Sections 4.7, 6.4).
+- **Why:** retrying a failed save must never duplicate money; an edit from another device must never be silently lost (D-17).
+- **Rejected:** *last write wins; no duplicate protection; idempotency only for transactions.*
+- **Binds:** every create accepts `idempotencyKey`; every change sends `version`; stale changes get `409 STALE_RECORD`.
+
+### 1.12 Errors: thrown domain errors from one catalogue
+
+- **ID:** D-39. **Decided:** 2026-11-11.
+- **Chosen:** services throw typed domain errors; one shared catalogue of codes and messages; library errors translated at the boundary (Section 9).
+- **Why:** one predictable error shape, and no library text ever reaches the user.
+- **Rejected:** *Result types (neverthrow); each error writing its own message; Zod's default messages.*
+- **Binds:** Section 9.6; error codes form a closed list in `packages/shared/src/errors.ts`.
+
+### 1.13 Response shapes and API documentation
+
+- **ID:** D-40. **Decided:** 2026-11-11.
+- **Chosen:** every response passes through a response schema; the OpenAPI document is generated from the same schemas and checked in CI (Sections 6.6, 6.8).
+- **Why:** internal fields can't leak, and the API description can't drift.
+- **Rejected:** *returning database documents; a hand-written API document.*
+- **Binds:** routes respond only through `respond(res, schema, data)`.
+
+### 1.14 Sessions
+
+- **ID:** D-41. **Decided:** 2026-11-10.
+- **Chosen:** sessions stored in the database by Better Auth, in `httpOnly` cookies, expiring after 30 days without use; no list of devices, only "log out of all devices" (Section 7.3).
+- **Why:** sliding expiry means daily use never signs me out; database sessions make logging out everywhere instant.
+- **Rejected:** *fixed 30-day expiry; tokens in `localStorage`; a per-device session list.*
+- **Binds:** no session cookie caching; every request checks the session (Section 7.3).
+
+### 1.15 Frontend data and forms
+
+- **ID:** D-42. **Decided:** 2026-11-10.
+- **Chosen:** TanStack Query for server data, React Router, React Hook Form with the shared Zod schemas, no global store, no optimistic updates (Sections 8.4, 8.11).
+- **Why:** caching, retries and loading states come built in; one schema validates both sides.
+- **Rejected:** *`fetch` + `useEffect` by hand; TanStack Router; plain controlled inputs; a global state library; optimistic updates.*
+- **Binds:** Section 8.11's state and refresh rules.
+
+### 1.16 UI building blocks
+
+- **ID:** D-43. **Decided:** 2026-11-10.
+- **Chosen:** Tailwind CSS with shadcn/ui, Motion for animation, Recharts, Lucide icons, Inter self-hosted, a curated emoji list instead of a picker library (Section 8.1, UI.md).
+- **Why:** accessible components that live in the repo; one animation library for gestures and layout; no third-party font requests.
+- **Rejected:** *Material UI or Mantine; CSS-only animation; Chart.js; Phosphor icons; Google Fonts; an emoji picker library.*
+- **Binds:** design tokens only (UI.md 4), checked in CI (Section 10.2).
+
+### 1.17 Quality tooling and testing
+
+- **ID:** D-44. **Decided:** 2026-11-10; additions 2026-11-11.
+- **Chosen:** Biome; husky and lint-staged; gitleaks; dependency-cruiser; Vitest with fast-check property tests; Supertest against an in-memory MongoDB; Playwright for the critical flows only (Section 10).
+- **Why:** one fast linter and formatter; boundaries and secrets checked by machines; real database behaviour in API tests.
+- **Rejected:** *ESLint + Prettier; no pre-commit hook; Biome's restricted-imports rule for boundaries; mocking the database; end-to-end tests for every screen.*
+- **Binds:** Sections 10.1–10.4 and 10.8.
+
+### 1.18 Workflow and releases
+
+- **ID:** D-45. **Decided:** 2026-11-10.
+- **Chosen:** GitHub with Actions; a branch and pull request per issue; squash merge; Conventional Commits; release notes generated from labels (Section 10.7).
+- **Why:** the same flow a team would use, enforced by CI rather than memory.
+- **Rejected:** *committing straight to `main`; merge commits or rebase merges; release-please.*
+- **Binds:** Section 10.7; every pull request closes an issue (the planning pull request #61 is the one recorded exception).
+
+### 1.19 Environments and monitoring
+
+- **ID:** D-46. **Decided:** 2026-11-10.
+- **Chosen:** local and production only, two Atlas projects, Railway's subdomain, Railway's email alerts (Section 11).
+- **Why:** a staging copy, a custom domain and a monitoring service each cost money or upkeep a personal app doesn't need yet.
+- **Rejected:** *a staging environment; a custom domain; third-party error tracking or uptime monitoring.*
+- **Binds:** Sections 11.1 and 11.7.
+
+### 1.20 Security posture
+
+- **ID:** D-47. **Decided:** 2026-11-10; additions 2026-11-11.
+- **Chosen:** strict security headers and a Content Security Policy with no inline scripts; `SameSite=Lax` cookies plus an Origin check; `trust proxy` of 1; rate limits; `pnpm audit` in CI (Sections 7.4, 7.6).
+- **Why:** a money app's main risks are injected scripts, cross-site requests and leaked data.
+- **Rejected:** *CORS middleware; session cookie caching; trusting any number of proxies.*
+- **Binds:** Section 7.6; the built `index.html` contains no inline script.
+
+### 1.21 Google sign-in publishing
+
+- **ID:** D-48. **Decided:** 2026-11-10; logo 2026-11-11.
+- **Chosen:** the Google app stays in Testing mode, with the app name, my email and the app icon on the consent screen (Section 7.5).
+- **Why:** Testing mode keeps strangers out and needs no Google review.
+- **Rejected:** *publishing to Production* (needs a privacy policy and, with a logo, brand verification).
+- **Binds:** new users are added as Google test users.
+
+### 1.22 Traceability and drift checks
+
+- **ID:** D-49. **Decided:** 2026-11-11.
+- **Chosen:** requirement IDs in SPEC.md; issues declare the requirements and decisions they implement; `TRACEABILITY.md` is generated from the spec, the backlog source and the tests; CI fails when they drift (Section 10.2).
+- **Why:** "done" must be checkable, and docs, issues and code must not silently disagree.
+- **Rejected:** *a hand-written traceability table; keeping the checks on one machine; a separate spec repository with a pinned version* (the spec and code share one repository, so they're versioned together).
+- **Binds:** `tools/backlog/` and `tools/docs/` live in the repository; test names carry requirement IDs (Section 10.8).
 
 ## 2. Architecture overview
 
@@ -155,6 +295,10 @@ money-manager/
 │           └── dates.ts          calendar dates and timezone helpers
 ├── e2e/                          Playwright end-to-end tests (Section 10.2)
 ├── docs/openapi.json             generated API description (Section 6.8)
+├── tools/
+│   ├── backlog/                  issue source (issues.md) and the script that creates and verifies GitHub issues
+│   └── docs/                     check.mjs: references, IDs and traceability (Section 10.2)
+├── TRACEABILITY.md               generated: requirement → issues → module → tests
 ├── .github/                      CI workflow, issue and PR templates, Dependabot, release notes config
 ├── AGENTS.md                     conventions for AI agents and humans
 ├── SPEC.md
@@ -960,6 +1104,8 @@ A change reaches production only after passing every gate below, in order.
 | Build         | build `web` and `api`                        | the build fails                              |
 | Bundle budget | `size-limit` on the built web app            | initial JavaScript above **200 KB gzipped** (Section 12) |
 | API document  | `pnpm gen:openapi`, then compare             | `docs/openapi.json` differs from the code (Section 6.8) |
+| Docs and traceability | `node tools/docs/check.mjs --ci`     | a broken section reference; a duplicate or unknown requirement or decision ID; a Must requirement with no issue; `TRACEABILITY.md` out of date; a finished milestone's Must requirement with no test |
+| Issues match docs | `node tools/backlog/create-issues.mjs --verify` (read-only, with the workflow's GitHub token) | a live issue differs from `tools/backlog/issues.md` |
 | End-to-end    | Playwright against the built app             | any failing end-to-end test                  |
 
 API tests use `mongodb-memory-server`'s replica set mode, because MongoDB transactions (Section 4.6) only work on a replica set. No Docker needed.
@@ -1030,6 +1176,8 @@ A task is done when:
 - [ ] Errors are handled as in Section 9, with no third-party error text reaching the user (Section 9.6); no unhandled loading or empty states.
 - [ ] API responses go through their response schemas, with no internal fields (Section 6.6).
 - [ ] Names follow Section 10.9 and the glossary; any new dependency is justified (Section 10.10).
+- [ ] Tests carry the requirement IDs they prove (Section 10.8), and `TRACEABILITY.md` is regenerated.
+- [ ] No decision (`D-…`) was changed silently; a changed decision was updated in SPEC.md or Section 1 first.
 
 ### 10.6 Definition of ready
 
@@ -1066,7 +1214,7 @@ An issue moves from **Backlog** to **Ready** only when:
 - **Test data builders:** `buildTransaction({ ...overrides })`, `buildBill(...)` and so on, in one `test-support` folder per app. Tests set only the fields they care about.
 - **Property-based tests** (fast-check) for the shared money and date helpers and every domain module: random inputs check invariants such as "parsing a formatted amount gives back the same paise", "a bill's next due date is always later and never past its month's last day", "remaining = amount − repayments, never below zero".
 - **Time is injected:** domain tests pass "today"; API tests use a fixed clock, never the real date.
-- **Names describe behaviour:** `it("rejects a repayment larger than the remaining amount")`, not `it("works")`.
+- **Names describe behaviour and carry requirement IDs:** `it("[FR-8.4] rejects a repayment larger than the remaining amount")`, not `it("works")`. A test may carry several IDs. `tools/docs/check.mjs` reads them to build `TRACEABILITY.md`.
 - **Flaky tests are bugs:** a test that fails intermittently is fixed or deleted in the next pull request; it's never retried until it passes.
 - Tests live next to the code they test (`*.test.ts`); end-to-end tests live in `e2e/`.
 
@@ -1225,3 +1373,55 @@ CI enforces what tools can check (Section 10). This checklist covers the rest, r
 | Deployment | Health check and rollback work (Section 11.3); environment variables match Section 11.4; cost within budget (Section 11.6). |
 | Dependencies | `pnpm audit` is clean; every dependency added since the last sign-off is justified and permissively licensed (Section 10.10); nothing unused remains. |
 | Documentation | SPEC, DESIGN and UI.md describe what was built; the Risks section in SPEC.md is reviewed. |
+| Traceability | `TRACEABILITY.md` is current; every Must requirement of a finished milestone has at least one test carrying its ID (Section 10.8). |
+
+## 14. Module map
+
+Who owns what, so a rule has exactly one home. "Owns" means the module is the only place that writes that data or implements that rule. Requirement IDs are from SPEC.md; `TRACEABILITY.md` is generated from this table, the issues and the tests.
+
+### 14.1 Feature modules (`apps/api/src/modules/`)
+
+| Module | Owns | Does not own | Depends on | Requirements | How tested |
+| --- | --- | --- | --- | --- | --- |
+| `users` | `profiles`; first sign-in setup (`ensureProfile`); `GET`/`PATCH /me`; the backup export; account deletion | sessions and Google accounts (Better Auth); category contents | `categories` repository (default categories); every repository (backup, deletion) | FR-9.8, FR-9.14, FR-10.3–FR-10.5, FR-10.12, FR-13.1–FR-13.4 | API: `/me`, backup contains everything and nothing of other users, deletion leaves nothing |
+| `categories` | `categories`; the default set; the built-in Lending category; reassignment on delete | transactions' and bills' other fields | `transactions` and `bills` repositories (reassignment) | FR-5.2–FR-5.8, FR-8.9 | API: uniqueness, type lock, reassignment with rollback |
+| `transactions` | `transactions` writes for manual entries; the Trash; payee suggestions | totals and figures (`reports`); creating bill or lending transactions (their modules) | `categories` repository (validation) | FR-4.1–FR-4.14, FR-5.1, FR-5.10, FR-9.1, FR-9.3, FR-9.6, FR-9.7, FR-9.10, FR-9.25–FR-9.27 | API: validation, idempotency, versions, Trash; end-to-end: add, edit, delete |
+| `reports` | every money figure: balance, spent, income, left over, top categories, comparison, trend; `/reports/*` and `/home` | any write | `transactions`, `categories`, `bills`, `lending` repositories; `users` (timezone, opening balance) | FR-1.1, FR-5.9, FR-5.11–FR-5.16, FR-8.15, FR-9.13–FR-9.24, FR-12.3 | unit and property tests on the counting rules; API with fixture months |
+| `bills` | `bills`, `billCycles`; due-date rules; pay, skip, undo, pause, resume | storing transactions (writes through the `transactions` repository) | `transactions`, `categories` repositories; `users` (timezone) | FR-7.1–FR-7.19, FR-9.28 | unit and property tests on due dates; API with rollback; end-to-end: pay a bill |
+| `lending` | `lendingRecords` and repayments; settled and overdue rules; person suggestions | the Lending category (`categories`); storing transactions | `transactions`, `categories` repositories; `users` (timezone) | FR-8.1–FR-8.8, FR-8.10–FR-8.14, FR-8.16, FR-9.28 | unit and property tests on remaining and settled; API with rollback |
+| `goals` | `goals` and contributions; status rules | the balance and transactions (contributions never touch them) | `users` (timezone) | FR-6.1–FR-6.12, FR-9.28 | unit and property tests on statuses; API |
+
+### 14.2 Platform parts
+
+| Part | Owns | Requirements |
+| --- | --- | --- |
+| `auth/` (adapter) | sign-in, sessions, log out, log out everywhere, through Better Auth | FR-2.3, FR-10.8, FR-10.9 |
+| `middleware/` | `requireAuth`, Origin check, rate limits, validation, errors | FR-2.4, FR-10.7, FR-10.10 |
+| `db/` | client, transactions helper, indexes, validators, driver-error translation | FR-2.1, FR-9.9, FR-9.11, FR-9.12, FR-11.1 |
+| Deployment (Section 11) | the cloud database and the always-on server | FR-2.2, FR-10.1, FR-10.2 |
+| `app.ts`, `main.ts` | serving the web app, headers, caching, health | FR-10.6, FR-10.11, FR-11.2, FR-11.3 |
+| `packages/shared` | money and date helpers, schemas, error catalogue | FR-9.2, FR-9.4, FR-9.5, FR-14.1–FR-14.6 |
+| `apps/web` | every screen, component and flow (UI.md) | FR-3.1–FR-3.8, FR-4.6–FR-4.9, FR-12.1–FR-12.7 |
+
+### 14.3 Dependency direction
+
+Services may use **other modules' repositories**; repositories never use another module. So every dependency points from a service to a repository, and there are no cycles. dependency-cruiser enforces this (Section 10.4).
+
+```mermaid
+flowchart LR
+    subgraph Services
+        US[users] ; CS[categories] ; TS[transactions] ; RS[reports] ; BS[bills] ; LS[lending] ; GS[goals]
+    end
+    subgraph Repositories
+        UR[(profiles)] ; CR[(categories)] ; TR[(transactions)] ; BR[(bills + billCycles)] ; LR[(lendingRecords)] ; GR[(goals)]
+    end
+    US --> UR & CR & TR & BR & LR & GR
+    CS --> CR & TR & BR
+    TS --> TR & CR
+    RS --> TR & CR & BR & LR & UR
+    BS --> BR & TR & CR & UR
+    LS --> LR & TR & CR & UR
+    GS --> GR & UR
+```
+
+**Build order** follows the same direction (SPEC Rule 15): users and categories (first sign-in), then transactions, then reports, then bills, lending and goals, then backup and account deletion.
