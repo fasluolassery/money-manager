@@ -17,7 +17,7 @@ How to work in this repository, for AI agents and humans. This file only points 
 
 - **One issue, one branch, one pull request.** Branch `<issue>-<slug>`, e.g. `12-frontend-skeleton`.
 - **Conventional Commits** for commits and the PR title (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`, `ci:`, `perf:`).
-- The PR description contains `Closes #<issue>`. Merge with **squash merge** only.
+- The PR description contains `Closes #<issue>`, and the PR carries the issue's `type:` label. Merge with **squash merge** only.
 - **Refactors go in their own PR**, never mixed with behaviour changes ([DESIGN 15.8](DESIGN.md#158-refactoring)).
 - **Docs change in the same PR** as the behaviour or design they describe. When the code is right and the docs are wrong, fix the docs; otherwise fix the code.
 - **Issues are generated, never edited on GitHub by hand.** Change `tools/backlog/issues.md`, then, from your branch and before merging, run `node tools/backlog/create-issues.mjs --update --only <key>` and re-run CI; CI fails while they disagree. Adding an issue to a milestone changes that milestone's sign-off issue (it depends on every issue in its milestone), so update the sign-off too.
