@@ -1121,6 +1121,14 @@ A change reaches production only after passing every gate below, in order.
 | Issues match docs | `node tools/backlog/create-issues.mjs --verify` (read-only, with the workflow's GitHub token) | a live issue differs from `tools/backlog/issues.md` |
 | End-to-end    | Playwright against the built app             | any failing end-to-end test                  |
 
+**The workflow** (`.github/workflows/ci.yml`) is one job named `ci`, a stable name for branch protection and Railway's "wait for CI":
+
+- It has read-only repository permissions and doesn't keep the checkout's credentials.
+- Third-party actions are pinned to a full commit SHA, with the version in a comment; Dependabot updates them (Section 10.4).
+- gitleaks is downloaded at a pinned version and checked against a SHA-256 hash written in the workflow before it runs.
+- On a pull request it scans the pull request's commits; on a push to `main`, the pushed commits.
+- A newer push to the same pull request cancels the older run; runs on `main` are never cancelled.
+
 API tests use `mongodb-memory-server`'s replica set mode, because MongoDB transactions (Section 4.6) only work on a replica set. No Docker needed.
 
 **End-to-end tests** (Spec Rule 16):
