@@ -66,7 +66,7 @@ Technical decisions, `D-28` onward; product decisions `D-01`–`D-27` are in SPE
   - **Node.js 24 LTS** (pinned in `.nvmrc`, `engines.node` and CI) and **pnpm 10** (pinned with `packageManager`). `.npmrc` sets `engine-strict=true`, so installing on any other Node version fails with a clear message instead of half-working.
   - **The latest stable major version of every library** when issue #2 starts, including React 19, Tailwind CSS 4 (configured in CSS with `@theme`, as current shadcn/ui expects), Zod 4, React Router 7 in data mode (`createBrowserRouter`), Express 5 and Biome 2. Exact versions live in the lockfile; the README lists the majors.
   - **ES modules everywhere** (`"type": "module"`), TypeScript `strict`.
-  - **TypeScript project references, built with `tsc -b`:** `packages/shared` and `apps/api` compile to their own `dist/` folders (JavaScript plus type declarations). The API uses `moduleResolution: "NodeNext"`; the web app uses `"Bundler"` and Vite builds it, reading `shared` through its package exports.
+  - **TypeScript project references, built with `tsc -b`:** `packages/shared` and `apps/api` compile to their own `dist/` folders (JavaScript plus type declarations). Each has a `tsconfig.build.json` that builds `dist/` without test files, and a `tsconfig.json`, used by the editor and `pnpm typecheck`, that also checks the tests. The API uses `moduleResolution: "NodeNext"`; the web app uses `"Bundler"` and Vite builds it, reading `shared` through its package exports.
   - **Production start:** `node apps/api/dist/main.js`.
   - **Dates:** no date library. "Today in a timezone" uses the built-in `Intl.DateTimeFormat` with `timeZone`; calendar dates are `YYYY-MM-DD` strings with their arithmetic in `packages/shared/src/dates.ts` (Section 5.1).
 - **Why:**
@@ -1236,6 +1236,7 @@ An issue moves from **Backlog** to **Ready** only when:
 - **Names describe behaviour and carry requirement IDs:** `it("[FR-8.4] rejects a repayment larger than the remaining amount")`, not `it("works")`. A test may carry several IDs. `tools/docs/check.mjs` reads them to build `TRACEABILITY.md`.
 - **Flaky tests are bugs:** a test that fails intermittently is fixed or deleted in the next pull request; it's never retried until it passes.
 - Tests live next to the code they test (`*.test.ts`); end-to-end tests live in `e2e/`.
+- **One root `vitest.config.ts`** runs `shared`, `api` and `web` as Vitest projects and finds tests only under each workspace's `src/` (never compiled copies in `dist/`). `pnpm test` runs them all; `pnpm test:coverage` applies the 90% line and branch thresholds to `*.domain.ts` files only (Section 10.2), including domain files no test imports.
 
 ### 10.9 Naming conventions
 
