@@ -87,8 +87,8 @@ Each flow lists the steps on a phone. Laptop flows are the same, with dialogs in
 
 **Shortcuts:**
 
-- **Phone:** swipe a row left to reveal **Delete**; a full swipe deletes immediately. Both show the same Undo toast.
-- **Laptop:** hovering a row shows a **⋯** menu with Edit and Delete.
+- **Touch:** swipe a row left to reveal **Delete**; a full swipe deletes immediately. Both show the same Undo toast.
+- **Mouse:** hovering a row shows a **⋯** menu with Edit and Delete.
 - Every shortcut is also reachable without gestures (through the edit sheet), for keyboard and screen reader users.
 
 **Bill and lending transactions** can't be swiped. Tapping one opens a read-only sheet with a link to its bill or lending record (Spec Rule 9).
@@ -622,6 +622,7 @@ Tailwind's default breakpoints, with exactly three layouts:
 - Content never grows wider than 1120px (Section 4.3); wider screens add space around it.
 - Sheets become centred dialogs from `md` up (Section 5.3, `ResponsiveSheet`).
 - Layout depends only on width, never on the device type.
+- **Wording used across SPEC.md, DESIGN.md, this document and the issues:** "on phones" means the phone layout (below `md`) and "on laptops" means `md` and up, unless a sentence names the wide layout (`lg`). The exception is **input behaviour**, which follows the input method, not the width: swipe gestures and the number keypad apply to touch input, hover menus to a mouse.
 
 ### 4.9 Navigation icons
 
@@ -684,7 +685,7 @@ A spinner is used **only** inside a busy button. Everything else uses skeletons.
 - **`Amount`**: the only way an amount is displayed. Handles ₹ formatting and signs exactly as Spec Rule 14: `+` and the `income` colour for income; no sign for expenses and totals; `+` or `−` in normal colour for "left over"; `−` in normal colour for a negative balance. Tabular figures; sizes match the type styles (Section 4.2).
 - **`MoneyInput`**: ₹ prefix, native decimal keyboard (`inputmode="decimal"`), Indian digit grouping shown live as you type, converts to paise (DESIGN 8.5). In the Add sheet it uses `amount-xl`.
 - **`CategoryTile`** and **`CategoryPicker`**: emoji (28px) above the name; 4 per row on phones; at least 72px tall; selected state from 5.2. Names longer than the tile end with "…"; the full name is the tile's accessible label. The picker orders by recent use (Spec Rule 4).
-- **`TransactionRow`**: category emoji, title (payee, or category name if no payee), subtitle (category · note), `Amount` on the right, an optional source badge. Swipe-to-delete on phones (UI 2.2).
+- **`TransactionRow`**: category emoji, title (payee, or category name if no payee), subtitle (category · note), `Amount` on the right, an optional source badge. Swipe-to-delete with touch input (UI 2.2).
 - **`ProgressBar`**: for goals and lending; `primary` fill on a `primary-soft` track, with the value as text next to it.
 - **`Badge`**: `upcoming` (`primary-soft`), `overdue` (`alert-soft` with `alert` text), `paused` (`surface-muted`), source badges `Bill` / `Lending` (`surface-muted`).
 
@@ -698,7 +699,7 @@ A spinner is used **only** inside a busy button. Everything else uses skeletons.
 
 **Containers**
 
-- **`ResponsiveSheet`**: shadcn/ui **Drawer** (built on vaul; drag to dismiss) on phones, **Dialog** on laptops. Every create and edit form uses it (Section 1.6).
+- **`ResponsiveSheet`**: shadcn/ui **Drawer** (built on vaul; drag to dismiss) below the `md` breakpoint, centred **Dialog** from `md` up (Section 4.8). Every create and edit form uses it (Section 1.6).
 - **`Card`**: `surface`, `radius-lg`, card padding (Section 4.3). A tappable card shows the pressed state.
 - **`ConfirmDialog`**: a title saying what will happen, a sentence on the consequence, a destructive button labelled with the action ("Delete bill", never just "OK"), and **Cancel**, which has focus by default.
 

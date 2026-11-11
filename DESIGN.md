@@ -771,7 +771,7 @@ apps/web/src/
 ### 8.6 Layout and theme
 
 - **Responsive:** below Tailwind's `md` breakpoint, a bottom tab bar and a floating Add button; from `md` up, a sidebar and an Add button in the top bar (Spec Rule 12).
-- **Add transaction** opens as a bottom sheet on phones and a dialog on laptops, from any screen.
+- **Add transaction** opens from any screen as a bottom sheet below the `md` breakpoint and a centred dialog from `md` up (UI.md 4.8, 5.3).
 - **Theme:** follow device, light or dark, chosen in Settings and stored in the device's `localStorage` (it isn't sensitive). Implemented with shadcn/ui's CSS variables and a `dark` class on `<html>`, set before first paint by `theme-init.js` (Section 7.6).
 - **Accessibility:** shadcn/ui components are built on accessible primitives; every input has a label.
 
