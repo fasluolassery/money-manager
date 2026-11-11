@@ -2260,7 +2260,7 @@ key: size-limits
 title: Enforce the file and function size limits
 milestone: m1
 labels: type: chore | area: ci | size: S
-deps: biome
+deps: biome, split-backlog-script
 implements: none
 decisions: D-44, D-50
 
@@ -2270,12 +2270,35 @@ DESIGN 15.1 limits a file to about 300 lines and a function to about 50, but onl
 
 ## Scope
 
-- **First, a separate `refactor:` pull request** (DESIGN 15.8) splitting `tools/backlog/create-issues.mjs` by responsibility, so it fits the limit. Behaviour is unchanged: `--verify` still matches every issue exactly.
+- {{split-backlog-script}} first splits `tools/backlog/create-issues.mjs` in its own `refactor:` pull request (DESIGN 15.8), so it fits the limit.
 - Then `biome.json`: `noExcessiveLinesPerFile` (300) and `noExcessiveLinesPerFunction` (50) as errors. Blank lines don't count. Generated files are excluded.
 - DESIGN 15.1 and 10.4: both limits move from review to Biome. A file or function that has a real reason to be longer uses a `biome-ignore` comment saying why (DESIGN 10.4).
 
 ## Acceptance criteria
 
-- [ ] The refactor is merged in its own pull request before the rules are switched on, and `--verify` matches every issue afterwards.
+- [ ] {{split-backlog-script}} is merged before the rules are switched on.
 - [ ] A 301-line file and a 51-line function each fail `pnpm lint` (verified, then removed).
 - [ ] `pnpm lint` passes on the whole repo.
+
+@@@ issue
+key: split-backlog-script
+title: Split the backlog script by responsibility
+milestone: m1
+labels: type: chore | area: ci | size: S
+implements: none
+decisions: D-50
+
+## Context
+
+DESIGN 15.1 limits a file to about 300 lines. `tools/backlog/create-issues.mjs` is 318 lines, and {{size-limits}} turns the limit into a Biome rule. DESIGN 15.8 puts the refactor in its own pull request, ahead of the rule change.
+
+## Scope
+
+- Split `tools/backlog/create-issues.mjs` by responsibility: reading and validating the backlog, rendering issue bodies, and the command line that talks to GitHub.
+- Structure only: every mode (`--dry`, `--dry --order`, `--verify`, `--update`, creating) behaves exactly as before.
+
+## Acceptance criteria
+
+- [ ] Every file in `tools/backlog/` is under 300 lines and every function under 50.
+- [ ] `--dry`, `--dry --order` and the preview give byte-identical output to before the split, and a validation error gives the same message.
+- [ ] `--verify` reports every issue matching GitHub exactly.
