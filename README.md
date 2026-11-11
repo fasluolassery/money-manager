@@ -37,6 +37,8 @@ pnpm typecheck
 
 `pnpm typecheck` builds `packages/shared` and `apps/api` with TypeScript project references and checks `apps/web`. It passes on a fresh clone.
 
+`pnpm install` also installs the pre-commit hook: it scans staged changes with gitleaks, then formats and lints them with Biome ([DESIGN 10.1](DESIGN.md#101-gate-1-before-each-commit-my-machine)). Without gitleaks the hook stops and says how to install it.
+
 ## Commands
 
 Run from the repository root. Each runs across every workspace that defines it.
@@ -45,6 +47,8 @@ Run from the repository root. Each runs across every workspace that defines it.
 | --- | --- |
 | `pnpm install` | install dependencies and link the workspaces |
 | `pnpm typecheck` | type-check all workspaces |
+| `pnpm lint` | check formatting and lint rules across the repo (Biome) |
+| `pnpm format` | fix formatting and safe lint fixes across the repo |
 | `pnpm build` | build all workspaces |
 | `pnpm dev` | start every workspace's development server (from issues #8 and #12) |
 | `pnpm test` | run all tests (from issue #4) |

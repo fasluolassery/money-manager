@@ -43,7 +43,7 @@ Two kinds: **needs a fact** (look it up or try it) and **needs a decision** (I c
 | Q-02 | Branch protection on a private repo: GitHub Pro, public repo, or convention only (DESIGN 10.3) | needs a decision | #6 | open |
 | Q-03 | Railway Hobby's current price and limits | needs a fact | #15 | open |
 | Q-04 | Atlas free tier's current limits: connections, storage, backups, transactions (A-05) | needs a fact | #10, #15 | open |
-| Q-05 | Which of the Biome rules in DESIGN 10.4 exist in the installed Biome 2 version | needs a fact | #3 | open |
+| Q-05 | Which of the Biome rules in DESIGN 10.4 exist in the installed Biome 2 version | needs a fact | #3 | settled 2026-11-11: all exist in Biome 2.6.6; two are in the nursery group (DESIGN 10.4) |
 | Q-06 | Better Auth details: MongoDB adapter with Express 5, the after-sign-up hook, sliding-session settings (A-08) | needs a fact | #16 | open |
 | Q-07 | Whether the issue generator stays in the repo long-term (`tools/backlog/`) | needs a decision | — | settled 2026-11-11: it lives in `tools/backlog/` and runs in CI (D-49) |
 
