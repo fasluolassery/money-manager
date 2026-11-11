@@ -346,6 +346,8 @@ Bill, goal and lending details share one layout:
 │   Log out of all devices           │
 │ Danger zone                        │
 │   Delete account                   │  alert colour
+│                                    │
+│          Version 0.3.0             │  caption, text-muted
 └────────────────────────────────────┘
 ```
 
@@ -648,6 +650,21 @@ The active section uses `primary` for its icon and label; the others use `text-m
 - **Bar chart:** one bar per month in `primary`; the current month is drawn the same as the others, never highlighted as "good" or "bad".
 - **Dark theme:** the same palette, except slate becomes `#94A3B8` so it stays visible; every slice and bar keeps at least 3:1 contrast with `surface`, checked when the theme is built.
 - **Empty data:** a chart with nothing to show is replaced by its `EmptyState`, never drawn as an empty circle or blank axes.
+
+### 4.11 App identity
+
+| Item | Value |
+| --- | --- |
+| Name | **Money Manager** (a working name; Spec Rule 1) |
+| Short name | **MoneyMgr**, under the icon on a phone's home screen |
+| Tagline | "Know exactly where your money goes." (Section 9.3) |
+| App icon | Section 4.7 |
+| Browser tab title | the page first, then the app: `Reports · Money Manager`, `Electricity · Money Manager` for a detail screen; Home is just `Money Manager` |
+| Browser and status bar colour | matches the app background: `#FAF9FC` in light, `#17171C` in dark (Section 4.1). It follows the theme chosen in Settings, not only the device's setting |
+| Splash screen (installed app) | the app icon on the light background colour, generated from the manifest; nothing extra |
+| Version | shown at the bottom of Settings as "Version 0.3.0", from the release version (DESIGN 10.7) |
+
+If the name changes, every row here, the manifest and the Google consent screen (DESIGN 7.5) change together.
 
 ## 5. Components and their states
 

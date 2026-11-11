@@ -2,7 +2,7 @@
 
 ## Rule 1: Purpose
 
-**Name:** Money Manager.
+**Name:** Money Manager, short name **MoneyMgr** (for the phone's home screen). This is a working name: the final name is confirmed before the first production deployment (issue #15), because after that it also appears on Google's sign-in screen, in installed apps and in the app's web address. The rest of the app identity is in UI.md 4.11.
 
 **Primary goal:** Know exactly where my money goes.
 
@@ -413,7 +413,7 @@ The **Add** button (Rule 4) is a floating button on phones and a button in the t
 
 **Plan:** the bills (Rule 7), goals (Rule 6) and lending (Rule 8) lists, each with its own add button.
 
-**Settings:** categories, opening balance and date, timezone, theme (follow device, light or dark; remembered per device), download backup, log out, log out of all devices, delete account.
+**Settings:** categories, opening balance and date, timezone, theme (follow device, light or dark; remembered per device), download backup, log out, log out of all devices, delete account, and the app version.
 
 ## Rule 13: Signup flow
 

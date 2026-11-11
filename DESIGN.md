@@ -652,6 +652,7 @@ Better Auth handles every step of the OAuth exchange. The app only adds the firs
 - Only the basic `email` and `profile` scopes are requested.
 - The client id, client secret and Better Auth's signing secret are environment variables (Section 11), never committed.
 - **Publishing status: Testing.** Only Google accounts listed as test users can sign in (me, and family later). This needs no privacy policy or Google verification, and keeps strangers out. Moving to Production is a decision for later.
+- **Consent screen:** the app name (UI.md 4.11), my email as the support contact, and the app icon as the logo. In Testing mode none of this is reviewed by Google. If the app is ever published to Production, a logo means Google must verify the brand first; that's part of the later publishing decision (Spec Rule 17).
 
 ### 7.6 Security hardening
 
@@ -778,6 +779,9 @@ apps/web/src/
 ### 8.7 PWA
 
 - `vite-plugin-pwa` generates the manifest, icons and service worker. The service worker is registered from an external script file, never inline (Section 7.6).
+- **Manifest:** `name` "Money Manager", `short_name` "MoneyMgr", `theme_color` and `background_color` `#FAF9FC` (UI.md 4.11).
+- **Browser bar colour:** a `<meta name="theme-color">` tag that `theme-init.js` sets before first paint and the theme switch updates, so the bar matches the app background in the chosen theme.
+- **Tab titles:** each route sets `document.title` as UI.md 4.11 describes.
 - The service worker caches only the app's own files (HTML, JS, CSS, icons). It **never caches `/api` responses**, so the app never shows stale money data (Spec Rule 3).
 - When a new version is deployed, the app shows the "update available" message from UI.md 9.3 with a **Reload** button.
 
@@ -1045,6 +1049,7 @@ An issue moves from **Backlog** to **Ready** only when:
 - **Squash merge only.** Each pull request becomes one commit on `main`, titled with the PR title. Merge commits and rebase merges are disabled in the repo settings.
 - Merged branches are deleted automatically.
 - **Releases:** each milestone sign-off tags `vX.Y.0` and publishes a GitHub release with **automatically generated release notes**, grouped by the `type:` labels via `.github/release.yml`.
+- **The version number** lives in the root `package.json`. The sign-off pull request bumps it to the release's `X.Y.0` before tagging. Vite injects it into the web build as a constant, and Settings shows it (UI.md 4.11).
 
 ### 10.8 Testing discipline
 
