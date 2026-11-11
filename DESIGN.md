@@ -1230,6 +1230,7 @@ An issue moves from **Backlog** to **Ready** only when:
   - Confirm that CI is green on the last commit.
   - Tooling changes are also verified in a fresh clone.
   - Anything found is fixed in the pull request or recorded unticked with the reason.
+- **A pull request that changes `tools/backlog/issues.md` syncs the issues from its branch** (`create-issues.mjs --update --only <keys>`) and re-runs CI before merging. CI compares the live issues with the branch's backlog, so it stays red until they agree.
 - **Squash merge only.** Each pull request becomes one commit on `main`, titled with the PR title. Merge commits and rebase merges are disabled in the repo settings.
 - Merged branches are deleted automatically.
 - **Releases:** each milestone sign-off tags `vX.Y.0` and publishes a GitHub release with **automatically generated release notes**, grouped by the `type:` labels via `.github/release.yml`.

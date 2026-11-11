@@ -54,8 +54,15 @@ Run from the repository root. Each runs across every workspace that defines it.
 | `pnpm test` | run all tests (Vitest; each workspace is a project) |
 | `pnpm test:coverage` | run tests with coverage; fails below 90% lines or branches on `*.domain.ts` files |
 | `pnpm test:api` | run the API tests against an in-memory MongoDB (from issue #10; passes with none until then) |
-| `node tools/docs/check.mjs` | check docs, IDs and references; regenerate `TRACEABILITY.md` (`--ci` only checks) |
-| `node tools/backlog/create-issues.mjs --verify` | check every GitHub issue matches `tools/backlog/issues.md` |
+| `pnpm docs:check` | check docs, IDs, references and that `TRACEABILITY.md` is current, without changing anything (CI runs this) |
+| `node tools/docs/check.mjs` | the same checks, and regenerate `TRACEABILITY.md` |
+| `pnpm backlog:verify` | check every GitHub issue matches `tools/backlog/issues.md` (CI runs this; needs `gh` signed in) |
+
+## Changing the docs or an issue
+
+- **After changing SPEC, DESIGN, UI.md, the backlog or test names,** run `node tools/docs/check.mjs` to regenerate `TRACEABILITY.md`, and commit it. CI fails if it's out of date. Never edit `TRACEABILITY.md` by hand.
+- **To change an issue,** edit `tools/backlog/issues.md`, never the issue on GitHub. Then, from your branch, run `node tools/backlog/create-issues.mjs --update --only <key>` (and the milestone's sign-off key if you added an issue), and re-run CI. CI fails while an issue on GitHub and the backlog disagree ([DESIGN 10.7](DESIGN.md#107-git-conventions-and-releases)).
+- **To add an issue,** add an entry to `tools/backlog/issues.md` and run `node tools/backlog/create-issues.mjs` (no flag creates only missing issues), then commit the updated `tools/backlog/created.json`.
 
 ## Major versions
 
