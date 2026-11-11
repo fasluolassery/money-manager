@@ -194,7 +194,7 @@ Later issues add the token check ({{ui-tokens}}), the bundle budget ({{web-skele
 - [ ] This workflow is added through a pull request, and CI is green on that pull request.
 - [ ] A throwaway commit with a lint error, a type error and a failing test each turns CI red (verified one at a time, then reverted).
 - [ ] The job appears in GitHub as `ci`.
-- [ ] A cached run is noticeably faster than the first run.
+- [ ] The dependency cache is saved on the first run and restored on later runs. (Whether it makes runs noticeably faster is checked in {{web-skeleton}}, once installs are heavy enough to measure.)
 
 ## Out of scope
 
@@ -476,6 +476,7 @@ DESIGN 8.1, 8.2, 8.4, 8.6 and 8.8 define the frontend stack, folder layout, API 
 - [ ] `pnpm build` then starting the API serves the app at `/`.
 - [ ] `size-limit` runs in CI and fails when the budget is exceeded (verified with a deliberately large import, then removed).
 - [ ] A lazy route's code is in its own chunk in the build output.
+- [ ] A CI run that restores the dependency cache is noticeably faster than one without it (compare the Install step and the job time with the cache cleared, then restored).
 
 ## Out of scope
 
