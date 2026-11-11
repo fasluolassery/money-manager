@@ -57,6 +57,7 @@ Run from the repository root. Each runs across every workspace that defines it.
 | `pnpm docs:check` | check docs, IDs, references and that `TRACEABILITY.md` is current, without changing anything (CI runs this) |
 | `node tools/docs/check.mjs` | the same checks, and regenerate `TRACEABILITY.md` |
 | `pnpm backlog:verify` | check every GitHub issue matches `tools/backlog/issues.md` (CI runs this; needs `gh` signed in) |
+| `pnpm pr:check <number>` | check a pull request's verification record against its issue (CI runs this on every pull request; needs `gh` signed in) |
 
 ## Changing the docs or an issue
 
