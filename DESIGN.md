@@ -1,4 +1,4 @@
-# Money Management App — Technical Design
+# Money Manager — Technical Design
 
 This document describes **how** the app is built. `SPEC.md` describes **what** it does, and `UI.md` how it looks, feels and moves. When they disagree, the spec wins and the other documents are updated.
 
@@ -167,7 +167,7 @@ A feature with no complex rules (e.g. categories) may have no `domain.ts`.
 
 | Layer          | Does                                                         | Never                                    |
 | -------------- | ------------------------------------------------------------ | ---------------------------------------- |
-| **Routes**     | Parse the request, validate input with Zod, call one service function, send the response | Touch the database or contain business rules |
+| **Routes**     | Parse the request, validate input with Zod, call one service function, send the response through `respond` (Section 6.6) | Touch the database or contain business rules |
 | **Service**    | Run a use case: load data, apply domain rules, save, wrap multi-record writes in a DB transaction | Use `req` / `res`                       |
 | **Repository** | Read and write one collection, always filtered by user; translate driver errors into domain errors (Section 9.6) | Contain business rules, or let a MongoDB error escape |
 | **Domain**     | Pure functions: same input, same output, no database, no clock | Import anything except `packages/shared`, `errors.ts` and its own module's types |
@@ -193,7 +193,7 @@ Domain functions receive "today" as a parameter instead of reading the clock, so
 export function createBillsService({ billsRepository, transactionsRepository, db }: Deps) {
   return {
     async payBill(userId: string, billId: string, input: PayBillInput) { /* ... */ },
-    async skipCycle(userId: string, billId: string) { /* ... */ },
+    async skipCycle(userId: string, billId: string, input: SkipCycleInput) { /* ... */ },
   };
 }
 ```
@@ -241,7 +241,8 @@ Spec Rule 9 says an edit made on one device must never silently overwrite a newe
 - **Money:** whole numbers of paise, always positive. Whether money comes in or goes out is decided by `type` or `direction`, never by a minus sign. Zod checks every amount is an integer. The one exception is `openingBalance`, which is signed (Spec Rule 9).
 - **Calendar dates** (transaction date, due dates, deadlines): `"YYYY-MM-DD"` strings. They never shift with timezones, and they sort and compare correctly as plain strings.
 - **Timestamps** (`createdAt`, `updatedAt`, `deletedAt`, `completedAt`, `settledAt`, `lastBackupAt`): MongoDB `Date` values, in UTC.
-- **Indexes** are created by `db/indexes.ts` when the server starts.
+- **Indexes and validators** are created by `db/indexes.ts` when the server starts (Sections 5.4, 5.6).
+- **Text** is stored trimmed (Spec Rule 9); empty optional text is stored as `null`, never `""`.
 
 ### 5.2 Auth collections
 
@@ -266,7 +267,7 @@ Better Auth creates and manages its own collections for users, sessions and link
 | Field       | Type    | Notes                                   |
 | ----------- | ------- | --------------------------------------- |
 | `userId`    | string  |                                         |
-| `name`      | string  | as typed                                |
+| `name`      | string  | trimmed, original letter case kept      |
 | `nameLower` | string  | lowercase copy, for the uniqueness rule |
 | `emoji`     | string  | a single emoji, e.g. `"🍔"`             |
 | `type`      | string  | `"expense"`, `"income"` or `"both"`     |
@@ -343,7 +344,7 @@ Better Auth creates and manages its own collections for users, sessions and link
 | `repayments`    | array              | `{ _id, amount, date, transactionId, idempotencyKey }` |
 | `settledAt`     | Date or null       |                                                |
 
-Every collection also has `_id`, `createdAt`, `updatedAt` and `version` (Section 4.7). `categories`, `bills`, `goals` and `lendingRecords` also have a `idempotencyKey`, like `transactions` (Section 6.4).
+Every collection also has `_id`, `createdAt`, `updatedAt` and `version` (Section 4.7). `categories`, `bills`, `goals` and `lendingRecords` also have an `idempotencyKey`, like `transactions` (Section 6.4).
 
 ### 5.4 Indexes
 
@@ -391,7 +392,7 @@ Validators are created and updated with each collection in `db/indexes.ts` at st
 - **Dates:** calendar dates as `"YYYY-MM-DD"`, months as `"YYYY-MM"`, timestamps as ISO 8601 strings in UTC.
 - **Auth:** every `/api/v1` endpoint requires a valid session cookie, or returns `401`.
 - **Validation:** every request body and query is validated with the shared Zod schema before reaching the service.
-- **Versions:** every request that changes an existing document includes its `version` in the body (Section 4.7).
+- **Versions:** every request that changes an existing document includes its `version` in the body (Section 4.7). The exceptions are account deletion (`DELETE /me`) and `GET /me/backup`'s update of `lastBackupAt`, which can't conflict with an edit.
 - **Body size:** JSON bodies are limited to 100 KB; larger ones get `413 PAYLOAD_TOO_LARGE`.
 
 ### 6.2 Response envelope
@@ -409,8 +410,9 @@ Failure:
   "success": false,
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "Amount must be greater than 0",
-    "details": [{ "field": "amount", "message": "Must be greater than 0" }]
+    "message": "Check the highlighted fields.",
+    "details": [{ "field": "amount", "message": "Amount must be more than ₹0" }],
+    "requestId": "b7e3c1f0-2a4d-4c55-9a1e-6f2d8c0e9a31"
   }
 }
 ```
@@ -443,7 +445,7 @@ Small lists (categories, bills, goals, lending records) are returned whole, with
 
 ### 6.4 Duplicate protection
 
-**Every create request** accepts an optional `idempotencyKey`, a UUID the form generates once when it opens: transactions, categories, bills, goals, lending records, and the embedded repayments and contributions. If a request with the same `idempotencyKey` was already saved, the server returns the existing item instead of creating another. This makes **Retry** after a failed save safe (Spec Rule 4).
+**Every create request** accepts an optional `idempotencyKey`, a UUID the form generates once when it opens: transactions, categories, bills, goals, lending records, and the embedded repayments and contributions. If a request with the same `idempotencyKey` was already saved, the server returns the existing item (with `200` instead of `201`) instead of creating another; the second request's body isn't compared, because a retry always resends the same form. This makes **Retry** after a failed save safe (Spec Rule 4).
 
 - Top-level documents are protected by the unique `{ userId, idempotencyKey }` indexes (Section 5.4).
 - Embedded items (repayments, contributions) are checked by the service: if the parent already has an item with that `idempotencyKey`, it's returned before the version check, so a retry never shows a false "changed on another device".
@@ -451,7 +453,7 @@ Small lists (categories, bills, goals, lending records) are returned whole, with
 
 ### 6.5 Endpoints
 
-All paths below are under `/api/v1`.
+All paths below are under `/api/v1`. Fixed sub-paths (`/transactions/trash`, `/transactions/payees`, `/lending/people`) are registered **before** the `/:id` routes, so they're never mistaken for an id.
 
 **Profile and account**
 
@@ -505,8 +507,8 @@ Editing or deleting a bill or lending transaction directly returns `422 RULE_VIO
 
 | Method | Path                               | Does                                                     |
 | ------ | ---------------------------------- | -------------------------------------------------------- |
-| GET    | `/reports/summary?month=`          | spending per category, income vs expense, for the month  |
-| GET    | `/reports/trend?months=6`          | total spending per month, for the bar chart              |
+| GET    | `/reports/summary?month=`          | spent per category with shares, plus spent, income and left over, for the month (Spec Rule 9, Counting money) |
+| GET    | `/reports/trend?months=6`          | spent per month, for the bar chart (maximum 12 months)   |
 | GET    | `/reports/comparison?month=`       | per-category comparison with the previous month, same date range |
 
 **Bills**
@@ -556,7 +558,7 @@ Editing or deleting a bill or lending transaction directly returns `422 RULE_VIO
 The mirror of the error discipline (Section 9.6): **only fields the client needs leave the server.**
 
 - Every endpoint has a **response schema** in `packages/shared/src/schemas/`, next to its request schema. The web app uses the same schemas as its types.
-- Repositories map database documents to plain domain objects; routes send them through the endpoint's response schema with a single `respond(schema, data)` helper. Raw MongoDB documents are never sent.
+- Repositories map database documents to plain domain objects; routes send them through the endpoint's response schema with a single `respond(res, schema, data)` helper. Raw MongoDB documents are never sent.
 - **Never in a response:** `userId`, `nameLower`, `idempotencyKey`, `_id` (sent as `id`, a string), BSON types, or any Better Auth data beyond the user's name and email on `GET /me`.
 - Ids are strings, money is integer paise, calendar dates are `YYYY-MM-DD`, timestamps are ISO 8601 strings (Section 6.1).
 - In development and tests, `respond` **fails** if the data has a field the schema doesn't list, so a leak is caught immediately. In production it strips unknown fields and logs a warning.
@@ -605,7 +607,7 @@ Better Auth handles every step of the OAuth exchange. The app only adds the firs
   - the profile, with timezone `Asia/Kolkata`, opening balance 0 and `onboardedAt` null
   - the default categories and the built-in Lending category
 - `ensureProfile` does nothing if the profile already exists. The auth middleware also calls it when a signed-in user has no profile, so a failed hook can never leave a user without one.
-- While `onboardedAt` is null, the PWA shows the signup screen. It sends the device's detected timezone and the opening balance with `PATCH /me`, which sets `onboardedAt`. Skipping sends only the timezone.
+- While `onboardedAt` is null, the PWA shows the welcome screen (UI.md 3.9). **Continue** sends the timezone (detected from the device, changeable) and the opening balance and its date with `PATCH /me`; **Skip** sends only the timezone. Either way `PATCH /me` sets `onboardedAt`, so the welcome screen never appears again.
 
 ### 7.3 Sessions
 
@@ -729,7 +731,7 @@ apps/web/src/
   - on `401`, sends the user to `/sign-in`
   - on `409 STALE_RECORD`, lets the shared handler show "This was changed on another device" (Section 4.7)
 - Every feature's `api.ts` wraps the client in TanStack Query hooks. Components never call the client directly.
-- **Caching:** after a change succeeds, the related queries are invalidated and refetched. For example, creating a transaction refreshes transactions, reports and Home.
+- **Caching:** after a change succeeds, the related queries are invalidated and refetched, exactly as the table in Section 8.11 lists.
 - **Retries:** reads retry automatically up to 2 times. Writes never retry automatically. **Every create form** (transaction, category, bill, goal, lending record, repayment, contribution) generates an `idempotencyKey` when it opens; on failure it shows **Retry** and reuses that key (Section 6.4). `STALE_RECORD`, `VALIDATION_ERROR` and `RULE_VIOLATION` are never retried, because retrying can't fix them.
 - **No optimistic updates** in the first version: the screen shows what the server saved, never a guess.
 
@@ -750,7 +752,7 @@ apps/web/src/
 
 - `vite-plugin-pwa` generates the manifest, icons and service worker.
 - The service worker caches only the app's own files (HTML, JS, CSS, icons). It **never caches `/api` responses**, so the app never shows stale money data (Spec Rule 3).
-- When a new version is deployed, the app shows "Update available, reload".
+- When a new version is deployed, the app shows the "update available" message from UI.md 9.3 with a **Reload** button.
 
 ### 8.8 Local development
 
@@ -791,7 +793,8 @@ There is no global state library.
 | ----------------------------------------- | -------------------------------------------------------- |
 | Any transaction create, edit, trash, restore, permanent delete | `transactions`, `reports`, `home`, `payees`  |
 | Category create, edit, delete             | `categories`, `transactions`, `reports`, `home`, `bills` |
-| Bill create, edit, delete, pause, resume  | `bills`, `home`                                          |
+| Bill create, edit, pause, resume          | `bills`, `home`                                          |
+| Bill delete (its payments become manual transactions) | `bills`, `home`, `transactions`              |
 | Bill pay, skip, undo                      | `bills`, `transactions`, `reports`, `home`               |
 | Lending record or repayment change        | `lending`, `transactions`, `reports`, `home`, `people`   |
 | Goal or contribution change               | `goals`                                                  |
@@ -807,6 +810,7 @@ There is no global state library.
 | --------------------- | ---------------------------------------------------------- | ----------------------------- |
 | Frontend form         | shared Zod schema, for instant feedback                    | inline field errors           |
 | API `validate` middleware | the same Zod schema, on body, query and params; **this is the authority** | `400 VALIDATION_ERROR` |
+| Service: field checks that need the user's "today" | money-event dates not in the future, goal deadlines not in the past (Spec Rule 9) | `400 VALIDATION_ERROR` with field details, like any field error |
 | Service and domain    | spec rules that need data: repayment ≤ remaining, category type matches, linked transactions can't be edited directly | `422 RULE_VIOLATION` |
 | Database              | unique indexes: category names, bill cycles, idempotency keys; the repository translates the violation (Section 9.6) | `409 CONFLICT`, or the existing record for an idempotency key |
 
@@ -840,7 +844,7 @@ The server uses **Express 5**, which passes errors from async route handlers to 
 | `ZodError`                           | `400 VALIDATION_ERROR` with the schema's field messages |
 | Body parser: invalid JSON            | `400 VALIDATION_ERROR`, catalogue message |
 | Body parser: body too large          | `413 PAYLOAD_TOO_LARGE`, catalogue message |
-| Anything else                        | `500 INTERNAL_ERROR`, catalogue message "Something went wrong" |
+| Anything else                        | `500 INTERNAL_ERROR`, the catalogue's message for it |
 
 For a `500`, the full error and stack trace are logged, but the client only sees the catalogue message and the request id. A MongoDB error reaching the middleware is treated as "anything else": it means a repository failed to translate it (Section 9.6), and it's logged as a bug.
 
@@ -953,7 +957,7 @@ Every rule below fails CI. A rule is only switched off for a line with a comment
 | ------------------------------------------------------- | ------------------------------------------------- |
 | TypeScript `strict`, `noUncheckedIndexedAccess`, `noFallthroughCasesInSwitch` | `tsconfig.base.json`             |
 | No `any`                                                | Biome `noExplicitAny`                             |
-| No `console`; use the logger (Section 9.4)              | Biome `noConsole`                                 |
+| No `console`: the API uses the logger (Section 9.4); the web app logs nothing | Biome `noConsole`                 |
 | Named exports only. Exceptions: tool config files that require a default export (`vite.config.ts`, `playwright.config.ts` and similar) | Biome `noDefaultExport`, with an override for config files |
 | `process.env` read only in `apps/api/src/config.ts` (and the web's Vite config) | Biome `noProcessEnv`, with an override for those files |
 | No un-awaited promises                                  | Biome `noFloatingPromises`                        |
@@ -978,6 +982,8 @@ Some Biome rules above are newer and may be in its "nursery" group; issue #3 con
 | anything except repositories and `db/` | `mongodb`                                                    |
 | web `components/`, `pages/`      | `lib/api-client.ts` (only each feature's `api.ts` may)             |
 | any file                         | itself through a cycle (no circular imports)                       |
+
+Services still need to pass a database session into repositories (Section 4.6). `db/` re-exports it as its own `DbSession` type, so services never import `mongodb`, even for types.
 
 - **Dependabot** opens weekly pull requests for dependency updates, which go through the same CI.
 
@@ -1114,6 +1120,8 @@ flowchart LR
 | `GOOGLE_CLIENT_SECRET` | from Google Cloud                                 |
 | `LOG_LEVEL`            | `info` in production, `debug` locally             |
 | `E2E_AUTH`             | `true` only in end-to-end tests; rejected in production (Section 10.2) |
+| `RATE_LIMIT_API`       | optional; requests per 5 minutes per user on `/api/v1`, default `300` (Section 7.4) |
+| `RATE_LIMIT_AUTH`      | optional; requests per 5 minutes per IP on `/api/auth/*`, default `30` (Section 7.4) |
 
 - Production values are stored in Railway's variables. Local values live in `apps/api/.env`, which is git-ignored.
 - `apps/api/.env.example` lists every variable with no real values and is committed.
@@ -1121,7 +1129,7 @@ flowchart LR
 
 ### 11.5 Database changes
 
-- Indexes are created on startup (Section 5.1). Creating an index that already exists does nothing, so this is safe on every deploy.
+- Indexes and validators are created or updated on startup (Sections 5.1, 5.6). Creating an index that already exists does nothing, so this is safe on every deploy.
 - If a change needs existing documents rewritten, it gets a one-off script in `apps/api/scripts/migrations/`, run manually against production after downloading a backup.
 
 ### 11.6 Cost
@@ -1154,7 +1162,7 @@ Total: within the ₹500/month budget (Spec Rule 10), as long as Railway's prici
 | Initial JavaScript (gzipped)                     | ≤ 200 KB          | every pull request, by `size-limit` in CI      |
 | First screen visible (Largest Contentful Paint) on a mid-range Android phone, 4G | ≤ 2.5 s | Lighthouse mobile run at each milestone sign-off |
 | API response time, 95th percentile               | ≤ 300 ms          | from request durations in the logs, at each milestone sign-off |
-| Add expense, from tapping Add to "Saved"         | < 5 s             | timed by hand on my phone (Spec Rule 4)         |
+| Add expense, from tapping Add to the "Expense saved" toast | < 5 s   | timed by hand on my phone (Spec Rule 4)         |
 
 **Keeping inside the budget:**
 

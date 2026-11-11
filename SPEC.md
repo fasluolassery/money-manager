@@ -1,6 +1,8 @@
-# Money Management App — Spec
+# Money Manager — Spec
 
 ## Rule 1: Purpose
+
+**Name:** Money Manager.
 
 **Primary goal:** Know exactly where my money goes.
 
@@ -246,7 +248,11 @@ The Lending category cannot be renamed or deleted.
 
 - **Money** is stored as an integer number of the smallest unit (paise), never as a floating-point number. ₹125.50 is stored as `12550`.
 - **Amounts:** every amount (transactions, bills, goal targets, contributions, lending records, repayments) follows Rule 4's amount validation: greater than 0, at most 2 decimal places, at most ₹1,00,00,000. The **opening balance** is the one exception: it can be zero or negative (e.g. starting in debt), down to −₹1,00,00,000.
-- **Dates of money events** (transactions, contributions, lending records, repayments, the opening balance date) can't be in the future. **Due dates and deadlines** can.
+- **Dates of money events** (transactions, contributions, lending records, repayments, the opening balance date) can't be in the future.
+- **Due dates and deadlines** can be in the future, with these limits:
+  - A bill's next due date can be any date; if it's already past, the bill shows as overdue.
+  - A lending record's due date can't be before the record's own date.
+  - A goal's deadline can't be in the past at the moment I set or change it.
 - **Text limits:**
 
   | Field                     | Length        |
@@ -369,7 +375,7 @@ The Express server also serves the built frontend, so the app and the API share 
 **Constraints from earlier rules:**
 
 - Money is stored as integers in paise (Rule 9).
-- Actions that write more than one record (paying, skipping or undoing a bill cycle, recording or changing a loan or repayment, reassigning a category) must succeed or fail as a whole, using database transactions.
+- Actions that write more than one record (paying, skipping or undoing a bill cycle, recording or changing a lending record or repayment, reassigning a category) must succeed or fail as a whole, using database transactions.
 - The API checks on every request that the data belongs to the logged-in user (Rule 10).
 - The frontend and the API must be served from the **same site**. Otherwise browsers treat the session cookie as a third-party cookie and may block it.
 - The server must stay always on. A host that sleeps when idle is ruled out, because a slow first load breaks the 5-second rule (Rule 4).
@@ -407,16 +413,16 @@ The **Add** button (Rule 4) is a floating button on phones and a button in the t
 ## Rule 13: Signup flow
 
 1. I sign in with Google.
-2. On first sign-in, a user is created with:
-   - the default categories (Rule 5) and the built-in Lending category
-   - the timezone detected from my device
-3. I'm asked for an opening balance (default ₹0) and its date (default today). I can skip this step and set it later in Settings.
-4. I land on the Home screen.
+2. On first sign-in, my account is created with the default categories (Rule 5), the built-in Lending category, and the timezone `Asia/Kolkata`.
+3. The welcome screen shows the timezone detected from my device (I can change it) and asks for an opening balance (default ₹0) and its date (default today).
+4. **Continue** saves all three. **Skip** saves only the timezone; I can set the opening balance later in Settings.
+5. I land on the Home screen. The welcome screen never appears again.
 
 ## Rule 14: Formatting and calendar
 
 - **Money** is shown with the ₹ symbol and Indian digit grouping: ₹1,00,000. Paise are shown only when non-zero: ₹1,250 and ₹1,250.50.
 - **Negative figures** (only the balance, the opening balance and "left over" can be negative) are shown with a minus sign, in the normal text colour, never red: −₹2,000. Expenses are never shown with a minus sign; they are positive amounts of a different type.
+- **Signs:** income amounts get a `+` (in the income colour). "Left over" is a difference, so it gets `+` when positive and `−` when negative, both in the normal text colour. Every other figure (expenses, totals, the balance when positive) has no sign.
 - **Dates** are shown as `10 Nov 2026` in lists and `10/11/2026` (DD/MM/YYYY) in forms.
 - **Month** means the calendar month, from the 1st to the last day, in my timezone.
 - The app's language is English.
@@ -486,6 +492,13 @@ These are deliberately **not** built in the first version. Any of them can be ad
 - Multiple currencies (Rule 9)
 - CSV export and restoring from a backup file (Rule 10)
 - Payday-based months (Rule 14)
+- Production publishing of the Google sign-in app; it stays in Testing mode (DESIGN 7.5)
+- A list of signed-in devices; only "log out of all devices" (Rule 10)
+- Optimistic updates in the UI (DESIGN 8.4)
+- Vibration and sound feedback (UI.md 7)
+- A formal WCAG target or audit; a practical baseline instead (UI.md 8)
+- Error tracking and uptime monitoring services (DESIGN 9.4, 11.7)
+- A staging environment and a custom domain (DESIGN 11.1, 11.6)
 
 ## Risks
 

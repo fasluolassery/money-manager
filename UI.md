@@ -1,4 +1,4 @@
-# Money Management App — UI and UX
+# Money Manager — UI and UX
 
 This document describes how the app **looks, feels and behaves** for the person using it. `SPEC.md` defines what the app does and `DESIGN.md` how it's built; when this document conflicts with the spec, the spec wins and this document is updated.
 
@@ -25,7 +25,7 @@ The app has a warm, playful personality, in the spirit of Monzo and Notion:
 - Rounded shapes, soft colours and generous corner radius.
 - Every category has an **emoji icon** (e.g. 🍔 Food, 🚌 Transport), chosen by me and changeable.
 - Copy is warm and plain, never jargon (Section 9).
-- **Small celebrations for good moments**: completing a savings goal, settling a loan, paying a bill on time. Never for spending.
+- **Small celebrations for good moments**: completing a savings goal, settling a lending record, paying a bill on time. Never for spending.
 
 ### 1.4 Calm about money
 
@@ -34,7 +34,7 @@ Money is stressful; the app is not.
 - Facts are shown neutrally. Spending a lot is shown as a number, not as a warning.
 - **Expenses** use normal text colour with no sign. **Income** is green with a `+` sign.
 - **Negative figures** (a negative balance or "left over") use normal text colour with a minus sign (−₹2,000), never red (Spec Rule 14).
-- Red or amber is used **only** for things that are actually overdue (bills, lending, goal deadlines), never for spending amounts.
+- Red is used **only** for things that are actually overdue (bills, lending records, goal deadlines), for delete actions, and for form error messages. Never for spending amounts or negative figures.
 - The app never shames, scolds or judges.
 
 ### 1.5 Comfortable and one-handed
@@ -67,7 +67,7 @@ Each flow lists the steps on a phone. Laptop flows are the same, with dialogs in
 2. The amount field is focused with the number keypad open. Type the amount.
 3. Tap a category tile in the grid below the amount.
 4. Tap **Save**.
-5. The sheet closes; a toast shows "Saved · Undo".
+5. The sheet closes; a toast shows "Expense saved · Undo".
 
 **Taps:** Add, category, Save. Two taps after typing the amount, within Spec Rule 4's limit of three.
 
@@ -96,16 +96,16 @@ Each flow lists the steps on a phone. Laptop flows are the same, with dialogs in
 ### 2.3 First run
 
 1. **Sign in with Google** on `/sign-in`.
-2. **Welcome** screen: "Hi Save", opening balance (default ₹0) and its date. **Continue** or **Skip** (Spec Rule 13).
+2. **Welcome** screen: "Hi Save", the detected timezone (changeable), opening balance (default ₹0) and its date. **Continue** or **Skip** (Spec Rule 13).
 3. **Home** with a friendly empty state: an illustration, "Let's track your first expense", and a large **Add your first expense** button that opens the Add sheet.
 4. After the first transaction, Home shows its normal content.
 
 ### 2.4 Pay a bill
 
-1. On Home, the **Upcoming bills** card lists bills due soon. Tap **Pay** on one.
+1. On Home, the **Bills due** card lists upcoming and overdue bills. Tap **Pay** on one.
 2. A dialog shows the amount, prefilled and editable (Spec Rule 7).
-3. Tap **Confirm**.
-4. Toast: "Electricity paid · Undo". If it was paid on or before its due date, a small celebration plays (Section 7).
+3. Tap **Pay bill**.
+4. Toast: "Electricity paid · Undo". If it was paid on or before its due date, the small celebration plays (Section 6.4).
 
 **Undo** undoes the cycle (Spec Rule 7, History and undo).
 
@@ -124,7 +124,7 @@ Each flow lists the steps on a phone. Laptop flows are the same, with dialogs in
 
 ### 2.7 Check this month's spending
 
-1. On Home, tap the **This month** card.
+1. On Home, tap the top card (balance and **Spent in November**).
 2. Reports opens for the current month (Spec Rule 12).
 
 ## 3. Wireframes
@@ -135,7 +135,7 @@ Low-fidelity layouts: they fix **what goes where**, not colours or exact sizes (
 
 ```text
 ┌────────────────────────────────────┐
-│ Hi Save                        ⚙︎  │
+│ Hi Save                            │
 │                                    │
 │ ┌────────────────────────────────┐ │
 │ │ Balance          ₹42,300       │ │  small line
@@ -179,7 +179,9 @@ Low-fidelity layouts: they fix **what goes where**, not colours or exact sizes (
 └────────────────────────────────────┘
 ```
 
-Tapping the top card opens Reports for this month (flow 2.7).
+Tapping the top card opens Reports for this month (flow 2.7). Settings is reached from the tab bar, so Home has no separate settings button.
+
+**Tab bar labels** are the full section names: Home, Transactions, Reports, Plan, Settings, each with a Lucide icon. The sketches shorten "Transactions" to "Txns" only to fit the text width.
 
 ### 3.2 Add sheet (phone)
 
@@ -192,11 +194,11 @@ Tapping the top card opens Reports for this month (flow 2.7).
 │                                    │
 │  ┌──────┐┌──────┐┌──────┐┌──────┐  │
 │  │  🍔  ││  🚌  ││  🛍️  ││  🏠  │  │  recent first
-│  │ Food ││Trans.││ Shop ││ Rent │  │
+│  │ Food ││Trans…││ Shop…││ Rent │  │
 │  └──────┘└──────┘└──────┘└──────┘  │
 │  ┌──────┐┌──────┐┌──────┐┌──────┐  │
 │  │  🧾  ││  💊  ││  🎬  ││  📦  │  │
-│  │Bills ││Health││ Fun  ││Other │  │
+│  │Bills ││Health││Ente… ││Other │  │
 │  └──────┘└──────┘└──────┘└──────┘  │
 │                                    │
 │  More: payee, note, date        ⌄  │
@@ -213,7 +215,7 @@ Tapping the top card opens Reports for this month (flow 2.7).
 
 ```text
 ┌────────────────────────────────────┐
-│ Transactions               🔍  ⚲   │  search, filters
+│ Transactions            🔍  ⚲  ⋯   │  search, filters, menu (Trash)
 │ [This month ▾] [All categories ▾]  │  active filters as chips
 │                                    │
 │ Today                      ₹1,250  │  daily spending total
@@ -349,7 +351,7 @@ Bill, goal and lending details share one layout:
 
 ```text
 ┌──────────────┬──────────────────────────────────────────────────┐
-│ Money Mgr    │  Hi Save                            [＋ Add]      │
+│ Money Manager│  Hi Save                            [＋ Add]      │
 │              │                                                  │
 │ ⌂ Home       │  ┌──────────────────────┐ ┌──────────────────────┐│
 │ ☰ Txns       │  │ Balance ₹42,300      │ │ Bills due            ││
@@ -379,7 +381,7 @@ From the `md` breakpoint up: a sidebar instead of tabs, the Add button in the to
 │        [ illustration ]            │   │ As of                              │
 │                                    │   │ [Today] [Yesterday] [Pick a date]  │
 │                                    │   │                                    │
-│ ┌────────────────────────────────┐ │   │ Timezone: Asia/Kolkata (detected)  │
+│ ┌────────────────────────────────┐ │   │ Timezone: Asia/Kolkata    [Change] │
 │ │  G  Continue with Google       │ │   │                                    │
 │ └────────────────────────────────┘ │   │ ┌────────────────────────────────┐ │
 │                                    │   │ │           Continue             │ │
@@ -518,18 +520,18 @@ Semantic tokens: components use the meaning (`income`, `alert`), never the raw c
 | `primary-foreground` | `#FFFFFF` | `#1C1A22` | text on `primary`                              |
 | `primary-soft`     | `#EDE9FE` | `#2E2547` | selected tile, "upcoming" badge, progress track  |
 | `income`           | `#15803D` | `#4ADE80` | **income amounts only**, with a `+` sign         |
-| `alert`            | `#DC2626` | `#F87171` | **overdue only**, and destructive actions        |
+| `alert`            | `#DC2626` | `#F87171` | **overdue items**, delete actions, form error messages |
 | `alert-soft`       | `#FEF2F2` | `#3A1F22` | background of overdue badges                     |
 
 **Rules (Section 1.4):**
 
 - Expense amounts use `text`. They are never red.
 - `income` is used only for income amounts.
-- `alert` is used only for overdue items and destructive buttons (Delete, Delete account).
+- `alert` is used only for overdue items, delete actions (Delete, Delete account) and form error messages.
 - Negative figures (a negative balance or "left over") use `text` with a minus sign, never `alert` (Spec Rule 14).
 - "Upcoming" is not a problem, so it uses `primary-soft`, not `alert`.
 
-**Chart palette** (categories in charts, in this order): violet `#8B5CF6`, teal `#14B8A6`, amber `#F59E0B`, pink `#EC4899`, sky `#0EA5E9`, lime `#84CC16`, orange `#F97316`, slate `#64748B`. Red and green are deliberately left out so charts never look like "bad" and "good" money. Categories beyond 8 are grouped as "Other" in the pie chart.
+**Chart palette** (categories in charts, in this order): violet `#8B5CF6`, teal `#14B8A6`, amber `#F59E0B`, pink `#EC4899`, sky `#0EA5E9`, lime `#84CC16`, orange `#F97316`, slate `#64748B`. Red and green are deliberately left out so charts never look like "bad" and "good" money. Categories beyond the 8 largest are grouped into one slice called "Everything else" in the pie chart (not "Other", which is a real default category). The category list below the chart always shows every category.
 
 **Contrast:** every text token meets WCAG AA (4.5:1) on `background` and `surface` in both themes; verified with a contrast checker when the theme is built (Section 8).
 
@@ -587,14 +589,16 @@ A 4px scale: `1` = 4px, `2` = 8, `3` = 12, `4` = 16, `5` = 20, `6` = 24, `8` = 3
 
 Illustrations appear in:
 
-| Where                                   | Message (Section 9)                       |
+| Where                                   | Message (exact text in Section 9.3)       |
 | --------------------------------------- | ----------------------------------------- |
-| Home, first run                         | "Let's track your first expense"          |
-| Transactions, empty                     | "Nothing here yet"                        |
-| Search or filters with no results       | "No matches. Try a different search."     |
-| Bills, Goals, Lending tabs, empty       | one invitation each, e.g. "No bills yet"  |
-| Trash, empty                            | "Trash is empty"                          |
-| Page failed to load, 404                | "Something went wrong" / "Page not found" |
+| Sign-in                                 | the sign-in tagline                       |
+| Home, first run                         | first run                                 |
+| Transactions, empty                     | transactions, empty                       |
+| Search or filters with no results       | search, no results                        |
+| Bills, Goals, Lending tabs, empty       | one invitation each                       |
+| Trash, empty                            | trash, empty                              |
+| Page failed to load                     | unexpected error                          |
+| Page not found (404)                    | page not found                            |
 
 ### 4.7 App icon
 
@@ -636,16 +640,16 @@ A spinner is used **only** inside a busy button. Everything else uses skeletons.
 
 **Money and data**
 
-- **`Amount`**: the only way an amount is displayed. Handles ₹ formatting (Spec Rule 14), tabular figures, the `+` sign and `income` colour for income, no sign for expenses, and a minus sign in normal colour for negative figures (the balance, left over). Sizes match the type styles (Section 4.2).
+- **`Amount`**: the only way an amount is displayed. Handles ₹ formatting and signs exactly as Spec Rule 14: `+` and the `income` colour for income; no sign for expenses and totals; `+` or `−` in normal colour for "left over"; `−` in normal colour for a negative balance. Tabular figures; sizes match the type styles (Section 4.2).
 - **`MoneyInput`**: ₹ prefix, native decimal keyboard (`inputmode="decimal"`), Indian digit grouping shown live as you type, converts to paise (DESIGN 8.5). In the Add sheet it uses `amount-xl`.
-- **`CategoryTile`** and **`CategoryPicker`**: emoji (28px) above the name; 4 per row on phones; at least 72px tall; selected state from 5.2. The picker orders by recent use (Spec Rule 4).
+- **`CategoryTile`** and **`CategoryPicker`**: emoji (28px) above the name; 4 per row on phones; at least 72px tall; selected state from 5.2. Names longer than the tile end with "…"; the full name is the tile's accessible label. The picker orders by recent use (Spec Rule 4).
 - **`TransactionRow`**: category emoji, title (payee, or category name if no payee), subtitle (category · note), `Amount` on the right, an optional source badge. Swipe-to-delete on phones (UI 2.2).
 - **`ProgressBar`**: for goals and lending; `primary` fill on a `primary-soft` track, with the value as text next to it.
 - **`Badge`**: `upcoming` (`primary-soft`), `overdue` (`alert-soft` with `alert` text), `paused` (`surface-muted`), source badges `Bill` / `Lending` (`surface-muted`).
 
 **Inputs**
 
-- **`TextField`** and **`TextArea`**: label above, error message below in `alert`, character counter for limited fields (note: 500).
+- **`TextField`** and **`TextArea`**: label above, error message below in `alert`, a character counter near the limit, using the limits in Spec Rule 9.
 - **`DateField`**: quick chips **Today** and **Yesterday**, plus **Pick a date**, which opens a calendar. Future dates are disabled where the spec forbids them (Spec Rule 4).
 - **`Autocomplete`**: for payee and person; built on shadcn/ui's Command; suggestions appear under the field.
 - **`SegmentedControl`**: Expense / Income, and the Plan tabs.
@@ -668,7 +672,8 @@ A spinner is used **only** inside a busy button. Everything else uses skeletons.
 | `primary`     | `primary` background                   | the one main action on a screen or sheet  |
 | `secondary`   | `surface-muted` background             | other actions                             |
 | `ghost`       | no background                          | low-priority actions, icon buttons        |
-| `destructive` | `alert` background                     | only inside `ConfirmDialog` and the danger zone |
+| `destructive` | `alert` background                     | the final confirming button in `ConfirmDialog`, and Delete account |
+| `danger-ghost` | no background, `alert` text           | buttons that start a delete: Delete in an edit sheet, Delete on a Trash row |
 | `fab`         | `primary`, `radius-full`, 56px, shadow | the floating Add button                   |
 
 A screen or sheet has **at most one** `primary` button.
@@ -749,14 +754,17 @@ Every change I make gets visible feedback. There is **no vibration and no sound*
 
 | Action                                           | Feedback                                   |
 | ------------------------------------------------ | ------------------------------------------ |
-| Save a new transaction                           | toast "Saved" · **Undo** (moves it to the Trash) |
-| Edit a transaction                               | toast "Updated"                            |
+| Save a new transaction                           | toast "Expense saved" / "Income saved" · **Undo** (moves it to the Trash) |
+| Edit a transaction                               | toast "Expense updated" / "Income updated" |
 | Delete a transaction (sheet or swipe)            | toast "Moved to Trash" · **Undo** (restores) |
 | Restore from the Trash                           | toast "Restored"                           |
+| Create or edit a category, bill, goal or lending record | toast "Food saved", "Electricity saved", "Goa trip saved", "Lending record saved" |
 | Pay a bill                                       | toast "Electricity paid" · **Undo** (undoes the cycle) |
-| Skip a bill cycle                                | toast "Skipped this month" · **Undo**      |
-| Pause / resume a bill                            | toast "Paused" / "Resumed"                 |
-| Add, edit or delete a repayment or contribution  | toast "Saved" / "Updated" / "Deleted"      |
+| Skip a bill cycle                                | toast "Electricity skipped this time" · **Undo** |
+| Pause / resume a bill                            | toast "Electricity paused" / "Electricity resumed" |
+| Add, edit or delete a repayment                  | toast "Repayment saved" / "Repayment updated" / "Repayment deleted" |
+| Add, edit or delete a contribution               | toast "Added to Goa trip" / "Contribution updated" / "Contribution deleted" |
+| Change a setting (opening balance, timezone, theme) | toast "Settings saved"                  |
 | **Delete permanently** from the Trash            | **ConfirmDialog**                          |
 | **Delete a bill, goal or lending record**        | **ConfirmDialog**, saying what else is removed or kept |
 | **Delete a category** that is in use             | **ConfirmDialog** with the "move to" picker |
@@ -808,7 +816,7 @@ shadcn/ui's components (built on Radix) handle most of the focus and keyboard be
 **Friendly and plain.** Short sentences, everyday words, talking to me as "you".
 
 - Light humour only in empty states and celebrations. Never in errors, confirmations or anything about money owed.
-- My first name only in the Home greeting and celebration messages ("Hi Save").
+- My first name only in the Home and welcome-screen greetings ("Hi Save").
 - **No emoji in text.** Emoji appear only as category icons.
 - Neutral about money (Section 1.4): describe, never judge. "You spent ₹18,450 this month", never "You overspent".
 
@@ -818,7 +826,8 @@ shadcn/ui's components (built on Radix) handle most of the focus and keyboard be
 - **Toasts name the thing in the past tense:** "Electricity paid", "Moved to Trash".
 - **Errors say what happened and what to do next,** without blame or technical words: "Couldn't save. Check your connection and try again." Never "Error 500" or "Invalid input". Error messages are written once, in the error catalogue (DESIGN 9.6), and library error text is never shown.
 - **Confirmations state the consequence:** "Delete Goa trip? Its 6 contributions will be deleted too. This can't be undone."
-- **Sentence case** everywhere ("Upcoming bills", not "Upcoming Bills").
+- **Sentence case** everywhere ("Bills due", not "Bills Due").
+- **Glossary words** from SPEC.md: "lending record", never "loan" or "debt"; "Trash", never "bin".
 - **Numbers and dates** follow Spec Rule 14. Relative dates where they're clearer: "Today", "Yesterday", "in 2 days", "3 days overdue".
 
 ### 9.3 Examples
@@ -835,9 +844,12 @@ shadcn/ui's components (built on Radix) handle most of the focus and keyboard be
 | Trash, empty                 | "Trash is empty"                                        |
 | Bill overdue badge           | "3 days overdue"                                        |
 | Goal completed               | "Goa trip complete!"                                    |
-| Loan settled                 | "All settled with Rahul"                                |
+| Lending record settled       | "All settled with Rahul"                                |
 | Save failed                  | "Couldn't save. Check your connection and try again."   |
 | Unexpected error             | "Something went wrong. Try again in a moment."          |
+| Page not found               | "This page doesn't exist."                              |
+| Sign-in failed               | "Couldn't sign you in. Try again."                      |
+| Update available             | "A new version is ready." · **Reload**                  |
 | Offline banner               | "You're offline. Changes won't save until you're back." |
 | Backup reminder              | "It's been a while since your last backup."             |
 | Delete account confirmation  | "Type 'delete my account' to permanently delete your account and all your data." |
