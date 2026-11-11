@@ -17,5 +17,9 @@ coverage/
 .DS_Store
 .idea/
 
-# Local backlog scripts
+# Local scratch files (pull request drafts and similar)
 .backlog/
+
+# Backlog tool output
+tools/backlog/body.tmp.md
+tools/backlog/preview.md

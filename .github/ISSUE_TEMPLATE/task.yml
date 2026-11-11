@@ -5,7 +5,7 @@ body:
     id: context
     attributes:
       label: Context
-      description: Why this task exists. Link the relevant SPEC.md rules and DESIGN.md sections.
+      description: Why this task exists. Link the relevant SPEC.md rules, DESIGN.md sections and UI.md sections.
     validations:
       required: true
   - type: textarea
@@ -30,6 +30,16 @@ body:
       label: Out of scope
       description: What this task deliberately does not include.
   - type: textarea
+    id: traceability
+    attributes:
+      label: Traceability
+      description: Requirement IDs this implements (FR-…, from SPEC.md) and decision IDs it follows (D-…). Write "none" if it implements no requirement. Add the issue to tools/backlog/issues.md too.
+      value: |
+        - Implements:
+        - Decisions:
+    validations:
+      required: true
+  - type: textarea
     id: dependencies
     attributes:
       label: Dependencies
@@ -44,6 +54,13 @@ body:
         - label: Tests required by Spec Rule 16 for this area are written and pass
         - label: Every CI gate passes
         - label: Works on a phone-sized and a laptop-sized screen (UI tasks)
-        - label: Errors are handled as in DESIGN.md Section 9
-        - label: SPEC.md / DESIGN.md updated if behaviour or design changed
-        - label: Merged through a pull request that closes this issue
+        - label: Matches UI.md, including tokens, states, motion, copy and the accessibility baseline (UI tasks)
+        - label: Errors are handled as in DESIGN.md Section 9; no third-party error text reaches the user (9.6)
+        - label: The code rules and import boundaries in DESIGN.md 10.4 pass
+        - label: API responses go through their response schemas, with no internal fields (DESIGN.md 6.6)
+        - label: Names follow DESIGN.md 10.9 and the glossary; any new dependency is justified (10.10)
+        - label: Tests carry the requirement IDs they prove (DESIGN.md 10.8), and TRACEABILITY.md is regenerated
+        - label: No decision (D-…) was changed silently
+        - label: Follows the engineering principles in DESIGN.md 15 (sizes, no listed code smells, no speculative code, composition, branded types)
+        - label: SPEC.md / DESIGN.md / UI.md updated if behaviour or design changed
+        - label: Merged through a squash-merged pull request that closes this issue
