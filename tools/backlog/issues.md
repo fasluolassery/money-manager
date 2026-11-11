@@ -2098,3 +2098,26 @@ UI.md 1.6 and 5 say every component is built on shadcn/ui and that one component
 ## Out of scope
 
 - Adding any shadcn/ui component to code; that happens in {{ui-components}} and {{ui-inputs}}.
+
+@@@ issue
+key: verify-closed
+title: Treat closed issues as normal in the backlog verification
+milestone: m1
+labels: type: bug | area: ci | size: S
+implements: none
+decisions: D-49
+
+## Context
+
+`node tools/backlog/create-issues.mjs --verify` reports every closed issue as a problem. Closing is what finished work does: after {{shadcn-map}} was closed by its merged pull request, the verification started failing, and it would fail after every merge from now on, which would make the CI drift check in {{docs-checks}} useless.
+
+## Scope
+
+- `--verify` accepts open and closed issues; it still compares title, body, labels and milestone for every issue, whatever its state.
+- The success message reports how many issues are open and how many closed.
+
+## Acceptance criteria
+
+- [ ] With #68 closed, `--verify` passes and reports the open and closed counts.
+- [ ] A closed issue whose body differs from `tools/backlog/issues.md` is still reported.
+- [ ] An issue on GitHub that isn't in the backlog is still reported.
