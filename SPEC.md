@@ -40,7 +40,7 @@ Two kinds: **needs a fact** (look it up or try it) and **needs a decision** (I c
 | ID | Question | Kind | Needed by | Status |
 | --- | --- | --- | --- | --- |
 | Q-01 | Final app name (Rule 1) | needs a decision | #15 | open |
-| Q-02 | Branch protection on a private repo: GitHub Pro, public repo, or convention only (DESIGN 10.3) | needs a decision | #6 | open |
+| Q-02 | Branch protection on a private repo: GitHub Pro, public repo, or convention only (DESIGN 10.3) | needs a decision | #6 | settled 2026-11-11: the repo becomes public after a pre-publication audit; protection is then enforced (#6) |
 | Q-03 | Railway Hobby's current price and limits | needs a fact | #15 | open |
 | Q-04 | Atlas free tier's current limits: connections, storage, backups, transactions (A-05) | needs a fact | #10, #15 | open |
 | Q-05 | Which of the Biome rules in DESIGN 10.4 exist in the installed Biome 2 version | needs a fact | #3 | settled 2026-11-11: all exist in Biome 2.6.6; two are in the nursery group (DESIGN 10.4) |

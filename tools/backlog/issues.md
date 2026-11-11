@@ -214,11 +214,16 @@ decisions: D-45
 
 Gate 3 (DESIGN 10.3): changes reach `main` only through pull requests with green CI. DESIGN 10.4 adds Dependabot.
 
-**Plan limitation to resolve first:** GitHub only enforces branch protection and rulesets on **private** repositories with a paid plan (GitHub Pro or higher). On GitHub Free, decide one of: upgrade to Pro, make the repo public, or follow the workflow by convention without enforcement. Record the decision in DESIGN 10.3.
+**Plan limitation, decided 2026-11-11 (SPEC Q-02):** GitHub only enforces branch protection and rulesets on private repositories with a paid plan. The repo becomes **public**, which makes protection available on GitHub Free. Making it public publishes the whole history, so a pre-publication audit comes first.
 
 ## Scope
 
-- Branch protection or a ruleset on `main` (if the plan allows): require a pull request, require the `ci` status check, block force pushes and deletion. No required reviewers.
+- **Pre-publication audit, before changing visibility:**
+  - gitleaks over the **entire** git history: every commit on every branch, not only staged changes.
+  - A search of every tracked file for personal data: email addresses, phone numbers, real names other than the GitHub username, and real financial figures, as opposed to the documented examples.
+  - Anything found is removed, or explained in the pull request, before the switch.
+- Change the repo's visibility to public; turn on GitHub secret scanning and push protection (free on public repos).
+- A ruleset on `main`: require a pull request, require the `ci` status check, block force pushes and deletion. No required reviewers.
 - `.github/pull_request_template.md`: summary, `Closes #`, then the verification record from DESIGN 10.7: an **Acceptance criteria** section and a **Definition of done** section, where each line is ticked with its evidence or marked N/A with a reason.
 - `.github/dependabot.yml`: weekly updates for npm (pnpm lockfile) and GitHub Actions.
 - Repo settings (DESIGN 10.7): squash merge only (merge commits and rebase merges disabled), PR title as the squash commit title, automatically delete merged branches.
@@ -226,10 +231,12 @@ Gate 3 (DESIGN 10.3): changes reach `main` only through pull requests with green
 
 ## Acceptance criteria
 
-- [ ] The plan decision is recorded in DESIGN 10.3.
+- [ ] The decision (public repo) is recorded in DESIGN 10.3.
+- [ ] The pre-publication audit is recorded in the pull request: the gitleaks full-history result (commits scanned, leaks found) and the personal-data search with what it found, before visibility changed.
+- [ ] The repo is public, with secret scanning and push protection on.
 - [ ] Only squash merging is offered on pull requests, and merged branches are deleted.
 - [ ] A draft release's generated notes are grouped by type.
-- [ ] If enforced: a direct push to `main` is rejected, and a pull request with red CI cannot be merged.
+- [ ] A direct push to `main` is rejected, and a pull request with red CI cannot be merged.
 - [ ] New pull requests open with the template.
 - [ ] Dependabot appears under the repo's Insights → Dependency graph → Dependabot, with no config errors.
 
@@ -2183,3 +2190,91 @@ Issues #3–#5 were verified by running things, but some definition-of-done line
 - [ ] Every generated definition of done includes "no decision changed silently" and "refactors are in their own pull request"; all issues on GitHub match (`--verify`).
 - [ ] #3's pull request has a note about the mixed refactor.
 - [ ] This pull request's own record shows the pre-flight and pre-merge checks.
+
+@@@ issue
+key: enforcement-plan
+title: Plan the rule enforcement: pull request record check, size limits, public repo
+milestone: m1
+labels: type: docs | area: ci | size: S
+implements: none
+decisions: D-45, D-50
+flags: nocode
+
+## Context
+
+Issue {{rule-checks}} added pre-flight and pre-merge checks, but they rely on discipline. On 2026-11-11 these were chosen to make the rules machine-checked where possible:
+
+- A CI check of the pull request record.
+- The DESIGN 15.1 size limits enforced by Biome.
+- Q-02 settled as a public repo, so branch protection works on GitHub Free.
+
+## Scope
+
+- New issues: {{pr-record}} and {{size-limits}}.
+- {{protection}}: the public-repo decision, with a pre-publication audit first.
+- SPEC Q-02: settled.
+- {{m1-signoff}} re-synced, since milestone 1 gains issues.
+
+## Acceptance criteria
+
+- [ ] The new issues exist on GitHub, with dependencies, acceptance criteria and traceability.
+- [ ] {{protection}} on GitHub carries the pre-publication audit and the public-repo criteria.
+- [ ] SPEC Q-02 reads settled, pointing to {{protection}}.
+- [ ] `node tools/docs/check.mjs --ci` and `node tools/backlog/create-issues.mjs --verify` pass.
+
+@@@ issue
+key: pr-record
+title: Check the pull request record in CI
+milestone: m1
+labels: type: infra | area: ci | size: M
+deps: docs-checks, protection
+implements: none
+decisions: D-45, D-50
+
+## Context
+
+DESIGN 10.7 makes the pull request description the verification record. Nothing checks it yet, so a record can be skipped, shortened or ticked without evidence. This check fails CI when the record is incomplete.
+
+## Scope
+
+- `tools/pr/check-record.mjs`, run by a step in the `ci` job on `pull_request` events, reads the pull request and its linked issue through the GitHub API with a read-only token. It checks that:
+  - the title follows Conventional Commits (DESIGN 10.7);
+  - the branch is `<issue>-<slug>`, and the description says `Closes #<same issue>`;
+  - the description has an **Acceptance criteria** and a **Definition of done** section, containing every checkbox line of the issue's sections of the same names, word for word;
+  - every ticked line has evidence after it, and every unticked line says why.
+- Whether a pull request mixes a refactor with a behaviour change stays with the pre-merge check (DESIGN 10.7), because a script can't judge it reliably.
+- The step re-runs when the description is edited (`pull_request` `edited` event).
+- Dependabot pull requests are exempt (they have no issue).
+- DESIGN 10.2 lists the step; the README says how to run it locally against a pull request number.
+
+## Acceptance criteria
+
+- [ ] Each failure is shown on a throwaway pull request, one at a time: a bad title, a mismatched `Closes #`, a missing definition-of-done line, a tick without evidence, an unticked line without a reason. Each fails with a message naming the line.
+- [ ] Editing the description to fix it turns the check green without a new commit.
+- [ ] A Dependabot pull request isn't blocked by it.
+- [ ] The step's token has only `contents: read`, `pull-requests: read` and `issues: read`.
+
+@@@ issue
+key: size-limits
+title: Enforce the file and function size limits
+milestone: m1
+labels: type: chore | area: ci | size: S
+deps: biome
+implements: none
+decisions: D-44, D-50
+
+## Context
+
+DESIGN 15.1 limits a file to about 300 lines and a function to about 50, but only review checks it. Biome 2.6.6 has `noExcessiveLinesPerFile` and `noExcessiveLinesPerFunction`, so CI can enforce both. `tools/backlog/create-issues.mjs` is already 318 lines.
+
+## Scope
+
+- **First, a separate `refactor:` pull request** (DESIGN 15.8) splitting `tools/backlog/create-issues.mjs` by responsibility, so it fits the limit. Behaviour is unchanged: `--verify` still matches every issue exactly.
+- Then `biome.json`: `noExcessiveLinesPerFile` (300) and `noExcessiveLinesPerFunction` (50) as errors. Blank lines don't count. Generated files are excluded.
+- DESIGN 15.1 and 10.4: both limits move from review to Biome. A file or function that has a real reason to be longer uses a `biome-ignore` comment saying why (DESIGN 10.4).
+
+## Acceptance criteria
+
+- [ ] The refactor is merged in its own pull request before the rules are switched on, and `--verify` matches every issue afterwards.
+- [ ] A 301-line file and a 51-line function each fail `pnpm lint` (verified, then removed).
+- [ ] `pnpm lint` passes on the whole repo.

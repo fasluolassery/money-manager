@@ -68,5 +68,8 @@
   "shadcn-map": 68,
   "verify-closed": 70,
   "verification-record": 74,
-  "rule-checks": 79
+  "rule-checks": 79,
+  "enforcement-plan": 81,
+  "pr-record": 82,
+  "size-limits": 83
 }
