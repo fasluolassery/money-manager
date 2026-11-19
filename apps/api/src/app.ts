@@ -102,7 +102,7 @@ export function createApp(
         return "info";
       },
       serializers: {
-        req: (req) => ({ method: req.method, url: req.url }),
+        req: (req) => ({ id: req.id, method: req.method, url: req.url }),
         res: (res) => ({ statusCode: res.statusCode }),
       },
     }),

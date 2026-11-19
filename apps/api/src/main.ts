@@ -1,6 +1,6 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createApp } from "./app.js";
+import { createApp, gracefulShutdown } from "./app.js";
 import { loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
 
@@ -28,11 +28,7 @@ function run(): void {
   });
 
   process.on("SIGTERM", () => {
-    logger.info("SIGTERM received, shutting down gracefully");
-    server.close(() => {
-      logger.info("Server closed");
-      process.exit(0);
-    });
+    gracefulShutdown(server, logger);
   });
 }
 

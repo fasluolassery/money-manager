@@ -51,6 +51,8 @@ describe("Security headers", () => {
     expect(csp).toContain("font-src 'self'");
     expect(csp).toContain("connect-src 'self'");
     expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("base-uri 'self'");
+    expect(csp).toContain("form-action 'self'");
     expect(csp).toContain("object-src 'none'");
   });
 
@@ -177,6 +179,9 @@ describe("Request logging", () => {
     const lastLine = lines[lines.length - 1] ?? "{}";
     const entry = JSON.parse(lastLine) as Record<string, unknown>;
 
+    expect(String((entry.req as Record<string, unknown>).id)).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
     expect((entry.req as Record<string, unknown>).method).toBe("GET");
     expect((entry.req as Record<string, unknown>).url).toBe("/api/health");
     expect((entry.res as Record<string, unknown>).statusCode).toBe(200);
