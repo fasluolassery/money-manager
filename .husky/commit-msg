@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+msg=$(head -1 "$1")
+
+# Merge commits and fixup commits pass through unchecked.
+case "$msg" in
+  Merge\ *|fixup!\ *|squash!\ *) exit 0 ;;
+esac
+
+pattern='^(feat|fix|chore|docs|test|refactor|ci|perf)(\([a-z0-9-]+\))?!?: .+'
+if ! echo "$msg" | grep -qE "$pattern"; then
+  echo "commit-msg: message must follow Conventional Commits." >&2
+  echo "  Allowed types: feat, fix, chore, docs, test, refactor, ci, perf" >&2
+  echo "  Example: feat(api): add health endpoint" >&2
+  echo "  Got: $msg" >&2
+  exit 1
+fi
