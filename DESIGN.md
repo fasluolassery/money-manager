@@ -1177,7 +1177,7 @@ Every rule below fails CI. A rule is only switched off for a line with a comment
 | No clock in domain files: no `Date.now()` or `new Date()` without arguments in `*.domain.ts` | `check:discipline` script |
 | No raw money arithmetic (`* 100`, `/ 100`, `toFixed`, `parseFloat` on amounts) outside `packages/shared/src/money.ts` | `check:discipline` script |
 
-**Biome rules, confirmed in Biome 2.6.6 (issue #3):** every rule above exists, so none needed a replacement. `noFloatingPromises` and `useExhaustiveSwitchCases` are in Biome's **nursery** group (still experimental), so Biome is pinned to an exact version, and an upgrade checks Biome's release notes for changes to those two rules. The scripts in `tools/` are command-line programs, so `noConsole` and `noProcessEnv` are off there; every other rule applies to them.
+**Biome rules, confirmed in Biome 2.6.8 (issue #3, verified again at 2.6.8):** every rule above exists, so none needed a replacement. `noFloatingPromises` and `useExhaustiveSwitchCases` are in Biome's **nursery** group (still experimental), so Biome is pinned to an exact version, and an upgrade checks Biome's release notes for changes to those two rules. The scripts in `tools/` are command-line programs, so `noConsole` and `noProcessEnv` are off there; every other rule applies to them.
 
 **Import boundaries** (`.dependency-cruiser.cjs`):
 
