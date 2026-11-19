@@ -53,6 +53,31 @@ Create `AGENTS.md` at the repo root that tells any agent (and any human) to:
 - Cursor-specific rule files (`.cursor/rules`). Can be added later if `AGENTS.md` isn't enough.
 
 @@@ issue
+key: cursor-rules
+title: Add Cursor rule files
+milestone: m1
+labels: type: docs | size: S
+deps: agents-md
+implements: none
+decisions: none
+
+## Context
+
+Issue {{agents-md}} (AGENTS.md) explicitly deferred Cursor-specific rule files. Cursor does not automatically read `AGENTS.md`; it only picks up `.cursor/rules/*.mdc` files. Without them, every new Cursor AI session starts cold, unaware of the project conventions, the doc hierarchy or the rules in AGENTS.md.
+
+## Scope
+
+- `.cursor/rules/00-project.mdc` with `alwaysApply: true`: instructs Cursor to read `AGENTS.md` before starting any task and states the doc hierarchy (`SPEC.md` wins over `DESIGN.md` wins over `UI.md`).
+
+## Acceptance criteria
+
+- [ ] `.cursor/rules/00-project.mdc` exists, has `alwaysApply: true`, and tells Cursor to read `AGENTS.md` before starting a task.
+
+## Out of scope
+
+- Per-file or per-glob rules; those can be added when a gap is found in practice.
+
+@@@ issue
 key: monorepo
 title: Set up the pnpm monorepo skeleton
 milestone: m1
@@ -126,6 +151,30 @@ Gate 1 (DESIGN 10.1) formats and lints changed files before every commit. DESIGN
 ## Out of scope
 
 - Running Biome in CI ({{ci}}).
+
+@@@ issue
+key: commit-msg-hook
+title: Validate commit messages with a commit-msg hook
+milestone: m1
+labels: type: infra | area: ci | size: S
+deps: biome
+implements: none
+decisions: D-44
+
+## Context
+
+DESIGN 10.7 and AGENTS.md require Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`, `perf:`). CI checks the PR title format and `tools/pr/check-record.mjs` validates it, but individual commit messages are not validated locally before push. A `commit-msg` hook catches bad messages immediately, before the branch is ever pushed.
+
+## Scope
+
+- `.husky/commit-msg`: validates the commit message's first line against the same Conventional Commits pattern used in `ci.yml` and `tools/pr/check-record.mjs`. Exits non-zero with a readable message on failure, naming the allowed types. Merge commits (`Merge …`) and fixup commits (`fixup! …`) pass through unchecked.
+
+## Acceptance criteria
+
+- [ ] Committing with a message like `update stuff` is rejected locally with a readable error naming the allowed types.
+- [ ] `feat: add login` and `fix(api): handle timeout` are accepted.
+- [ ] Merge commits (`Merge branch ...`) and fixup commits (`fixup! ...`) pass through unchecked.
+- [ ] The hook works on a fresh clone after `pnpm install`, with no manual step.
 
 @@@ issue
 key: vitest
@@ -712,7 +761,7 @@ key: m1-signoff
 title: Milestone 1 sign-off
 milestone: m1
 labels: type: chore | size: S
-deps: onboarding
+deps: onboarding, cursor-rules, commit-msg-hook
 implements: FR-3.4
 decisions: D-01
 
