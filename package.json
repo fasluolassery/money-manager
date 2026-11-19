@@ -24,6 +24,11 @@
   "lint-staged": {
     "*": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
     "@vitest/coverage-v8": "5.1.0",

@@ -9,7 +9,7 @@
 | Requirements | 150 (149 Must, 1 Should) |
 | With at least one issue | 150 |
 | With a module | 150 |
-| With at least one test | 12 |
+| With at least one test | 16 |
 | Finished milestones | none yet |
 
 ## Requirements
@@ -139,16 +139,16 @@
 | FR-10.3 | Must | The app has a Download backup button that downloads all my data as one JSON file. | #51 | users | not yet |
 | FR-10.4 | Must | The file includes a format version number and the export date, so a restore feature can be added later. | #51 | users | not yet |
 | FR-10.5 | Must | If I haven't downloaded a backup in 30 days, the Home screen shows a reminder. | #52 | users | not yet |
-| FR-10.6 | Must | All traffic uses HTTPS. | #8 | app.ts, main.ts | not yet |
+| FR-10.6 | Must | All traffic uses HTTPS. | #8 | app.ts, main.ts | apps/api/src/app.test.ts<br>apps/api/src/config.test.ts |
 | FR-10.7 | Must | Access rules are enforced on the server: a user can only read or change their own data, whatever the client… | #16 | middleware/ | not yet |
 | FR-10.8 | Must | Sessions are stored in httpOnly, Secure, SameSite cookies, never in localStorage. A session expires after 3… | #16 | auth/ (adapter) | not yet |
 | FR-10.9 | Must | I can log out of all devices, which ends every session. | #53 | auth/ (adapter) | not yet |
 | FR-10.10 | Must | The API is rate limited per user and per IP address, with tighter limits on expensive or dangerous actions … | #16 | middleware/ | not yet |
-| FR-10.11 | Must | No third-party analytics or tracking. | #8 | app.ts, main.ts | not yet |
+| FR-10.11 | Must | No third-party analytics or tracking. | #8 | app.ts, main.ts | apps/api/src/app.test.ts |
 | FR-10.12 | Must | Account deletion: I can delete my account. This permanently deletes the account and all its data, after I c… | #54 | users | not yet |
 | FR-11.1 | Must | Actions that write more than one record (paying, skipping or undoing a bill cycle, recording or changing a … | #10, #37 | db/ | not yet |
-| FR-11.2 | Must | The frontend and the API must be served from the same site. Otherwise browsers treat the session cookie as … | #8 | app.ts, main.ts | not yet |
-| FR-11.3 | Must | The server must stay always on. A host that sleeps when idle is ruled out, because a slow first load breaks… | #8 | app.ts, main.ts | not yet |
+| FR-11.2 | Must | The frontend and the API must be served from the same site. Otherwise browsers treat the session cookie as … | #8 | app.ts, main.ts | apps/api/src/app.test.ts |
+| FR-11.3 | Must | The server must stay always on. A host that sleeps when idle is ruled out, because a slow first load breaks… | #8 | app.ts, main.ts | apps/api/src/app.test.ts |
 | FR-12.1 | Must | Navigation: a bottom tab bar on phones and a sidebar on laptops, with these sections: | #13 | apps/web | not yet |
 | FR-12.2 | Must | The Add button (Rule 4) is a floating button on phones and a button in the top bar on laptops, visible on e… | #13, #24 | apps/web | not yet |
 | FR-12.3 | Must | Home: | #33, #39, #45, #52 | reports, apps/web | not yet |
