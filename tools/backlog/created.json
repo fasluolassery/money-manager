@@ -72,5 +72,7 @@
   "enforcement-plan": 81,
   "pr-record": 82,
   "size-limits": 83,
-  "split-backlog-script": 90
+  "split-backlog-script": 90,
+  "cursor-rules": 97,
+  "commit-msg-hook": 98
 }
