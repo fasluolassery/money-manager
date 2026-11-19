@@ -48,7 +48,11 @@
       "linter": { "rules": { "style": { "noDefaultExport": "off" } } }
     },
     {
-      "includes": ["apps/api/src/config.ts", "apps/web/vite.config.ts"],
+      "includes": [
+        "apps/api/src/config.ts",
+        "apps/api/src/config.test.ts",
+        "apps/web/vite.config.ts"
+      ],
       "linter": { "rules": { "style": { "noProcessEnv": "off" } } }
     },
     {
