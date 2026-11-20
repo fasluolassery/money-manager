@@ -6,8 +6,16 @@ import helmet from "helmet";
 import type pino from "pino";
 import { pinoHttp } from "pino-http";
 import type { Config } from "./config.js";
+import { NotFoundError } from "./errors.js";
+import { errorHandler } from "./middleware/error-handler.js";
 
 const PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), payment=()";
+const JSON_BODY_LIMIT = "100kb";
+
+export type CreateAppOptions = {
+  /** Mount extra API routes after `/api/health` and before the `/api` 404 (tests). */
+  registerApiRoutes?: (app: express.Application) => void;
+};
 
 function helmetOptions(nodeEnv: string): Parameters<typeof helmet>[0] {
   return {
@@ -79,6 +87,7 @@ export function createApp(
   config: Config,
   logger: pino.Logger,
   webDistPath: string,
+  options: CreateAppOptions = {},
 ): express.Application {
   const app = express();
 
@@ -113,6 +122,8 @@ export function createApp(
     next();
   });
 
+  app.use(express.json({ limit: JSON_BODY_LIMIT }));
+
   app.use("/api", (_req: Request, res: Response, next: NextFunction) => {
     res.setHeader("Cache-Control", "no-store");
     next();
@@ -122,9 +133,17 @@ export function createApp(
     res.json({ status: "ok" });
   });
 
+  options.registerApiRoutes?.(app);
+
+  app.use("/api", (_req: Request, _res: Response, next: NextFunction) => {
+    next(new NotFoundError());
+  });
+
   const [serveFiles, spaFallback] = staticMiddleware(webDistPath);
   app.use(serveFiles);
   app.use(spaFallback);
+
+  app.use(errorHandler);
 
   return app;
 }
