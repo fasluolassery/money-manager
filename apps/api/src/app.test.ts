@@ -154,7 +154,11 @@ describe("SPA fallback", () => {
   it("[FR-11.2] does not serve index.html for unknown /api routes", async () => {
     const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
     const res = await request(app).get("/api/nonexistent");
-    expect(res.status).not.toBe(200);
+    expect(res.status).toBe(404);
+    expect(res.body).toMatchObject({
+      success: false,
+      error: { code: "NOT_FOUND" },
+    });
   });
 });
 

@@ -3,5 +3,6 @@ export const APP_NAME = "Money Manager";
 
 export * from "./assert-never.js";
 export * from "./dates.js";
+export * from "./errors.js";
 export * from "./money.js";
 export * from "./schemas/common.js";
