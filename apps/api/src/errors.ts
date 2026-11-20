@@ -1,9 +1,6 @@
 import { ERROR_MESSAGES, type ErrorCode, type FieldError } from "@money-manager/shared";
 
-/**
- * Domain errors thrown by services and middleware (DESIGN 9.2).
- * Classes are allowed only for errors; everything else stays as functions.
- */
+// Domain error base class (DESIGN 9.2). Classes are allowed only for errors.
 export class AppError extends Error {
   readonly status: number;
   readonly code: ErrorCode;

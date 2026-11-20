@@ -23,10 +23,7 @@ function replaceObject(target: Record<string, unknown>, source: unknown): void {
   Object.assign(target, source);
 }
 
-/**
- * Authority for request shape (DESIGN 9.1). Pass **strict** Zod object schemas
- * so unknown keys and operator-shaped values are rejected (DESIGN 7.6).
- */
+// Schemas must be strict so unknown keys and operator-shaped values are rejected (DESIGN 7.6).
 export function validate(schemas: RequestSchemas) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
