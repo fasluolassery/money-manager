@@ -53,7 +53,7 @@ Run from the repository root. Each runs across every workspace that defines it.
 | `pnpm dev` | start every workspace's development server (from issues #8 and #12) |
 | `pnpm test` | run all tests (Vitest; each workspace is a project) |
 | `pnpm test:coverage` | run tests with coverage; fails below 90% lines or branches on `*.domain.ts` files |
-| `pnpm test:api` | run the API tests against an in-memory MongoDB (from issue #10; passes with none until then) |
+| `pnpm test:api` | run API integration tests (`*.api.test.ts`) against an in-memory MongoDB replica set |
 | `pnpm docs:check` | check docs, IDs, references and that `TRACEABILITY.md` is current, without changing anything (CI runs this) |
 | `node tools/docs/check.mjs` | the same checks, and regenerate `TRACEABILITY.md` |
 | `pnpm backlog:verify` | check every GitHub issue matches `tools/backlog/issues.md` (CI runs this; needs `gh` signed in) |

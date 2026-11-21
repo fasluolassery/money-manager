@@ -26,6 +26,7 @@ export const ERROR_TEST_CONFIG: Config = {
   PORT: 3000,
   APP_URL: "http://localhost:3000",
   LOG_LEVEL: "silent",
+  MONGODB_URI: "mongodb://localhost:27017",
 };
 
 export const nameBodySchema = z
@@ -97,6 +98,7 @@ export function createErrorProbeApp(logLines?: string[]): {
       : undefined,
   );
   const app = createApp(ERROR_TEST_CONFIG, logger, webDistPath, {
+    pingDb: async () => undefined,
     registerApiRoutes: registerProbeRoutes,
   });
   return { app, webDistPath };

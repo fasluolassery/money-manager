@@ -5,6 +5,7 @@ const configSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   APP_URL: z.string().url(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+  MONGODB_URI: z.string().min(1),
 });
 
 export type Config = z.infer<typeof configSchema>;

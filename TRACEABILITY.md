@@ -9,7 +9,7 @@
 | Requirements | 150 (149 Must, 1 Should) |
 | With at least one issue | 150 |
 | With a module | 150 |
-| With at least one test | 16 |
+| With at least one test | 21 |
 | Finished milestones | none yet |
 
 ## Requirements
@@ -17,7 +17,7 @@
 | ID | Kind | Requirement | Issues | Modules | Tests |
 | --- | --- | --- | --- | --- | --- |
 | FR-1.1 | Must | The app must make it easy to record every expense and see clearly how much I spent in each category. | #34 | reports | not yet |
-| FR-2.1 | Must | Every piece of data (transactions, categories, goals, bills, lending records) belongs to a user. | #10 | db/ | not yet |
+| FR-2.1 | Must | Every piece of data (transactions, categories, goals, bills, lending records) belongs to a user. | #10 | db/ | apps/api/src/db/db.api.test.ts |
 | FR-2.2 | Must | Devices: I use the app on multiple devices (e.g. phone and laptop). My data must stay in sync across them. | #15, #28 | Deployment (Section 11) | not yet |
 | FR-2.3 | Must | Login: Sign in with Google only. Email and password login is not part of the first version, so no email-sen… | #16, #17 | auth/ (adapter) | not yet |
 | FR-2.4 | Must | A user can only ever see their own data. | #16 | middleware/ | not yet |
@@ -114,10 +114,10 @@
 | FR-9.6 | Must | Currency: Every amount is stored with a currency code. The first version only supports INR. Contributions, … | #20 | transactions | not yet |
 | FR-9.7 | Must | Dates: Transaction, contribution, repayment and due dates are calendar dates (no time of day), in the user'… | #7, #20 | transactions | packages/shared/src/dates.test.ts<br>packages/shared/src/schemas/common.test.ts |
 | FR-9.8 | Must | Timezone: Each user has a timezone (default Asia/Kolkata). The server uses it to decide what "today" is, fo… | #7, #18, #27 | users | packages/shared/src/dates.test.ts<br>packages/shared/src/schemas/common.test.ts |
-| FR-9.9 | Must | Ownership: Every record belongs to exactly one user (Rule 2). | #10 | db/ | not yet |
+| FR-9.9 | Must | Ownership: Every record belongs to exactly one user (Rule 2). | #10 | db/ | apps/api/src/db/db.api.test.ts |
 | FR-9.10 | Must | Editing on two devices: if a record was changed on another device after I opened it, my save or delete is r… | #62 | transactions | not yet |
-| FR-9.11 | Must | Timestamps: Every record has createdAt and updatedAt. | #10 | db/ | not yet |
-| FR-9.12 | Must | The app stores exactly these entities; DESIGN 5 defines their fields and storage. | #10 | db/ | not yet |
+| FR-9.11 | Must | Timestamps: Every record has createdAt and updatedAt. | #10 | db/ | apps/api/src/db/db.api.test.ts |
+| FR-9.12 | Must | The app stores exactly these entities; DESIGN 5 defines their fields and storage. | #10 | db/ | apps/api/src/db/db.api.test.ts |
 | FR-9.13 | Must | balance = opening balance + income − expenses, counting only transactions dated on or after the opening bal… | #23 | reports | not yet |
 | FR-9.14 | Must | The opening balance and its date are set at signup (Rule 13) and can be edited later. | #18, #27 | users, reports | not yet |
 | FR-9.15 | Must | Transactions dated before the opening balance date still appear in every view, but not in the balance. | #23 | reports | not yet |
@@ -146,7 +146,7 @@
 | FR-10.10 | Must | The API is rate limited per user and per IP address, with tighter limits on expensive or dangerous actions … | #16 | middleware/ | not yet |
 | FR-10.11 | Must | No third-party analytics or tracking. | #8 | app.ts, main.ts | apps/api/src/app.test.ts |
 | FR-10.12 | Must | Account deletion: I can delete my account. This permanently deletes the account and all its data, after I c… | #54 | users | not yet |
-| FR-11.1 | Must | Actions that write more than one record (paying, skipping or undoing a bill cycle, recording or changing a … | #10, #37 | db/ | not yet |
+| FR-11.1 | Must | Actions that write more than one record (paying, skipping or undoing a bill cycle, recording or changing a … | #10, #37 | db/ | apps/api/src/db/db.api.test.ts |
 | FR-11.2 | Must | The frontend and the API must be served from the same site. Otherwise browsers treat the session cookie as … | #8 | app.ts, main.ts | apps/api/src/app.test.ts |
 | FR-11.3 | Must | The server must stay always on. A host that sleeps when idle is ruled out, because a slow first load breaks… | #8 | app.ts, main.ts | apps/api/src/app.test.ts |
 | FR-12.1 | Must | Navigation: a bottom tab bar on phones and a sidebar on laptops, with these sections: | #13 | apps/web | not yet |

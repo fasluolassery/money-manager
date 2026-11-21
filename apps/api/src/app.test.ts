@@ -12,9 +12,11 @@ const TEST_CONFIG: Config = {
   PORT: 3000,
   APP_URL: "http://localhost:3000",
   LOG_LEVEL: "silent",
+  MONGODB_URI: "mongodb://localhost:27017",
 };
 
 const SILENT_LOGGER = pino({ level: "silent" });
+const OK_PING = { pingDb: async () => undefined };
 
 let webDistPath: string;
 
@@ -30,19 +32,32 @@ afterAll(() => {
   rmSync(webDistPath, { recursive: true, force: true });
 });
 
+function appUnderTest(config: Config = TEST_CONFIG, logger: pino.Logger = SILENT_LOGGER) {
+  return createApp(config, logger, webDistPath, OK_PING);
+}
+
 describe("GET /api/health", () => {
   it("[FR-11.2] returns 200 with status ok", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/api/health");
+    const res = await request(appUnderTest()).get("/api/health");
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: "ok" });
+  });
+
+  it("[FR-11.2] returns 503 when pingDb fails", async () => {
+    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath, {
+      pingDb: async () => {
+        throw new Error("db down");
+      },
+    });
+    const res = await request(app).get("/api/health");
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({ status: "unavailable" });
   });
 });
 
 describe("Security headers", () => {
   it("[FR-10.6] sets Content-Security-Policy with no inline scripts", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/api/health");
+    const res = await request(appUnderTest()).get("/api/health");
     const csp = res.headers["content-security-policy"] as string;
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("script-src 'self'");
@@ -57,20 +72,17 @@ describe("Security headers", () => {
   });
 
   it("[FR-10.6] sets X-Content-Type-Options nosniff", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/api/health");
+    const res = await request(appUnderTest()).get("/api/health");
     expect(res.headers["x-content-type-options"]).toBe("nosniff");
   });
 
   it("[FR-10.6] sets Referrer-Policy", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/api/health");
+    const res = await request(appUnderTest()).get("/api/health");
     expect(res.headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   });
 
   it("[FR-10.6] sets Permissions-Policy disabling camera, microphone, geolocation, payment", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/api/health");
+    const res = await request(appUnderTest()).get("/api/health");
     const pp = res.headers["permissions-policy"] as string;
     expect(pp).toContain("camera=()");
     expect(pp).toContain("microphone=()");
@@ -79,24 +91,19 @@ describe("Security headers", () => {
   });
 
   it("[FR-10.6] removes X-Powered-By", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/api/health");
+    const res = await request(appUnderTest()).get("/api/health");
     expect(res.headers["x-powered-by"]).toBeUndefined();
   });
 
   it("[FR-10.6] does not set HSTS in development", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/api/health");
+    const res = await request(appUnderTest()).get("/api/health");
     expect(res.headers["strict-transport-security"]).toBeUndefined();
   });
 
   it("[FR-10.6] sets HSTS only when NODE_ENV is production", async () => {
-    const prodApp = createApp(
-      { ...TEST_CONFIG, NODE_ENV: "production" },
-      SILENT_LOGGER,
-      webDistPath,
+    const res = await request(appUnderTest({ ...TEST_CONFIG, NODE_ENV: "production" })).get(
+      "/api/health",
     );
-    const res = await request(prodApp).get("/api/health");
     const hsts = res.headers["strict-transport-security"] as string;
     expect(hsts).toContain("max-age=31536000");
     expect(hsts).toContain("includeSubDomains");
@@ -105,8 +112,7 @@ describe("Security headers", () => {
 
 describe("X-Request-Id", () => {
   it("[FR-10.6] includes X-Request-Id on every response", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/api/health");
+    const res = await request(appUnderTest()).get("/api/health");
     expect(res.headers["x-request-id"]).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
     );
@@ -115,28 +121,24 @@ describe("X-Request-Id", () => {
 
 describe("Cache-Control", () => {
   it("[FR-10.6] sets no-store on API responses", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/api/health");
+    const res = await request(appUnderTest()).get("/api/health");
     expect(res.headers["cache-control"]).toBe("no-store");
   });
 
   it("[FR-10.6] sets no-cache on index.html", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/");
+    const res = await request(appUnderTest()).get("/");
     expect(res.headers["cache-control"]).toBe("no-cache");
     expect(res.status).toBe(200);
   });
 
   it("[FR-10.6] sets immutable on hashed assets", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/assets/app-abc123.js");
+    const res = await request(appUnderTest()).get("/assets/app-abc123.js");
     expect(res.headers["cache-control"]).toBe("public, max-age=31536000, immutable");
     expect(res.status).toBe(200);
   });
 
   it("[FR-10.6] sets max-age=86400 on icons and manifest", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/manifest.webmanifest");
+    const res = await request(appUnderTest()).get("/manifest.webmanifest");
     expect(res.headers["cache-control"]).toBe("public, max-age=86400");
     expect(res.status).toBe(200);
   });
@@ -144,16 +146,14 @@ describe("Cache-Control", () => {
 
 describe("SPA fallback", () => {
   it("[FR-11.2] returns index.html for non-api routes", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/some/client/route");
+    const res = await request(appUnderTest()).get("/some/client/route");
     expect(res.status).toBe(200);
     expect(res.text).toContain("<!DOCTYPE html>");
     expect(res.headers["cache-control"]).toBe("no-cache");
   });
 
   it("[FR-11.2] does not serve index.html for unknown /api routes", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
-    const res = await request(app).get("/api/nonexistent");
+    const res = await request(appUnderTest()).get("/api/nonexistent");
     expect(res.status).toBe(404);
     expect(res.body).toMatchObject({
       success: false,
@@ -171,7 +171,7 @@ describe("Request logging", () => {
       },
     };
     const loggingLogger = pino({ level: "info" }, dest);
-    const app = createApp(TEST_CONFIG, loggingLogger, webDistPath);
+    const app = appUnderTest(TEST_CONFIG, loggingLogger);
 
     await request(app)
       .get("/api/health")
@@ -199,14 +199,16 @@ describe("Request logging", () => {
 
 describe("Graceful shutdown", () => {
   it("[FR-11.3] closes the server cleanly", async () => {
-    const app = createApp(TEST_CONFIG, SILENT_LOGGER, webDistPath);
+    const app = appUnderTest();
     const server = app.listen(0);
     const exitFn = vi.fn();
 
     await new Promise<void>((resolve) => {
-      gracefulShutdown(server, SILENT_LOGGER, (code) => {
-        exitFn(code);
-        resolve();
+      gracefulShutdown(server, SILENT_LOGGER, {
+        exitFn: (code) => {
+          exitFn(code);
+          resolve();
+        },
       });
     });
 

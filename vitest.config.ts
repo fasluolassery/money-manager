@@ -1,13 +1,17 @@
 import { defineConfig } from "vitest/config";
 
-const workspace = (name: string, root: string) => ({ extends: true, test: { name, root } });
+const workspace = (name: string, root: string, exclude: string[] = []) => ({
+  extends: true,
+  test: { name, root, exclude },
+});
 
 export default defineConfig({
   test: {
     include: ["src/**/*.test.{ts,tsx}"],
     projects: [
       workspace("shared", "packages/shared"),
-      workspace("api", "apps/api"),
+      // API integration tests (`*.api.test.ts`) run via `pnpm test:api` (issue #10).
+      workspace("api", "apps/api", ["src/**/*.api.test.ts"]),
       workspace("web", "apps/web"),
     ],
     coverage: {
