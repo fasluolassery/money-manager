@@ -49,8 +49,15 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
       signal: controller.signal,
       headers: { "Content-Type": "application/json", ...init.headers },
     });
-  } catch {
+  } catch (error) {
     clearTimeout(timer);
+    // AbortError = our 15 s timeout fired (DESIGN 15.6, UI.md 9.3).
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiError(
+        "NETWORK_ERROR",
+        "That took too long. Check your connection and try again.",
+      );
+    }
     throw new ApiError("NETWORK_ERROR", ERROR_MESSAGES.NETWORK_ERROR);
   }
   clearTimeout(timer);

@@ -89,3 +89,13 @@ jobs:
 
       - name: Size limit
         run: pnpm --filter @money-manager/web size
+
+      - name: No inline scripts in built output
+        run: |
+          node -e "
+            const html = require('fs').readFileSync('apps/web/dist/index.html', 'utf8');
+            if (/<script(?![^>]*\bsrc\s*=)[^>]*>\s*\S/i.test(html)) {
+              console.error('inline script found in dist/index.html'); process.exit(1);
+            }
+            console.log('OK: no inline scripts');
+          "

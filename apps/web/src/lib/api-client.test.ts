@@ -44,7 +44,7 @@ describe("apiRequest — success", () => {
   });
 });
 
-describe("apiRequest — error handling", () => {
+describe("apiRequest — 401 and timeout", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -68,6 +68,34 @@ describe("apiRequest — error handling", () => {
     );
     await expect(apiRequest("/test")).rejects.toBeInstanceOf(ApiError);
     expect(window.location.href).toBe("/sign-in");
+  });
+
+  it("[FR-3.5] times out after 15 s with NETWORK_ERROR and the UI.md 9.3 message", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener("abort", () => {
+              reject(new DOMException("The operation was aborted.", "AbortError"));
+            });
+          }),
+      ),
+    );
+    const promise = apiRequest("/test");
+    vi.advanceTimersByTime(15_000);
+    const error = await promise.catch((e) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).code).toBe("NETWORK_ERROR");
+    expect((error as ApiError).message).toBe(
+      "That took too long. Check your connection and try again.",
+    );
+  });
+});
+
+describe("apiRequest — network and parse errors", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("[FR-3.5] turns a fetch TypeError into NETWORK_ERROR without exposing the original message", async () => {
