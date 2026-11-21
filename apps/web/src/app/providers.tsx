@@ -1,6 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LazyMotion, MotionConfig } from "motion/react";
 import { type ReactNode, useEffect } from "react";
 import { Toaster } from "sonner";
+
+// Loaded asynchronously so Motion's feature bundle stays out of the initial chunk (UI.md 6.1).
+const loadMotionFeatures = () => import("motion/react").then((m) => m.domAnimation);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,8 +46,12 @@ function ThemeWatcher() {
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeWatcher />
-      {children}
+      <LazyMotion features={loadMotionFeatures} strict>
+        <MotionConfig reducedMotion="user">
+          <ThemeWatcher />
+          {children}
+        </MotionConfig>
+      </LazyMotion>
       <Toaster />
     </QueryClientProvider>
   );
