@@ -10,21 +10,20 @@ import {
 } from "./motion.js";
 
 describe("motion tokens", () => {
-  it("durations are in ascending order and in seconds", () => {
-    expect(duration.instant).toBeLessThan(duration.fast);
-    expect(duration.fast).toBeLessThan(duration.base);
-    expect(duration.base).toBeLessThan(duration.moderate);
-    expect(duration.moderate).toBeLessThan(duration.slow);
-    // All < 1 s (seconds, not ms)
-    for (const v of Object.values(duration)) {
-      expect(v).toBeLessThan(1);
-    }
+  it("duration tokens match UI.md 6.2 values (in seconds, not ms)", () => {
+    expect(duration.instant).toBe(0.1);
+    expect(duration.fast).toBe(0.15);
+    expect(duration.base).toBe(0.2);
+    expect(duration.moderate).toBe(0.25);
+    expect(duration.slow).toBe(0.5);
   });
 
-  it("exit easing starts faster than enter easing (cubic control points)", () => {
-    // enter: cubic-bezier(0.2, 0, 0, 1) — gentle start
-    // exit:  cubic-bezier(0.4, 0, 1, 1) — faster start (higher first x control)
-    expect(easing.exit[0]).toBeGreaterThan(easing.enter[0]);
+  it("enter easing is cubic-bezier(0.2, 0, 0, 1) (UI.md 6.2)", () => {
+    expect(easing.enter).toStrictEqual([0.2, 0, 0, 1]);
+  });
+
+  it("exit easing is cubic-bezier(0.4, 0, 1, 1) (UI.md 6.2)", () => {
+    expect(easing.exit).toStrictEqual([0.4, 0, 1, 1]);
   });
 
   it("spring is a spring type with the specified stiffness and damping", () => {
@@ -73,11 +72,17 @@ describe("detailSlideIn variants", () => {
 });
 
 describe("listItem variants", () => {
-  it("hidden state collapses height to 0", () => {
-    expect(listItem.hidden).toMatchObject({ opacity: 0, height: 0 });
+  it("hidden and exit use only opacity — no height or margin (UI.md 6.5)", () => {
+    expect(listItem.hidden).toStrictEqual({ opacity: 0 });
+    const exit = listItem.exit as { opacity: number; transition: object };
+    expect(exit.opacity).toBe(0);
+    expect(exit).not.toHaveProperty("height");
+    expect(exit).not.toHaveProperty("marginBottom");
   });
 
-  it("visible state expands to auto height", () => {
-    expect((listItem.visible as { height: string }).height).toBe("auto");
+  it("exit duration is 75% of base", () => {
+    const exitDuration = (listItem.exit as { transition: { duration: number } }).transition
+      .duration;
+    expect(exitDuration).toBeCloseTo(duration.base * 0.75, 5);
   });
 });

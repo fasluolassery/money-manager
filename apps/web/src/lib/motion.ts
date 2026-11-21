@@ -67,21 +67,18 @@ export const detailSlideIn: Variants = {
 };
 
 /**
- * List item insert: fade in and expand into place.
- * List item remove: collapse out, letting neighbours slide up.
+ * List item insert/remove: opacity only (UI.md 6.5 — transform and opacity
+ * only). Callers must add the `layout` prop so Motion handles the height
+ * reflow via transforms, not direct height animation.
  */
 export const listItem: Variants = {
-  hidden: { opacity: 0, height: 0, marginBottom: 0 },
+  hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    height: "auto",
-    marginBottom: "auto",
     transition: { duration: duration.base, ease: easing.enter },
   },
   exit: {
     opacity: 0,
-    height: 0,
-    marginBottom: 0,
     transition: { duration: duration.base * 0.75, ease: easing.exit },
   },
 };
