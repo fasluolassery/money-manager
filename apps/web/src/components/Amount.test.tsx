@@ -15,7 +15,7 @@ describe("Amount", () => {
     expect(el.className).not.toContain("text-income");
   });
 
-  it("[FR-14.2] renders income with + sign and income colour", () => {
+  it("[FR-14.3] renders income with + sign and income colour", () => {
     render(<Amount paise={p(8500000)} variant="income" data-testid="amount" />);
     const el = screen.getByTestId("amount");
     expect(el.textContent).toBe("+₹85,000");
@@ -43,17 +43,17 @@ describe("Amount", () => {
     expect(el.className).not.toContain("text-income");
   });
 
-  it("[FR-14.3] renders a negative left-over with − sign and normal colour", () => {
+  it("[FR-14.2] renders a negative left-over with − sign and normal colour", () => {
     render(<Amount paise={p(-800000)} variant="left-over" data-testid="amount" />);
     const el = screen.getByTestId("amount");
-    expect(el.textContent).toContain("₹8,000");
+    expect(el.textContent).toBe("−₹8,000");
     expect(el.className).not.toContain("text-income");
   });
 
-  it("[FR-14.3] renders a negative balance with − sign and normal colour", () => {
+  it("[FR-14.2] renders a negative balance with − sign and normal colour", () => {
     render(<Amount paise={p(-50000)} variant="balance" data-testid="amount" />);
     const el = screen.getByTestId("amount");
-    expect(el.textContent).toContain("₹500");
+    expect(el.textContent).toBe("−₹500");
     expect(el.className).not.toContain("text-income");
   });
 
