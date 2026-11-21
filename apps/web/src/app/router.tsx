@@ -54,4 +54,16 @@ export const router = createBrowserRouter([
       return { Component };
     },
   },
+  // /dev/ui is tree-shaken out of production builds (import.meta.env.DEV = false).
+  ...(import.meta.env.DEV
+    ? [
+        {
+          path: "/dev/ui",
+          lazy: async () => {
+            const { default: Component } = await import("../pages/dev/DevUiPage.js");
+            return { Component };
+          },
+        },
+      ]
+    : []),
 ]);

@@ -1,6 +1,134 @@
 @import "tailwindcss";
+@import "@fontsource-variable/inter";
 
-/* Safe-area padding helpers for viewport-fit=cover (DESIGN 8.9). */
+/* ─── Semantic colour tokens (UI.md 4.1) ───────────────────────────────── */
+:root {
+  --background: #faf9fc;
+  --surface: #ffffff;
+  --surface-muted: #f3f1f8;
+  --border: #e7e4ee;
+  --text: #1c1a22;
+  --text-muted: #6b6878;
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --primary-soft: #ede9fe;
+  --income: #15803d;
+  --alert: #dc2626;
+  --alert-soft: #fef2f2;
+
+  /* Shadows — light theme: soft borders + tinted FAB (UI.md 4.5) */
+  --shadow-card-raw: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow-fab-raw: 0 4px 16px 0 rgb(124 58 237 / 0.3);
+  --shadow-modal-raw: 0 20px 60px 0 rgb(0 0 0 / 0.25);
+}
+
+/* Dark theme: soft dark-grey surfaces, no shadows (UI.md 4.1, 4.5) */
+.dark {
+  --background: #17171c;
+  --surface: #1f1f26;
+  --surface-muted: #27272f;
+  --border: #33323c;
+  --text: #f4f3f7;
+  --text-muted: #a09dad;
+  --primary: #a78bfa;
+  --primary-foreground: #1c1a22;
+  --primary-soft: #2e2547;
+  --income: #4ade80;
+  --alert: #f87171;
+  --alert-soft: #3a1f22;
+
+  --shadow-card-raw: none;
+  --shadow-fab-raw: 0 4px 16px 0 rgb(167 139 250 / 0.35);
+  --shadow-modal-raw: none;
+}
+
+/* ─── Tailwind theme (inline = reference CSS vars, not inline values) ─── */
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* Semantic tokens — available as bg-background, text-text, etc. */
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-income: var(--income);
+  --color-alert: var(--alert);
+  --color-alert-soft: var(--alert-soft);
+
+  /* shadcn/ui standard names — existing components use these */
+  --color-foreground: var(--text);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text);
+  --color-muted: var(--surface-muted);
+  --color-muted-foreground: var(--text-muted);
+  --color-accent: var(--primary-soft);
+  --color-accent-foreground: var(--primary);
+  --color-destructive: var(--alert);
+  --color-destructive-foreground: var(--primary-foreground);
+  --color-secondary: var(--surface-muted);
+  --color-secondary-foreground: var(--text);
+  --color-input: var(--border);
+  --color-ring: var(--primary);
+
+  /* Shadows */
+  --shadow-card: var(--shadow-card-raw);
+  --shadow-fab: var(--shadow-fab-raw);
+  --shadow-modal: var(--shadow-modal-raw);
+}
+
+/* ─── Shape — static values (UI.md 4.4) ─── */
+@theme {
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-sheet: 24px;
+}
+
+/* ─── Typography utilities (UI.md 4.2) ─── */
+@utility text-amount-xl {
+  font-size: 3rem;
+  line-height: 3.5rem;
+  font-weight: 600;
+}
+@utility text-display {
+  font-size: 2.5rem;
+  line-height: 2.75rem;
+  font-weight: 600;
+}
+@utility text-title {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+}
+@utility text-heading {
+  font-size: 1.125rem;
+  line-height: 1.625rem;
+  font-weight: 600;
+}
+@utility text-body {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+}
+@utility text-label {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+}
+@utility text-caption {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 400;
+}
+
+/* ─── Safe-area padding helpers for viewport-fit=cover (DESIGN 8.9) ─── */
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);
 }
