@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@money-manager/shared": "workspace:*",
+    "awilix": "^12.1.1",
     "express": "^5.0.0",
     "helmet": "^8.0.0",
     "mongodb": "^6.22.0",

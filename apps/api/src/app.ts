@@ -1,13 +1,16 @@
 import { randomUUID } from "node:crypto";
 import type { Server } from "node:http";
 import { join } from "node:path";
+import type { AwilixContainer } from "awilix";
 import express, { type NextFunction, type Request, type Response } from "express";
 import helmet from "helmet";
 import type pino from "pino";
 import { pinoHttp } from "pino-http";
 import type { Config } from "./config.js";
+import type { AppCradle } from "./container.js";
 import { NotFoundError } from "./errors.js";
 import { errorHandler } from "./middleware/error-handler.js";
+import { createUsersRoutes } from "./modules/users/users.routes.js";
 
 const PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), payment=()";
 const JSON_BODY_LIMIT = "100kb";
@@ -15,6 +18,8 @@ const JSON_BODY_LIMIT = "100kb";
 export type CreateAppOptions = {
   /** Ping the database for `/api/health` (DESIGN 11.2). */
   pingDb: () => Promise<void>;
+  /** Feature modules resolve services from this container (DESIGN 4.4). */
+  container?: AwilixContainer<AppCradle>;
   /** Mount extra API routes after `/api/health` and before the `/api` 404 (tests). */
   registerApiRoutes?: (app: express.Application) => void;
 };
@@ -152,6 +157,10 @@ export function createApp(
       res.status(503).json({ status: "unavailable" });
     }
   });
+
+  if (options.container !== undefined) {
+    app.use("/api/v1", createUsersRoutes(options.container));
+  }
 
   options.registerApiRoutes?.(app);
 

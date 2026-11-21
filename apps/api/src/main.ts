@@ -2,6 +2,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApp, gracefulShutdown } from "./app.js";
 import { loadConfig } from "./config.js";
+import { createAppContainer } from "./container.js";
 import { connectDb, type DbHandle, databaseNameFor } from "./db/client.js";
 import { ensureIndexes } from "./db/indexes.js";
 import { createLogger } from "./logger.js";
@@ -39,8 +40,11 @@ async function run(): Promise<void> {
   const db = await connectOrExit(config.MONGODB_URI, databaseNameFor(config.NODE_ENV), logger);
   await ensureIndexes(db.db);
 
+  const container = createAppContainer({ config, logger, dbHandle: db });
+
   const app = createApp(config, logger, WEB_DIST_PATH, {
     pingDb: () => db.ping(),
+    container,
   });
 
   const server = app.listen(config.PORT, () => {
