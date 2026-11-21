@@ -51,24 +51,24 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     });
   } catch {
     clearTimeout(timer);
-    throw new ApiError("NETWORK_ERROR", ERROR_MESSAGES["NETWORK_ERROR"]);
+    throw new ApiError("NETWORK_ERROR", ERROR_MESSAGES.NETWORK_ERROR);
   }
   clearTimeout(timer);
 
   if (response.status === 401) {
     window.location.href = "/sign-in";
-    throw new ApiError("UNAUTHENTICATED", ERROR_MESSAGES["UNAUTHENTICATED"]);
+    throw new ApiError("UNAUTHENTICATED", ERROR_MESSAGES.UNAUTHENTICATED);
   }
 
   let body: unknown;
   try {
     body = await response.json();
   } catch {
-    throw new ApiError("INTERNAL_ERROR", ERROR_MESSAGES["INTERNAL_ERROR"]);
+    throw new ApiError("INTERNAL_ERROR", ERROR_MESSAGES.INTERNAL_ERROR);
   }
 
   if (!isEnvelope(body)) {
-    throw new ApiError("INTERNAL_ERROR", ERROR_MESSAGES["INTERNAL_ERROR"]);
+    throw new ApiError("INTERNAL_ERROR", ERROR_MESSAGES.INTERNAL_ERROR);
   }
 
   if (body.success === true) {
