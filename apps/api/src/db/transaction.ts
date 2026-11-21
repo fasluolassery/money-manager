@@ -1,9 +1,6 @@
 import type { ClientSession, MongoClient } from "mongodb";
 
-/**
- * Runs multi-record writes as one commit (DESIGN 4.6, FR-11.1).
- * Repository functions accept an optional session so they join this block.
- */
+// Runs multi-record writes as one commit; pass the session to each repository call (DESIGN 4.6).
 export async function withTransaction<T>(
   client: MongoClient,
   work: (session: ClientSession) => Promise<T>,

@@ -1,9 +1,6 @@
 import { ObjectId } from "mongodb";
 
-/**
- * Test data builders (DESIGN 10.8). Feature builders (`buildTransaction`, …)
- * land with their feature issues; this file holds shared primitives.
- */
+// Shared test-data primitives (DESIGN 10.8).
 export function buildObjectId(overrides?: { hex?: string }): ObjectId {
   if (overrides?.hex !== undefined) return new ObjectId(overrides.hex);
   return new ObjectId();

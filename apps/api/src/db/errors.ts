@@ -17,12 +17,7 @@ export function duplicateKeyIndexName(error: MongoServerError): string | undefin
   return undefined;
 }
 
-/**
- * Translate a driver error at the repository boundary (DESIGN 9.6).
- * Duplicate key → ConflictError with a message for that index; anything else rethrown.
- * Idempotency-key lookups stay in the repository: on duplicate, call
- * `isDuplicateKeyError` then load the existing row instead of using this helper.
- */
+// Translate a duplicate-key driver error to ConflictError; rethrow anything else (DESIGN 9.6).
 export function translateDriverError(
   error: unknown,
   indexMessages: Record<string, string> = {},

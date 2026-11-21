@@ -28,10 +28,7 @@ export function listCollectionRegistrations(): readonly CollectionRegistration[]
   return registrations;
 }
 
-/**
- * Creates or updates indexes and `$jsonSchema` validators (DESIGN 5.1, 5.6).
- * Feature modules register their collections; none are registered until those issues.
- */
+// Creates or updates indexes and $jsonSchema validators at startup (DESIGN 5.1, 5.6).
 export async function ensureIndexes(db: Db): Promise<void> {
   for (const registration of registrations) {
     await applyCollection(db, registration);

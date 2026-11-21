@@ -32,9 +32,7 @@ export type ApiTestContext = {
   close: () => Promise<void>;
 };
 
-/**
- * Fresh database per call against the shared in-memory replica set (DESIGN 10.8).
- */
+// Fresh database per call against the shared in-memory replica set (DESIGN 10.8).
 export async function createApiTestContext(
   options: Omit<CreateAppOptions, "pingDb"> & { pingDb?: () => Promise<void> } = {},
 ): Promise<ApiTestContext> {

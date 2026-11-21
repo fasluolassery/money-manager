@@ -21,10 +21,7 @@ export function databaseNameFor(nodeEnv: Config["NODE_ENV"]): string {
   return "money-manager-dev";
 }
 
-/**
- * One MongoClient for the process (DESIGN 5.1, 15.6).
- * Callers must close it on shutdown.
- */
+// One MongoClient for the process; caller closes it on shutdown (DESIGN 5.1, 15.6).
 export async function connectDb(uri: string, dbName: string): Promise<DbHandle> {
   const client = new MongoClient(uri, {
     serverSelectionTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,

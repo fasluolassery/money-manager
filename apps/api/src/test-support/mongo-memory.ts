@@ -25,7 +25,7 @@ export async function stopMemoryMongo(): Promise<void> {
   }
 }
 
-/** Stops the in-memory server mid-test (health 503 AC). */
+/** Stops the in-memory server to simulate a database outage. */
 export async function crashMemoryMongo(): Promise<void> {
   await stopMemoryMongo();
 }
