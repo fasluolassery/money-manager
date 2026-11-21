@@ -60,6 +60,10 @@
       "linter": {
         "rules": { "suspicious": { "noConsole": "off" }, "style": { "noProcessEnv": "off" } }
       }
+    },
+    {
+      "includes": ["apps/web/src/pages/**/*.tsx"],
+      "linter": { "rules": { "style": { "noDefaultExport": "off" } } }
     }
   ]
 }

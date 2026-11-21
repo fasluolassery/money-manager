@@ -12,7 +12,7 @@ export default defineConfig({
       workspace("shared", "packages/shared"),
       // API integration tests (`*.api.test.ts`) run via `pnpm test:api` (issue #10).
       workspace("api", "apps/api", ["src/**/*.api.test.ts"]),
-      workspace("web", "apps/web"),
+      { extends: true, test: { name: "web", root: "apps/web", environment: "jsdom" } },
     ],
     coverage: {
       provider: "v8",

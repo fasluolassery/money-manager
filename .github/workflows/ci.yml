@@ -86,3 +86,6 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Size limit
+        run: pnpm --filter @money-manager/web size
