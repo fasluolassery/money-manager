@@ -6,13 +6,17 @@ import { Label } from "@/components/ui/label.js";
 import { cn } from "@/lib/utils.js";
 import { EMOJI_GROUPS } from "./emoji-groups.js";
 
+/** Exactly one emoji grapheme (UI.md 5.4 / Spec Rule 5). Rejects letters and CJK. */
 export function isExactlyOneEmoji(text: string): boolean {
   if (!text) return false;
   const segments = [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text)];
   if (segments.length !== 1) return false;
-  const cp = text.codePointAt(0);
-  if (cp === undefined) return false;
-  return cp > 0x00ff;
+  const grapheme = segments[0]?.segment ?? "";
+  if (/\p{Extended_Pictographic}/u.test(grapheme)) return true;
+  // Flag pairs (regional indicators) and keycaps (1️⃣)
+  if (/^\p{Regional_Indicator}{2}$/u.test(grapheme)) return true;
+  if (/^[0-9#*]\uFE0F?\u20E3$/u.test(grapheme)) return true;
+  return false;
 }
 
 interface EmojiGridProps {

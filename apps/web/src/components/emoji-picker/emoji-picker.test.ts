@@ -21,6 +21,17 @@ describe("isExactlyOneEmoji (FR-5.3, Spec Rule 5)", () => {
     expect(isExactlyOneEmoji("a")).toBe(false);
   });
 
+  it("[FR-5.3] rejects non-emoji graphemes (CJK, letters with marks)", () => {
+    expect(isExactlyOneEmoji("你")).toBe(false);
+    expect(isExactlyOneEmoji("あ")).toBe(false);
+    expect(isExactlyOneEmoji("É")).toBe(false);
+  });
+
+  it("[FR-5.3] accepts a flag and a keycap emoji", () => {
+    expect(isExactlyOneEmoji("🇮🇳")).toBe(true);
+    expect(isExactlyOneEmoji("1️⃣")).toBe(true);
+  });
+
   it("[FR-5.3] rejects two emoji", () => {
     expect(isExactlyOneEmoji("🍕🍕")).toBe(false);
     expect(isExactlyOneEmoji("🍕🎯")).toBe(false);

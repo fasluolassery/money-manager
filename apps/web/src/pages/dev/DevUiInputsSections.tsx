@@ -45,6 +45,13 @@ export function TextFieldsSection() {
           placeholder="Optional note"
           maxLength={500}
         />
+        <TextArea
+          label="Note (error)"
+          value=""
+          onChange={() => {}}
+          error="Note is required."
+          maxLength={500}
+        />
         <TextArea label="Disabled" value="Some note" onChange={() => {}} disabled />
       </div>
     </section>
@@ -130,14 +137,20 @@ export function DateAutoSection() {
           disableFuture
         />
         <DateField label="Due date (future allowed)" value={date} onChange={setDate} />
+        <DateField
+          label="Date (error)"
+          value={undefined}
+          onChange={() => {}}
+          error="Date is required."
+        />
         <DateField label="Disabled" value={date} onChange={setDate} disabled />
         <Autocomplete
           label="Payee"
           options={PAYEE_OPTIONS}
           value={payee}
           onChange={setPayee}
-          placeholder="Search payees…"
-          emptyText="No payees yet."
+          placeholder="Type a payee or pick a suggestion…"
+          emptyText="No matching payees — keep typing to use a new one."
         />
         <Autocomplete
           label="Payee (error)"
@@ -151,7 +164,7 @@ export function DateAutoSection() {
         <Autocomplete
           label="Payee (disabled)"
           options={PAYEE_OPTIONS}
-          value="swiggy"
+          value="Swiggy"
           onChange={() => {}}
           disabled
         />
