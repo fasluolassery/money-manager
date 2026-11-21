@@ -1,6 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LazyMotion, MotionConfig } from "motion/react";
 import { type ReactNode, useEffect } from "react";
 import { Toaster } from "sonner";
+
+// Separate file forces a Vite code-split boundary so the feature bundle stays
+// out of the initial chunk (UI.md 6.1). A same-package dynamic import would
+// be bundled together with the static LazyMotion/MotionConfig imports.
+const loadMotionFeatures = async () => {
+  const { features } = await import("../lib/motion-features.js");
+  return features;
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,8 +51,12 @@ function ThemeWatcher() {
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeWatcher />
-      {children}
+      <LazyMotion features={loadMotionFeatures} strict>
+        <MotionConfig reducedMotion="user">
+          <ThemeWatcher />
+          {children}
+        </MotionConfig>
+      </LazyMotion>
       <Toaster />
     </QueryClientProvider>
   );
