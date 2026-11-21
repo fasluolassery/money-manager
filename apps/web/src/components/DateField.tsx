@@ -13,6 +13,7 @@ export interface DateFieldProps {
   error?: string;
   disabled?: boolean;
   id?: string;
+  today?: Date;
 }
 
 export function DateField({
@@ -23,13 +24,17 @@ export function DateField({
   error,
   disabled,
   id,
+  today: todayProp,
 }: DateFieldProps) {
   const generatedId = React.useId();
   const fieldId = id ?? generatedId;
   const errorId = `${fieldId}-error`;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = React.useMemo(() => {
+    const d = todayProp !== undefined ? new Date(todayProp) : new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, [todayProp]);
   const yesterday = subDays(today, 1);
 
   const isToday =
@@ -74,7 +79,7 @@ export function DateField({
               aria-expanded={undefined}
             >
               <CalendarIcon className="h-4 w-4 mr-1" aria-hidden />
-              {!isToday && !isYesterday && value ? format(value, "d MMM yyyy") : "Pick a date"}
+              {!isToday && !isYesterday && value ? format(value, "dd/MM/yyyy") : "Pick a date"}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">

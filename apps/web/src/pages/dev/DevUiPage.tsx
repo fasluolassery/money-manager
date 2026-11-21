@@ -4,23 +4,23 @@ import type { Paise } from "@money-manager/shared";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Amount } from "@/components/Amount.js";
-import { Autocomplete } from "@/components/Autocomplete.js";
 import { ConfirmDialog } from "@/components/ConfirmDialog.js";
-import { DateField } from "@/components/DateField.js";
 import { EmptyState } from "@/components/EmptyState.js";
 import { ErrorState } from "@/components/ErrorState.js";
-import { EmojiPicker } from "@/components/emoji-picker/index.js";
 import { OfflineBanner } from "@/components/OfflineBanner.js";
-import { ProgressBar } from "@/components/ProgressBar.js";
 import { ResponsiveDrawer } from "@/components/ResponsiveDrawer.js";
-import { SegmentedControl } from "@/components/SegmentedControl.js";
-import { TextArea } from "@/components/TextArea.js";
-import { TextField } from "@/components/TextField.js";
 import { Toaster } from "@/components/Toaster.js";
 import { Badge } from "@/components/ui/badge.js";
 import { Button } from "@/components/ui/button.js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.js";
 import { Skeleton } from "@/components/ui/skeleton.js";
+import {
+  DateAutoSection,
+  EmojiSection,
+  RhfFormSection,
+  SegmentedProgressSection,
+  TextFieldsSection,
+} from "./DevUiInputsSections.js";
 
 type ColorRow = { name: string; bg: string; label: string };
 type TypographyRow = { name: string; cls: string; sample: string };
@@ -385,115 +385,6 @@ function TokenSections() {
   );
 }
 
-function TextFieldsSection() {
-  const [name, setName] = useState("");
-  const [note, setNote] = useState("");
-  return (
-    <section>
-      <h2 className="text-heading mb-4">TextField + TextArea (UI.md 5.3)</h2>
-      <div className="space-y-4 max-w-sm">
-        <TextField
-          label="Payee"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Swiggy"
-          maxLength={100}
-        />
-        <TextField
-          label="With error"
-          value=""
-          onChange={() => {}}
-          error="This field is required."
-        />
-        <TextArea
-          label="Note"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Optional note"
-          maxLength={500}
-        />
-      </div>
-    </section>
-  );
-}
-
-function DateAutoSection() {
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [payee, setPayee] = useState("");
-  const payeeOptions = [
-    { value: "swiggy", label: "Swiggy" },
-    { value: "zomato", label: "Zomato" },
-    { value: "amazon", label: "Amazon" },
-    { value: "netflix", label: "Netflix" },
-  ];
-  return (
-    <section>
-      <h2 className="text-heading mb-4">DateField + Autocomplete (UI.md 5.3)</h2>
-      <div className="space-y-4 max-w-sm">
-        <DateField label="Transaction date" value={date} onChange={setDate} disableFuture />
-        <DateField label="Due date (future allowed)" value={date} onChange={setDate} />
-        <Autocomplete
-          label="Payee"
-          options={payeeOptions}
-          value={payee}
-          onChange={setPayee}
-          placeholder="Search payees…"
-          emptyText="No payees yet."
-        />
-      </div>
-    </section>
-  );
-}
-
-function SegmentedProgressSection() {
-  const [type, setType] = useState("expense");
-  return (
-    <section>
-      <h2 className="text-heading mb-4">SegmentedControl + ProgressBar (UI.md 5.3)</h2>
-      <div className="space-y-4 max-w-sm">
-        <SegmentedControl
-          label="Type"
-          options={[
-            { value: "expense", label: "Expense" },
-            { value: "income", label: "Income" },
-          ]}
-          value={type}
-          onChange={setType}
-        />
-        <SegmentedControl
-          label="Lending"
-          options={[
-            { value: "lent", label: "I lent" },
-            { value: "borrowed", label: "I borrowed" },
-          ]}
-          value="lent"
-          onChange={() => {}}
-        />
-        <ProgressBar percent={65} className="mt-6" />
-        <ProgressBar percent={24} label="₹12,000 of ₹50,000" />
-      </div>
-    </section>
-  );
-}
-
-function EmojiSection() {
-  const [emoji, setEmoji] = useState("🍕");
-  const [open, setOpen] = useState(false);
-  return (
-    <section>
-      <h2 className="text-heading mb-4">EmojiPicker (UI.md 5.4)</h2>
-      <div className="flex items-center gap-4">
-        <Button variant="secondary" onClick={() => setOpen(true)}>
-          <span className="text-heading mr-2">{emoji}</span>
-          Change emoji
-        </Button>
-        <span className="text-label text-text-muted">Selected: {emoji}</span>
-      </div>
-      <EmojiPicker open={open} onOpenChange={setOpen} value={emoji} onChange={setEmoji} />
-    </section>
-  );
-}
-
 export default function DevUiPage() {
   const [dark, setDark] = useState(document.documentElement.classList.contains("dark"));
   function toggleTheme() {
@@ -519,6 +410,7 @@ export default function DevUiPage() {
         <ToastsSection />
         <EmptyErrorSection />
         <TextFieldsSection />
+        <RhfFormSection />
         <DateAutoSection />
         <SegmentedProgressSection />
         <EmojiSection />
