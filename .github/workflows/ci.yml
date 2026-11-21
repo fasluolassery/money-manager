@@ -93,6 +93,11 @@ jobs:
       - name: Size limit
         run: pnpm --filter @money-manager/web size
 
+      - name: OpenAPI up to date
+        run: |
+          pnpm gen:openapi
+          git diff --exit-code docs/openapi.json
+
       - name: No inline scripts in built output
         run: |
           node -e "

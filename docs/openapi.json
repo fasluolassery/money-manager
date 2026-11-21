@@ -1,0 +1,55 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Money Manager API",
+    "version": "0.1.0",
+    "description": "Personal finance tracker API. All /api/v1 endpoints require a valid session cookie."
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health check — 200 when the server can reach the database (DESIGN 11.2)",
+        "operationId": "gethealth",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "ok"
+                    }
+                  },
+                  "required": ["status"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unreachable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "unavailable"
+                    }
+                  },
+                  "required": ["status"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    }
+  }
+}

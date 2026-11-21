@@ -106,3 +106,12 @@ export type BillId = z.infer<typeof billIdSchema>;
 export type GoalId = z.infer<typeof goalIdSchema>;
 export type LendingRecordId = z.infer<typeof lendingRecordIdSchema>;
 export type UserId = z.infer<typeof userIdSchema>;
+
+/** MongoDB ObjectId as a 24-hex string — the `id` field in every API response (DESIGN 6.6). */
+export const idSchema = objectIdSchema().brand<"Id">();
+export type Id = z.infer<typeof idSchema>;
+
+/** Convert a MongoDB `_id` to the response `id` string (DESIGN 6.6). */
+export function toId(objectId: { toHexString(): string } | string): Id {
+  return (typeof objectId === "string" ? objectId : objectId.toHexString()) as Id;
+}
