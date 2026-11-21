@@ -1,8 +1,7 @@
 import { type AwilixContainer, asValue, createContainer, InjectionMode } from "awilix";
-import type { Db, MongoClient } from "mongodb";
 import type pino from "pino";
 import type { Config } from "./config.js";
-import type { DbHandle } from "./db/client.js";
+import type { Db, DbHandle, MongoClient } from "./db/client.js";
 import { registerUsersModule } from "./modules/users/users.register.js";
 import type { UsersRepository } from "./modules/users/users.repository.js";
 import type { UsersService } from "./modules/users/users.service.js";

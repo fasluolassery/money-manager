@@ -18,6 +18,9 @@
     "backlog:verify": "node tools/backlog/create-issues.mjs --verify",
     "pr:check": "node tools/pr/check-record.mjs",
     "check:tokens": "pnpm --filter @money-manager/web check:tokens",
+    "check:boundaries": "depcruise --config .dependency-cruiser.cjs apps/api/src apps/web/src packages/shared/src",
+    "check:duplication": "jscpd",
+    "check:discipline": "node tools/discipline/check.mjs",
     "gen:openapi": "pnpm --filter @money-manager/api gen:openapi",
     "lint": "biome check .",
     "format": "biome check --write .",
@@ -28,15 +31,20 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@swc/core",
       "esbuild",
       "mongodb-memory-server"
     ]
   },
   "devDependencies": {
+    "@babel/preset-typescript": "^7.29.7",
     "@biomejs/biome": "2.6.8",
+    "@swc/core": "^1.16.22",
     "@vitest/coverage-v8": "5.1.0",
+    "dependency-cruiser": "^18.8.0",
     "fast-check": "4.10.2",
     "husky": "9.1.7",
+    "jscpd": "^5.4.3",
     "lint-staged": "17.6.1",
     "typescript": "7.0.2",
     "vitest": "5.1.0"

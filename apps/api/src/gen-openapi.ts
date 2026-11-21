@@ -116,5 +116,5 @@ function buildDocument(): object {
 }
 
 const document = buildDocument();
-writeFileSync(OUT_PATH, JSON.stringify(document, null, 2) + "\n");
+writeFileSync(OUT_PATH, `${JSON.stringify(document, null, 2)}\n`);
 process.stdout.write(`Written: ${OUT_PATH}\n`);
