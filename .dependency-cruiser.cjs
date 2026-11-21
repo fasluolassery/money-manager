@@ -39,6 +39,14 @@ module.exports = {
       },
     },
     {
+      name: "domain-no-infrastructure-npm",
+      comment:
+        "Domain files must not import HTTP or database npm packages — they must stay pure (DESIGN 4.2)",
+      severity: "error",
+      from: { path: "\\.domain\\.ts$" },
+      to: { dependencyTypes: ["npm"], path: "[/](?:express|mongodb)[/@]" },
+    },
+    {
       name: "routes-no-db",
       comment: "Route files must not reach the DB layer directly — only via services (DESIGN 4.2)",
       severity: "error",
