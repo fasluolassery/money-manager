@@ -22,7 +22,7 @@ registerRoute({
   path: "/api/health",
   summary: "Health check — 200 when the server can reach the database (DESIGN 11.2)",
   auth: false,
-  responseSchema: z.object({ status: z.literal("ok") }),
+  responseSchema: healthResponseSchema,
   additionalResponses: {
     503: {
       description: "Database unreachable",

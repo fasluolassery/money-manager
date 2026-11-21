@@ -14,6 +14,7 @@ import {
   dateNotInPastSchema,
   goalIdSchema,
   goalNameSchema,
+  idSchema,
   lendingRecordIdSchema,
   VALIDATION_MESSAGES as M,
   monthSchema,
@@ -23,6 +24,7 @@ import {
   personSchema,
   TEXT_LIMITS,
   timezoneSchema,
+  toId,
   transactionIdSchema,
   userIdSchema,
 } from "./common.js";
@@ -154,6 +156,23 @@ describe("ids", () => {
     }
     expect(userIdSchema.parse("user-1")).toBe("user-1");
     expect(messagesOf(userIdSchema, "")).toEqual([M.invalid]);
+  });
+
+  it("[D-37] idSchema is a branded ObjectId string used as the generic Id type", () => {
+    const hex = "6553f1c2a4b5c6d7e8f90123";
+    const id = idSchema.parse(hex);
+    expect(id).toBe(hex);
+    expect(messagesOf(idSchema, "not-an-object-id")).toEqual([M.invalid]);
+  });
+
+  it("[D-37] toId converts a hex string to a branded Id", () => {
+    const hex = "6553f1c2a4b5c6d7e8f90123";
+    expect(toId(hex)).toBe(hex);
+  });
+
+  it("[D-37] toId converts a MongoDB ObjectId-like object to a branded Id", () => {
+    const hex = "6553f1c2a4b5c6d7e8f90123";
+    expect(toId({ toHexString: () => hex })).toBe(hex);
   });
 });
 
