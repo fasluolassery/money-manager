@@ -18,6 +18,7 @@
     "backlog:verify": "node tools/backlog/create-issues.mjs --verify",
     "pr:check": "node tools/pr/check-record.mjs",
     "check:tokens": "pnpm --filter @money-manager/web check:tokens",
+    "gen:openapi": "pnpm --filter @money-manager/api gen:openapi",
     "lint": "biome check .",
     "format": "biome check --write .",
     "prepare": "husky"

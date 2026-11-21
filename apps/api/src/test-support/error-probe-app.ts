@@ -19,7 +19,7 @@ import {
   ValidationError,
 } from "../errors.js";
 import { validate } from "../middleware/validate.js";
-import { sendSuccess } from "../respond.js";
+import { createRespond } from "../respond.js";
 
 export const ERROR_TEST_CONFIG: Config = {
   NODE_ENV: "test",
@@ -35,6 +35,9 @@ export const nameBodySchema = z
   })
   .strict();
 
+/** Response schema matching nameBodySchema for use in probe routes. */
+const nameResponseSchema = z.object({ name: z.string() });
+
 export function createTempWebDist(): string {
   const webDistPath = mkdtempSync(join(tmpdir(), "api-errors-dist-"));
   mkdirSync(join(webDistPath, "assets"), { recursive: true });
@@ -43,8 +46,10 @@ export function createTempWebDist(): string {
 }
 
 export function registerProbeRoutes(app: Application): void {
+  const respond = createRespond(ERROR_TEST_CONFIG.NODE_ENV);
+
   app.post("/api/probe/validate", validate({ body: nameBodySchema }), (req, res) => {
-    sendSuccess(res, req.body);
+    respond(res, nameResponseSchema, req.body);
   });
 
   app.get("/api/probe/validation", (_req, _res, next) => {

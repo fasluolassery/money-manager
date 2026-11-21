@@ -4,15 +4,18 @@ import type { Application } from "express";
 import pino from "pino";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { z } from "zod";
 import { createApp } from "./app.js";
 import { validate } from "./middleware/validate.js";
-import { sendSuccess } from "./respond.js";
+import { createRespond } from "./respond.js";
 import {
   createErrorProbeApp,
   createTempWebDist,
   ERROR_TEST_CONFIG,
   nameBodySchema,
 } from "./test-support/error-probe-app.js";
+
+const nameResponseSchema = z.object({ name: z.string() });
 
 function expectFailure(
   res: request.Response,
@@ -94,9 +97,10 @@ describe("validate middleware", () => {
     const probingApp = createApp(ERROR_TEST_CONFIG, pino({ level: "silent" }), dist, {
       pingDb: async () => undefined,
       registerApiRoutes(inner) {
+        const respond = createRespond(ERROR_TEST_CONFIG.NODE_ENV);
         inner.post("/api/probe/strict", validate({ body: nameBodySchema }), (req, res) => {
           handlerRan = true;
-          sendSuccess(res, req.body);
+          respond(res, nameResponseSchema, req.body);
         });
       },
     });
@@ -118,7 +122,7 @@ describe("validate middleware", () => {
     rmSync(dist, { recursive: true, force: true });
   });
 
-  it("sendSuccess wraps data in the success envelope", async () => {
+  it("respond wraps data in the success envelope", async () => {
     const res = await request(app).post("/api/probe/validate").send({ name: "Save" });
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ success: true, data: { name: "Save" } });

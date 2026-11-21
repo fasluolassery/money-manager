@@ -6,11 +6,26 @@ import express, { type NextFunction, type Request, type Response } from "express
 import helmet from "helmet";
 import type pino from "pino";
 import { pinoHttp } from "pino-http";
+import { z } from "zod";
 import type { Config } from "./config.js";
 import type { AppCradle } from "./container.js";
 import { NotFoundError } from "./errors.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { createUsersRoutes } from "./modules/users/users.routes.js";
+import { registerRoute } from "./route-registry.js";
+
+/** Schema for `/api/health` responses (outside the success envelope). */
+export const healthResponseSchema = z.object({
+  status: z.enum(["ok", "unavailable"]),
+});
+
+registerRoute({
+  method: "GET",
+  path: "/api/health",
+  summary: "Health check — 200 when the server can reach the database (DESIGN 11.2)",
+  auth: false,
+  responseSchema: healthResponseSchema,
+});
 
 const PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), payment=()";
 const JSON_BODY_LIMIT = "100kb";
