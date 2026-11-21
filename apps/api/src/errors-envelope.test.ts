@@ -92,6 +92,7 @@ describe("validate middleware", () => {
     let handlerRan = false;
     const dist = createTempWebDist();
     const probingApp = createApp(ERROR_TEST_CONFIG, pino({ level: "silent" }), dist, {
+      pingDb: async () => undefined,
       registerApiRoutes(inner) {
         inner.post("/api/probe/strict", validate({ body: nameBodySchema }), (req, res) => {
           handlerRan = true;

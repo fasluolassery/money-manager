@@ -24,6 +24,13 @@ function withEnv(overrides: Record<string, string | undefined>, fn: () => void):
   }
 }
 
+const VALID_ENV = {
+  APP_URL: "http://localhost:3000",
+  MONGODB_URI: "mongodb://localhost:27017",
+  NODE_ENV: "test",
+  LOG_LEVEL: "silent",
+};
+
 describe("loadConfig", () => {
   let exitSpy: ReturnType<typeof vi.spyOn>;
   let stderrSpy: ReturnType<typeof vi.spyOn>;
@@ -41,9 +48,10 @@ describe("loadConfig", () => {
   });
 
   it("[FR-10.6] parses valid environment variables", () => {
-    withEnv({ APP_URL: "http://localhost:3000", NODE_ENV: "test", LOG_LEVEL: "silent" }, () => {
+    withEnv(VALID_ENV, () => {
       const config = loadConfig();
       expect(config.APP_URL).toBe("http://localhost:3000");
+      expect(config.MONGODB_URI).toBe("mongodb://localhost:27017");
       expect(config.NODE_ENV).toBe("test");
       expect(config.LOG_LEVEL).toBe("silent");
       expect(config.PORT).toBeTypeOf("number");
@@ -51,7 +59,7 @@ describe("loadConfig", () => {
   });
 
   it("[FR-10.6] exits with a message naming a missing required variable", () => {
-    withEnv({ APP_URL: undefined }, () => {
+    withEnv({ ...VALID_ENV, APP_URL: undefined }, () => {
       expect(() => loadConfig()).toThrow("process.exit called");
       expect(exitSpy).toHaveBeenCalledWith(1);
       const message = String(stderrSpy.mock.calls[0]?.[0] ?? "");
@@ -59,8 +67,17 @@ describe("loadConfig", () => {
     });
   });
 
+  it("[FR-10.6] exits when MONGODB_URI is missing", () => {
+    withEnv({ ...VALID_ENV, MONGODB_URI: undefined }, () => {
+      expect(() => loadConfig()).toThrow("process.exit called");
+      expect(exitSpy).toHaveBeenCalledWith(1);
+      const message = String(stderrSpy.mock.calls[0]?.[0] ?? "");
+      expect(message).toContain("MONGODB_URI");
+    });
+  });
+
   it("[FR-10.6] exits with a message naming an invalid variable", () => {
-    withEnv({ APP_URL: "not-a-url" }, () => {
+    withEnv({ ...VALID_ENV, APP_URL: "not-a-url" }, () => {
       expect(() => loadConfig()).toThrow("process.exit called");
       expect(exitSpy).toHaveBeenCalledWith(1);
       const message = String(stderrSpy.mock.calls[0]?.[0] ?? "");
@@ -69,7 +86,7 @@ describe("loadConfig", () => {
   });
 
   it("[FR-10.6] applies defaults for optional variables", () => {
-    withEnv({ APP_URL: "http://localhost:3000", NODE_ENV: undefined, LOG_LEVEL: undefined }, () => {
+    withEnv({ ...VALID_ENV, NODE_ENV: undefined, LOG_LEVEL: undefined }, () => {
       const config = loadConfig();
       expect(config.NODE_ENV).toBe("development");
       expect(config.LOG_LEVEL).toBe("info");

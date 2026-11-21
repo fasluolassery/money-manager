@@ -13,8 +13,15 @@ const PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), payment=()
 const JSON_BODY_LIMIT = "100kb";
 
 export type CreateAppOptions = {
+  /** Ping the database for `/api/health` (DESIGN 11.2). */
+  pingDb: () => Promise<void>;
   /** Mount extra API routes after `/api/health` and before the `/api` 404 (tests). */
   registerApiRoutes?: (app: express.Application) => void;
+};
+
+export type GracefulShutdownOptions = {
+  onClose?: () => void | Promise<void>;
+  exitFn?: (code: number) => void;
 };
 
 function helmetOptions(nodeEnv: string): Parameters<typeof helmet>[0] {
@@ -74,12 +81,20 @@ function staticMiddleware(webDistPath: string) {
 export function gracefulShutdown(
   server: Server,
   logger: pino.Logger,
-  exitFn: (code: number) => void = process.exit,
+  options: GracefulShutdownOptions = {},
 ): void {
+  const exitFn = options.exitFn ?? process.exit;
   logger.info("SIGTERM received, shutting down gracefully");
   server.close(() => {
-    logger.info("Server closed");
-    exitFn(0);
+    void (async () => {
+      try {
+        await options.onClose?.();
+      } catch (error) {
+        logger.error({ error }, "Error during shutdown");
+      }
+      logger.info("Server closed");
+      exitFn(0);
+    })();
   });
 }
 
@@ -87,7 +102,7 @@ export function createApp(
   config: Config,
   logger: pino.Logger,
   webDistPath: string,
-  options: CreateAppOptions = {},
+  options: CreateAppOptions,
 ): express.Application {
   const app = express();
 
@@ -129,8 +144,13 @@ export function createApp(
     next();
   });
 
-  app.get("/api/health", (_req: Request, res: Response) => {
-    res.json({ status: "ok" });
+  app.get("/api/health", async (_req: Request, res: Response) => {
+    try {
+      await options.pingDb();
+      res.json({ status: "ok" });
+    } catch {
+      res.status(503).json({ status: "unavailable" });
+    }
   });
 
   options.registerApiRoutes?.(app);
