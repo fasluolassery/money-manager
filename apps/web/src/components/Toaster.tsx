@@ -3,14 +3,16 @@ import { Toaster as Sonner } from "sonner";
 /**
  * Sonner toast container configured per UI.md 7.2:
  * - Bottom-right on laptops; above the tab bar on phones (bottom + 72px)
- * - One toast at a time (richColors + expand=false)
- * - Durations managed per-toast via toast() calls (4s default, 6s with action)
+ * - One toast at a time (visibleToasts=1)
+ * - 4s default; 6s when the toast has an action — callers set duration via toast()
+ * - Errors stay until dismissed — callers pass duration: Infinity for error toasts
  */
 export function Toaster() {
   return (
     <Sonner
       position="bottom-right"
       expand={false}
+      visibleToasts={1}
       richColors
       closeButton
       toastOptions={{

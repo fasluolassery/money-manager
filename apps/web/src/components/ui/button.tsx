@@ -19,10 +19,8 @@ const buttonVariants = cva(
         ghost: "text-text hover:bg-surface-muted",
         destructive: "bg-alert text-primary-foreground hover:bg-alert/90",
         "danger-ghost": "text-alert hover:bg-alert-soft",
-        fab: [
-          "h-14 w-14 rounded-full shadow-fab bg-primary text-primary-foreground",
-          "hover:bg-primary/90 fixed bottom-20 right-4 z-30",
-        ],
+        // `fixed` positioning is NOT here — the page that renders the FAB controls its placement
+        fab: "h-14 w-14 rounded-full shadow-fab bg-primary text-primary-foreground hover:bg-primary/90",
       },
       size: {
         default: "h-10 px-5 py-2",

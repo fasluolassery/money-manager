@@ -41,8 +41,8 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          {/* AlertDialog renders Cancel first in the DOM; CSS flex-row-reverse puts it last visually */}
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          {/* Cancel is first in DOM (flex-row-reverse puts it last visually) and receives autoFocus per UI.md 9.2 */}
+          <AlertDialogCancel autoFocus>Cancel</AlertDialogCancel>
           <AlertDialogAction
             className={cn(buttonVariants({ variant: "destructive" }))}
             onClick={onConfirm}

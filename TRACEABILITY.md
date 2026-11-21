@@ -9,7 +9,7 @@
 | Requirements | 150 (149 Must, 1 Should) |
 | With at least one issue | 150 |
 | With a module | 150 |
-| With at least one test | 22 |
+| With at least one test | 23 |
 | Finished milestones | none yet |
 
 ## Requirements
@@ -165,7 +165,7 @@
 | FR-14.3 | Must | Signs: income amounts get a + (in the income colour). "Left over" is a difference, so it gets + when positi… | #7, #58 | packages/shared | apps/web/src/components/Amount.test.tsx<br>packages/shared/src/money.test.ts |
 | FR-14.4 | Must | Dates are shown as 10 Nov 2026 in lists and 10/11/2026 (DD/MM/YYYY) in forms. | #7 | packages/shared | packages/shared/src/dates.test.ts |
 | FR-14.5 | Must | Month means the calendar month, from the 1st to the last day, in my timezone. | #7 | packages/shared | packages/shared/src/dates.test.ts |
-| FR-14.6 | Must | The app's language is English. | #58 | packages/shared | not yet |
+| FR-14.6 | Must | The app's language is English. | #58 | packages/shared | apps/web/src/lib/use-delayed-loading.test.ts |
 
 ## Decisions
 

@@ -17,8 +17,7 @@ export function ErrorState({ requestId, onRetry }: ErrorStateProps) {
         <ErrorIllustration className="h-32 w-32 text-primary" aria-hidden="true" role="img" />
       </Suspense>
       <div className="max-w-xs">
-        <p className="text-body text-text">Couldn't load this.</p>
-        <p className="text-label text-text-muted">Check your connection and try again.</p>
+        <p className="text-body text-text">Something went wrong. Try again in a moment.</p>
         {requestId && <p className="text-caption text-text-muted mt-1">Request ID: {requestId}</p>}
       </div>
       {onRetry && (
