@@ -1,0 +1,17 @@
+{
+  "threshold": 0,
+  "minLines": 10,
+  "minTokens": 50,
+  "reporters": ["console"],
+  "ignore": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.api.test.ts",
+    "**/dist/**",
+    "**/node_modules/**",
+    "docs/openapi.json",
+    "tools/**",
+    "**/components/ui/**"
+  ],
+  "path": ["apps/api/src", "apps/web/src", "packages/shared/src"]
+}

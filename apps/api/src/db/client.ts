@@ -1,6 +1,8 @@
 import { type Db, MongoClient } from "mongodb";
 import type { Config } from "../config.js";
 
+export type { Db, MongoClient };
+
 /** Aggregation cursor option (DESIGN 15.6). */
 export const AGGREGATION_MAX_TIME_MS = 10_000;
 

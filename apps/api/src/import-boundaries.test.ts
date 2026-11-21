@@ -8,6 +8,9 @@ const SRC_ROOT = fileURLToPath(new URL(".", import.meta.url));
 /** Runtime imports of the driver — `import type` is allowed anywhere. */
 const MONGODB_IMPORT = /(?:^|\n)import\s+(?!type\b)[^;]*from\s+["']mongodb["']/;
 
+/** Express is an HTTP concern; services must stay framework-agnostic. */
+const EXPRESS_IMPORT = /(?:^|\n)import\s+(?!type\b)[^;]*from\s+["']express["']/;
+
 function listTsFiles(dir: string): string[] {
   const entries = readdirSync(dir);
   const files: string[] = [];
@@ -39,8 +42,8 @@ function mayImportMongodb(relativePath: string): boolean {
   return false;
 }
 
-describe("MongoDB import boundaries", () => {
-  it("only repository files and db/ import the MongoDB driver", () => {
+describe("Import boundary rules (DESIGN 10.4)", () => {
+  it("[D-50] only repository files and db/ import the MongoDB driver", () => {
     const offenders: string[] = [];
 
     for (const file of listTsFiles(SRC_ROOT)) {
@@ -48,6 +51,21 @@ describe("MongoDB import boundaries", () => {
       const source = readFileSync(file, "utf8");
       if (!MONGODB_IMPORT.test(source)) continue;
       if (!mayImportMongodb(rel)) {
+        offenders.push(rel);
+      }
+    }
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("[D-50] service files do not import express — services are HTTP-framework-agnostic", () => {
+    const offenders: string[] = [];
+
+    for (const file of listTsFiles(SRC_ROOT)) {
+      const rel = relative(SRC_ROOT, file).replaceAll("\\", "/");
+      if (!rel.endsWith(".service.ts")) continue;
+      const source = readFileSync(file, "utf8");
+      if (EXPRESS_IMPORT.test(source)) {
         offenders.push(rel);
       }
     }
