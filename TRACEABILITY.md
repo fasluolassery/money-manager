@@ -160,9 +160,9 @@
 | FR-13.2 | Must | The welcome screen shows the timezone detected from my device (I can change it) and asks for an opening bal… | #18 | users | not yet |
 | FR-13.3 | Must | Continue saves all three. Skip saves only the timezone; I can set the opening balance later in Settings. | #18 | users | not yet |
 | FR-13.4 | Must | I land on the Home screen. The welcome screen never appears again. | #18 | users | not yet |
-| FR-14.1 | Must | Money is shown with the ₹ symbol and Indian digit grouping: ₹1,00,000. Paise are shown only when non-zero: … | #7, #58 | packages/shared | packages/shared/src/money.test.ts |
-| FR-14.2 | Must | Negative figures (only the balance, the opening balance and "left over" can be negative) are shown with a m… | #7, #58 | packages/shared | packages/shared/src/money.test.ts |
-| FR-14.3 | Must | Signs: income amounts get a + (in the income colour). "Left over" is a difference, so it gets + when positi… | #7, #58 | packages/shared | packages/shared/src/money.test.ts |
+| FR-14.1 | Must | Money is shown with the ₹ symbol and Indian digit grouping: ₹1,00,000. Paise are shown only when non-zero: … | #7, #58 | packages/shared | apps/web/src/components/Amount.test.tsx<br>packages/shared/src/money.test.ts |
+| FR-14.2 | Must | Negative figures (only the balance, the opening balance and "left over" can be negative) are shown with a m… | #7, #58 | packages/shared | apps/web/src/components/Amount.test.tsx<br>packages/shared/src/money.test.ts |
+| FR-14.3 | Must | Signs: income amounts get a + (in the income colour). "Left over" is a difference, so it gets + when positi… | #7, #58 | packages/shared | apps/web/src/components/Amount.test.tsx<br>packages/shared/src/money.test.ts |
 | FR-14.4 | Must | Dates are shown as 10 Nov 2026 in lists and 10/11/2026 (DD/MM/YYYY) in forms. | #7 | packages/shared | packages/shared/src/dates.test.ts |
 | FR-14.5 | Must | Month means the calendar month, from the 1st to the last day, in my timezone. | #7 | packages/shared | packages/shared/src/dates.test.ts |
 | FR-14.6 | Must | The app's language is English. | #58 | packages/shared | not yet |

@@ -1,3 +1,4 @@
+import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 const workspace = (name: string, root: string, exclude: string[] = []) => ({
@@ -12,7 +13,16 @@ export default defineConfig({
       workspace("shared", "packages/shared"),
       // API integration tests (`*.api.test.ts`) run via `pnpm test:api` (issue #10).
       workspace("api", "apps/api", ["src/**/*.api.test.ts"]),
-      { extends: true, test: { name: "web", root: "apps/web", environment: "jsdom" } },
+      {
+        extends: true,
+        resolve: { alias: { "@": path.resolve(__dirname, "apps/web/src") } },
+        test: {
+          name: "web",
+          root: "apps/web",
+          environment: "jsdom",
+          setupFiles: ["src/test-setup.ts"],
+        },
+      },
     ],
     coverage: {
       provider: "v8",
