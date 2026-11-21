@@ -39,12 +39,22 @@ module.exports = {
       },
     },
     {
-      name: "domain-no-infrastructure-npm",
+      name: "domain-no-npm",
       comment:
-        "Domain files must not import HTTP or database npm packages — they must stay pure (DESIGN 4.2)",
+        "Domain files must not import any npm package — only packages/shared, errors.ts and " +
+        "own-module types (DESIGN 4.2, 10.4). Workspace shared resolves as non-npm.",
       severity: "error",
       from: { path: "\\.domain\\.ts$" },
-      to: { dependencyTypes: ["npm"], path: "[/](?:express|mongodb)[/@]" },
+      to: {
+        dependencyTypes: [
+          "npm",
+          "npm-dev",
+          "npm-optional",
+          "npm-peer",
+          "npm-bundled",
+          "npm-no-pkg",
+        ],
+      },
     },
     {
       name: "routes-no-db",
