@@ -11,6 +11,7 @@
     "indentWidth": 2,
     "lineWidth": 100
   },
+  "css": { "parser": { "tailwindDirectives": true }, "linter": { "enabled": true } },
   "assist": { "enabled": true, "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
@@ -60,6 +61,10 @@
       "linter": {
         "rules": { "suspicious": { "noConsole": "off" }, "style": { "noProcessEnv": "off" } }
       }
+    },
+    {
+      "includes": ["apps/web/src/pages/**/*.tsx"],
+      "linter": { "rules": { "style": { "noDefaultExport": "off" } } }
     }
   ]
 }

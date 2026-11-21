@@ -9,7 +9,7 @@
 | Requirements | 150 (149 Must, 1 Should) |
 | With at least one issue | 150 |
 | With a module | 150 |
-| With at least one test | 21 |
+| With at least one test | 22 |
 | Finished milestones | none yet |
 
 ## Requirements
@@ -25,7 +25,7 @@
 | FR-3.2 | Must | The phone layout must make adding an expense fast with one hand. | #13 | apps/web | not yet |
 | FR-3.3 | Must | The laptop layout can show more detail (tables, summaries) at once. | #13 | apps/web | not yet |
 | FR-3.4 | Must | Primary devices: an Android phone with Chrome, and a laptop. Every feature is checked on these first. | #19, #63 | apps/web | not yet |
-| FR-3.5 | Must | Supported browsers: the last 2 versions of Chrome, Edge, Firefox, Safari and Brave, on desktop and mobile. | #12 | apps/web | not yet |
+| FR-3.5 | Must | Supported browsers: the last 2 versions of Chrome, Edge, Firefox, Safari and Brave, on desktop and mobile. | #12 | apps/web | apps/web/src/lib/api-client.test.ts<br>apps/web/src/lib/no-inline-scripts.test.ts |
 | FR-3.6 | Must | Installing as an app: supported on Android (Chrome, Edge, Brave) and desktop Chrome/Edge. | #14 | apps/web | not yet |
 | FR-3.7 | Should | On iPhone the app works in Safari; installing it to the home screen is best effort. | #14 | apps/web | not yet |
 | FR-3.8 | Must | Connectivity: The app requires an internet connection. Offline entry is not part of the first version. When… | #13 | apps/web | not yet |
