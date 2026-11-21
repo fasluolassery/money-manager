@@ -8,7 +8,7 @@
   if (themeColor !== null) {
     themeColor.setAttribute(
       "content",
-      document.documentElement.classList.contains("dark") ? "#1C1B1F" : "#FAF9FC",
+      document.documentElement.classList.contains("dark") ? "#17171C" : "#FAF9FC",
     );
   }
 })();

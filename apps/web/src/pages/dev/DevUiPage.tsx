@@ -29,6 +29,17 @@ const TYPOGRAPHY: TypographyRow[] = [
   { name: "caption", cls: "text-caption", sample: "3 days ago" },
 ];
 
+const CHART_COLORS = [
+  { name: "chart-1", bg: "bg-chart-1", label: "Violet" },
+  { name: "chart-2", bg: "bg-chart-2", label: "Teal" },
+  { name: "chart-3", bg: "bg-chart-3", label: "Amber" },
+  { name: "chart-4", bg: "bg-chart-4", label: "Pink" },
+  { name: "chart-5", bg: "bg-chart-5", label: "Sky" },
+  { name: "chart-6", bg: "bg-chart-6", label: "Lime" },
+  { name: "chart-7", bg: "bg-chart-7", label: "Orange" },
+  { name: "chart-8", bg: "bg-chart-8", label: "Slate (lightened in dark)" },
+];
+
 const RADII = [
   { name: "radius-sm (8px)", cls: "rounded-sm", label: "Chips, badges" },
   { name: "radius-md (12px)", cls: "rounded-md", label: "Buttons, inputs" },
@@ -101,7 +112,23 @@ export default function DevUiPage() {
         </section>
 
         <section>
+          <h2 className="text-heading mb-4">Chart palette (UI.md 4.1)</h2>
+          <div className="grid grid-cols-4 gap-3 sm:grid-cols-8">
+            {CHART_COLORS.map((c) => (
+              <div key={c.name} className="text-center">
+                <div className={`${c.bg} h-10 rounded-md`} />
+                <p className="text-caption text-text-muted mt-1">{c.name}</p>
+                <p className="text-caption text-text-muted">{c.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
           <h2 className="text-heading mb-4">Elevation (UI.md 4.5)</h2>
+          <p className="text-caption text-text-muted mb-4">
+            Light: soft shadows. Dark: no shadows — higher layers use lighter surfaces.
+          </p>
           <div className="flex gap-6 flex-wrap">
             <div className="shadow-card rounded-lg bg-surface p-6 border border-border">
               <p className="text-label text-text">shadow-card</p>

@@ -16,6 +16,16 @@
   --alert: #dc2626;
   --alert-soft: #fef2f2;
 
+  /* Chart palette — 8 fixed colours, in display order (UI.md 4.1) */
+  --chart-1: #8b5cf6;
+  --chart-2: #14b8a6;
+  --chart-3: #f59e0b;
+  --chart-4: #ec4899;
+  --chart-5: #0ea5e9;
+  --chart-6: #84cc16;
+  --chart-7: #f97316;
+  --chart-8: #64748b;
+
   /* Shadows — light theme: soft borders + tinted FAB (UI.md 4.5) */
   --shadow-card-raw: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
   --shadow-fab-raw: 0 4px 16px 0 rgb(124 58 237 / 0.3);
@@ -38,8 +48,11 @@
   --alert-soft: #3a1f22;
 
   --shadow-card-raw: none;
-  --shadow-fab-raw: 0 4px 16px 0 rgb(167 139 250 / 0.35);
+  --shadow-fab-raw: none;
   --shadow-modal-raw: none;
+
+  /* Slate lightened for dark-theme charts (UI.md 4.10) */
+  --chart-8: #94a3b8;
 }
 
 /* ─── Tailwind theme (inline = reference CSS vars, not inline values) ─── */
@@ -81,6 +94,16 @@
   --shadow-card: var(--shadow-card-raw);
   --shadow-fab: var(--shadow-fab-raw);
   --shadow-modal: var(--shadow-modal-raw);
+
+  /* Chart palette (UI.md 4.1) — chart-1 … chart-8 */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
 }
 
 /* ─── Shape — static values (UI.md 4.4) ─── */
@@ -89,6 +112,18 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-sheet: 24px;
+}
+
+/* ─── Icon size conventions (UI.md 4.6): 20px content, 24px navigation, 2px stroke ─── */
+@utility icon-content {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke-width: 2;
+}
+@utility icon-nav {
+  width: 1.5rem;
+  height: 1.5rem;
+  stroke-width: 2;
 }
 
 /* ─── Typography utilities (UI.md 4.2) ─── */
