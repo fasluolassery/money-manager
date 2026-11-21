@@ -57,6 +57,19 @@ function buildOperation(entry: RouteEntry): object {
     responses["401"] = { description: "No valid session" };
   }
 
+  for (const [code, extra] of Object.entries(entry.additionalResponses ?? {})) {
+    const addlExtra = extra as { description: string; schema?: z.ZodType };
+    responses[code] =
+      addlExtra.schema !== undefined
+        ? {
+            description: addlExtra.description,
+            content: {
+              "application/json": { schema: schemaToJsonSchema(addlExtra.schema) },
+            },
+          }
+        : { description: addlExtra.description };
+  }
+
   const op: Record<string, unknown> = {
     summary: entry.summary,
     operationId,

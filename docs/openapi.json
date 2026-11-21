@@ -20,7 +20,25 @@
                   "properties": {
                     "status": {
                       "type": "string",
-                      "enum": ["ok", "unavailable"]
+                      "const": "ok"
+                    }
+                  },
+                  "required": ["status"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unreachable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "unavailable"
                     }
                   },
                   "required": ["status"],
