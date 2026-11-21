@@ -506,7 +506,7 @@ Shown as an error toast that stays until dismissed. The form keeps what I typed 
 
 ## 4. Design tokens
 
-Tokens are the only source of colours, sizes and shapes. They are defined once as CSS variables in the shadcn/ui theme (`apps/web/src/index.css`) and used through Tailwind classes. **Components never hard-code a hex value, pixel size or shadow.**
+Tokens are the only source of colours, sizes and shapes. They are defined once as CSS variables in the shadcn/ui theme (`apps/web/src/styles.css`) and used through Tailwind classes. **Components never hard-code a hex value, pixel size or shadow.**
 
 ### 4.1 Colour
 
