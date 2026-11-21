@@ -93,6 +93,41 @@ describe("apiRequest — 401 and timeout", () => {
   });
 });
 
+describe("apiRequest — AbortError shapes", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it("[FR-3.5] treats a plain Error AbortError as a timeout (UI.md 9.3)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener("abort", () => {
+              const abort = new Error("The operation was aborted.");
+              abort.name = "AbortError";
+              reject(abort);
+            });
+          }),
+      ),
+    );
+    const promise = apiRequest("/test");
+    vi.advanceTimersByTime(15_000);
+    const error = await promise.catch((e) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).code).toBe("NETWORK_ERROR");
+    expect((error as ApiError).message).toBe(
+      "That took too long. Check your connection and try again.",
+    );
+  });
+});
+
 describe("apiRequest — network and parse errors", () => {
   afterEach(() => {
     vi.restoreAllMocks();

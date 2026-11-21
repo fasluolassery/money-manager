@@ -52,7 +52,14 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   } catch (error) {
     clearTimeout(timer);
     // AbortError = our 15 s timeout fired (DESIGN 15.6, UI.md 9.3).
-    if (error instanceof DOMException && error.name === "AbortError") {
+    // Runtimes differ: browsers often throw DOMException; some throw Error.
+    // jsdom's DOMException is not an Error subclass, so check by name.
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      (error as { name: unknown }).name === "AbortError"
+    ) {
       throw new ApiError(
         "NETWORK_ERROR",
         "That took too long. Check your connection and try again.",

@@ -14,6 +14,16 @@ const queryClient = new QueryClient({
   },
 });
 
+const THEME_COLOR_LIGHT = "#FAF9FC";
+const THEME_COLOR_DARK = "#1C1B1F";
+
+function applyThemeColor(dark: boolean) {
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor !== null) {
+    themeColor.setAttribute("content", dark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT);
+  }
+}
+
 function ThemeWatcher() {
   useEffect(() => {
     const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -21,6 +31,7 @@ function ThemeWatcher() {
       // Only follow the OS when the user has not set an explicit preference.
       if (localStorage.getItem("theme") === null) {
         document.documentElement.classList.toggle("dark", e.matches);
+        applyThemeColor(e.matches);
       }
     }
     mql.addEventListener("change", handler);
