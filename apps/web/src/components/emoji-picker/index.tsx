@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label.js";
 import { cn } from "@/lib/utils.js";
 import { EMOJI_GROUPS } from "./emoji-groups.js";
 
-function isExactlyOneEmoji(text: string): boolean {
+export function isExactlyOneEmoji(text: string): boolean {
   if (!text) return false;
   const segments = [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text)];
   if (segments.length !== 1) return false;
