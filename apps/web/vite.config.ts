@@ -37,7 +37,8 @@ export default defineConfig({
         navigateFallback: "index.html",
         runtimeCaching: [
           {
-            urlPattern: /^\/api\//,
+            // Match any URL whose path includes /api/ (full URL tested, not pathname)
+            urlPattern: /\/api\//,
             handler: "NetworkOnly",
           },
         ],

@@ -34,10 +34,14 @@ describe("PWA assets", () => {
     expect(existsSync(swPath), "sw.js not found in dist").toBe(true);
   });
 
-  it.skipIf(!existsSync(DIST))("[FR-3.6] service worker does not cache /api responses", () => {
-    const swPath = resolve(DIST, "sw.js");
-    if (!existsSync(swPath)) return;
-    const sw = readFileSync(swPath, "utf8");
-    expect(sw).toContain("NetworkOnly");
-  });
+  it.skipIf(!existsSync(DIST))(
+    "[FR-3.6] service worker routes /api paths to NetworkOnly handler",
+    () => {
+      const swPath = resolve(DIST, "sw.js");
+      if (!existsSync(swPath)) return;
+      const sw = readFileSync(swPath, "utf8");
+      // Workbox serialises /\/api\// as the RegExp literal and pairs it with the handler name.
+      expect(sw).toMatch(/api.*NetworkOnly/s);
+    },
+  );
 });
