@@ -12,6 +12,10 @@ const DEFAULT_CONFIG: Config = {
   APP_URL: "http://localhost:3000",
   LOG_LEVEL: "silent",
   MONGODB_URI: "mongodb://localhost:27017",
+  BETTER_AUTH_SECRET: "test-secret-32-chars-min-padding!",
+  GOOGLE_CLIENT_ID: "google-client-id",
+  GOOGLE_CLIENT_SECRET: "google-client-secret",
+  E2E_AUTH: false,
 };
 
 export type TestContainerOverrides = {

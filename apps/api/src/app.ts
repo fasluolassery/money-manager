@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Server } from "node:http";
 import { join } from "node:path";
 import type { AwilixContainer } from "awilix";
+import { toNodeHandler } from "better-auth/node";
 import express, { type NextFunction, type Request, type Response } from "express";
 import helmet from "helmet";
 import type pino from "pino";
@@ -11,6 +12,9 @@ import type { Config } from "./config.js";
 import type { AppCradle } from "./container.js";
 import { NotFoundError } from "./errors.js";
 import { errorHandler } from "./middleware/error-handler.js";
+import { createOriginCheck } from "./middleware/origin-check.js";
+import { createApiRateLimiter } from "./middleware/rate-limit.js";
+import { createRequireAuth } from "./middleware/require-auth.js";
 import { createUsersRoutes } from "./modules/users/users.routes.js";
 import { registerRoute } from "./route-registry.js";
 
@@ -178,6 +182,14 @@ export function createApp(
   });
 
   if (options.container !== undefined) {
+    // Better Auth owns /api/auth/* — rate-limited internally (D-48).
+    app.all("/api/auth/*splat", toNodeHandler(options.container.cradle.auth));
+
+    const requireAuth = createRequireAuth({ authAdapter: options.container.cradle.authAdapter });
+    const originCheck = createOriginCheck({ config });
+    const apiRateLimit = createApiRateLimiter();
+
+    app.use("/api/v1", apiRateLimit, requireAuth, originCheck);
     app.use("/api/v1", createUsersRoutes(options.container));
   }
 

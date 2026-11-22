@@ -16,6 +16,10 @@ export const API_TEST_CONFIG: Config = {
   APP_URL: "http://localhost:3000",
   LOG_LEVEL: "silent",
   MONGODB_URI: "mongodb://localhost:27017",
+  BETTER_AUTH_SECRET: "test-secret-32-chars-min-padding!",
+  GOOGLE_CLIENT_ID: "google-client-id",
+  GOOGLE_CLIENT_SECRET: "google-client-secret",
+  E2E_AUTH: false,
 };
 
 export function createTempWebDist(): string {
@@ -28,6 +32,7 @@ export function createTempWebDist(): string {
 export type ApiTestContext = {
   app: Application;
   db: DbHandle;
+  config: Config;
   webDistPath: string;
   close: () => Promise<void>;
 };
@@ -44,11 +49,13 @@ export async function createApiTestContext(
   const config: Config = { ...API_TEST_CONFIG, MONGODB_URI: uri };
   const app = createApp(config, pino({ level: "silent" }), webDistPath, {
     pingDb: options.pingDb ?? (() => db.ping()),
+    container: options.container,
     registerApiRoutes: options.registerApiRoutes,
   });
   return {
     app,
     db,
+    config,
     webDistPath,
     close: async () => {
       await db.close();

@@ -1,5 +1,7 @@
-import { type AwilixContainer, asValue, createContainer, InjectionMode } from "awilix";
+import { type AwilixContainer, asFunction, asValue, createContainer, InjectionMode } from "awilix";
 import type pino from "pino";
+import type { Auth, AuthAdapter } from "./auth/index.js";
+import { createAuth, createAuthAdapter } from "./auth/index.js";
 import type { Config } from "./config.js";
 import type { Db, DbHandle, MongoClient } from "./db/client.js";
 import { registerUsersModule } from "./modules/users/users.register.js";
@@ -11,6 +13,8 @@ export type AppCradle = {
   logger: pino.Logger;
   db: Db;
   mongoClient: MongoClient;
+  auth: Auth;
+  authAdapter: AuthAdapter;
   usersRepository: UsersRepository;
   usersService: UsersService;
 };
@@ -35,6 +39,11 @@ export function createAppContainer(input: CreateContainerInput): AwilixContainer
     logger: asValue(input.logger),
     db: asValue(input.dbHandle.db),
     mongoClient: asValue(input.dbHandle.client),
+  });
+
+  container.register({
+    auth: asFunction(createAuth).singleton(),
+    authAdapter: asFunction(createAuthAdapter).singleton(),
   });
 
   // One registration call per feature module.
