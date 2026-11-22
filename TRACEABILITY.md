@@ -9,7 +9,7 @@
 | Requirements | 150 (149 Must, 1 Should) |
 | With at least one issue | 150 |
 | With a module | 150 |
-| With at least one test | 23 |
+| With at least one test | 24 |
 | Finished milestones | none yet |
 
 ## Requirements
@@ -45,7 +45,7 @@
 | FR-4.14 | Must | Failed saves: If saving fails (e.g. the network drops), the form keeps everything I typed, shows an error a… | #20, #24 | transactions | not yet |
 | FR-5.1 | Must | Transactions: add, edit and delete income and expenses (see Rule 4). | #20, #25 | transactions | not yet |
 | FR-5.2 | Must | Every category is either an expense or an income category (except the built-in Lending category, see Rule 8). | #22 | categories | not yet |
-| FR-5.3 | Must | Every category has an emoji icon, which I can change. | #22, #59 | categories | not yet |
+| FR-5.3 | Must | Every category has an emoji icon, which I can change. | #22, #59 | categories | apps/web/src/components/emoji-picker/emoji-picker.test.ts |
 | FR-5.4 | Must | New users start with a default set: | #18 | categories | not yet |
 | FR-5.5 | Must | I can add, rename and delete categories. | #22, #27 | categories | not yet |
 | FR-5.6 | Must | Category names are unique per user, ignoring upper/lower case. | #22 | categories | not yet |

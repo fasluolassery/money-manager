@@ -14,6 +14,13 @@ import { Badge } from "@/components/ui/badge.js";
 import { Button } from "@/components/ui/button.js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.js";
 import { Skeleton } from "@/components/ui/skeleton.js";
+import {
+  DateAutoSection,
+  EmojiSection,
+  RhfFormSection,
+  SegmentedProgressSection,
+  TextFieldsSection,
+} from "./DevUiInputsSections.js";
 
 type ColorRow = { name: string; bg: string; label: string };
 type TypographyRow = { name: string; cls: string; sample: string };
@@ -402,6 +409,11 @@ export default function DevUiPage() {
         <DialogSection />
         <ToastsSection />
         <EmptyErrorSection />
+        <TextFieldsSection />
+        <RhfFormSection />
+        <DateAutoSection />
+        <SegmentedProgressSection />
+        <EmojiSection />
         <section>
           <h2 className="text-heading mb-4">OfflineBanner (UI.md 5.1)</h2>
           <p className="text-body text-text-muted">
