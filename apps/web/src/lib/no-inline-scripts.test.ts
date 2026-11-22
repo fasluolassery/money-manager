@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Check the built output — Vite must not inject inline scripts (DESIGN 7.6).
-const DIST_INDEX = resolve(__dirname, "../../../dist/index.html");
+const DIST_INDEX = resolve(__dirname, "../../dist/index.html");
 
 // Inline script: a <script> with content but no src (type="module" with src is fine).
 const INLINE_SCRIPT = /<script(?![^>]*\bsrc\s*=)[^>]*>\s*\S/i;

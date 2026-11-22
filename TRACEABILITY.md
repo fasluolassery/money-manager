@@ -9,7 +9,7 @@
 | Requirements | 150 (149 Must, 1 Should) |
 | With at least one issue | 150 |
 | With a module | 150 |
-| With at least one test | 30 |
+| With at least one test | 32 |
 | Finished milestones | none yet |
 
 ## Requirements
@@ -21,12 +21,12 @@
 | FR-2.2 | Must | Devices: I use the app on multiple devices (e.g. phone and laptop). My data must stay in sync across them. | #15, #28 | Deployment (Section 11) | not yet |
 | FR-2.3 | Must | Login: Sign in with Google only. Email and password login is not part of the first version, so no email-sen… | #16, #17 | auth/ (adapter) | not yet |
 | FR-2.4 | Must | A user can only ever see their own data. | #16 | middleware/ | not yet |
-| FR-3.1 | Must | Type: A web app that can be installed on a phone like a native app (PWA). One codebase serves both phone an… | #14 | apps/web | not yet |
+| FR-3.1 | Must | Type: A web app that can be installed on a phone like a native app (PWA). One codebase serves both phone an… | #14 | apps/web | apps/web/src/lib/pwa.test.ts |
 | FR-3.2 | Must | The phone layout must make adding an expense fast with one hand. | #13 | apps/web | apps/web/src/app/layout/AppShell.test.tsx |
 | FR-3.3 | Must | The laptop layout can show more detail (tables, summaries) at once. | #13 | apps/web | apps/web/src/app/layout/AppShell.test.tsx |
 | FR-3.4 | Must | Primary devices: an Android phone with Chrome, and a laptop. Every feature is checked on these first. | #19, #63 | apps/web | not yet |
 | FR-3.5 | Must | Supported browsers: the last 2 versions of Chrome, Edge, Firefox, Safari and Brave, on desktop and mobile. | #12 | apps/web | apps/web/src/lib/api-client.test.ts<br>apps/web/src/lib/no-inline-scripts.test.ts |
-| FR-3.6 | Must | Installing as an app: supported on Android (Chrome, Edge, Brave) and desktop Chrome/Edge. | #14 | apps/web | not yet |
+| FR-3.6 | Must | Installing as an app: supported on Android (Chrome, Edge, Brave) and desktop Chrome/Edge. | #14 | apps/web | apps/web/src/lib/pwa.test.ts |
 | FR-3.7 | Should | On iPhone the app works in Safari; installing it to the home screen is best effort. | #14 | apps/web | not yet |
 | FR-3.8 | Must | Connectivity: The app requires an internet connection. Offline entry is not part of the first version. When… | #13 | apps/web | apps/web/src/app/layout/AppShell.test.tsx |
 | FR-4.1 | Must | Method: All transactions are entered manually. Bank imports and SMS reading are not part of the first version. | #20 | transactions | not yet |

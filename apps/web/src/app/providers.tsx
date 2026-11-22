@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LazyMotion, MotionConfig } from "motion/react";
 import { type ReactNode, useEffect } from "react";
 import { Toaster } from "@/components/Toaster.js";
+import { UpdatePrompt } from "@/components/UpdatePrompt.js";
 
 // Separate file forces a Vite code-split boundary so the feature bundle stays
 // out of the initial chunk (UI.md 6.1). A same-package dynamic import would
@@ -58,6 +59,7 @@ export function Providers({ children }: { children: ReactNode }) {
         </MotionConfig>
       </LazyMotion>
       <Toaster />
+      <UpdatePrompt />
     </QueryClientProvider>
   );
 }
