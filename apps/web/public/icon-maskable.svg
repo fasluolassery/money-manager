@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <title>Money Manager</title>
+  <!-- Full bleed background for maskable crop (no rounded corners) -->
+  <rect width="512" height="512" fill="#7C3AED"/>
+  <!-- ₹ scaled to ~60% of safe zone (40% padding each side) -->
+  <text x="256" y="318" text-anchor="middle" font-size="230" font-family="sans-serif" fill="#FFFFFF">₹</text>
+</svg>
