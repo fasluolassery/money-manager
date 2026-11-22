@@ -128,6 +128,7 @@ jobs:
             if (!manifest.icons.some(i => i.purpose === 'maskable')) { console.error('maskable icon missing'); process.exit(1); }
             console.log('OK: manifest valid');
             const sw = fs.readFileSync('apps/web/dist/sw.js', 'utf8');
-            if (!sw.includes('/api/') || !sw.includes('NetworkOnly')) { console.error('SW missing NetworkOnly rule for /api/'); process.exit(1); }
+            // Workbox serialises /\/api\// with escaped slashes, so do not use includes('/api/').
+            if (!/api[\s\S]*NetworkOnly/.test(sw)) { console.error('SW missing NetworkOnly rule for /api/'); process.exit(1); }
             console.log('OK: service worker routes /api to NetworkOnly');
           "
