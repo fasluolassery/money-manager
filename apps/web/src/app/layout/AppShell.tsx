@@ -3,6 +3,7 @@ import { AnimatePresence, m } from "motion/react";
 import { useState } from "react";
 import { Outlet, useLocation, useMatches } from "react-router";
 import { OfflineBanner } from "@/components/OfflineBanner.js";
+import { Button } from "@/components/ui/button.js";
 import { detailSlideIn, tabCrossFade } from "@/lib/motion.js";
 import { useMediaQuery } from "@/lib/use-media-query.js";
 import { AddTransactionDrawer } from "./AddTransactionDrawer.js";
@@ -63,14 +64,16 @@ export function AppShell() {
         </div>
       </main>
       <BottomNav />
-      <button
-        type="button"
+      {/* safe-area-inset-bottom so the FAB clears the iOS home indicator */}
+      <Button
+        variant="fab"
+        size="icon"
         aria-label="Add transaction"
         onClick={() => setDrawerOpen(true)}
-        className="fixed bottom-20 right-4 z-10 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-fab hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.97] motion-reduce:active:scale-100"
+        className="fixed right-4 z-10 bottom-[calc(5rem_+_env(safe-area-inset-bottom,0px))]"
       >
         <Plus className="icon-nav" aria-hidden />
-      </button>
+      </Button>
       <AddTransactionDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
     </div>
   );

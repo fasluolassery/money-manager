@@ -1,11 +1,11 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { ErrorBoundaryPage } from "./ErrorBoundaryPage.js";
 import { AppShell } from "./layout/AppShell.js";
-import { PlanLayout } from "./layout/PlanLayout.js";
 
 /**
  * All leaf routes are lazy-loaded (DESIGN 8.10).
- * AppShell, ErrorBoundaryPage, and PlanLayout are eager — they're shared by every route.
+ * AppShell and ErrorBoundaryPage are eager — they're needed on every route.
+ * PlanLayout is lazy so the Tabs primitive stays out of the initial bundle.
  */
 export const router = createBrowserRouter([
   {
@@ -58,7 +58,10 @@ export const router = createBrowserRouter([
       },
       {
         path: "/plan",
-        element: <PlanLayout />,
+        lazy: async () => {
+          const { PlanLayout } = await import("./layout/PlanLayout.js");
+          return { Component: PlanLayout };
+        },
         children: [
           { index: true, element: <Navigate to="/plan/bills" replace /> },
           {

@@ -17,7 +17,7 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 export const PLAN_TABS = [
-  { label: "Bills", href: "/plan/bills" },
-  { label: "Goals", href: "/plan/goals" },
-  { label: "Lending", href: "/plan/lending" },
+  { label: "Bills", href: "/plan/bills", value: "bills" },
+  { label: "Goals", href: "/plan/goals", value: "goals" },
+  { label: "Lending", href: "/plan/lending", value: "lending" },
 ];
