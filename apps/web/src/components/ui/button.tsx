@@ -13,20 +13,22 @@ const buttonVariants = cva(
   ],
   {
     variants: {
+      // size is listed first so variant classes (including fab) can win via tailwind-merge
+      size: {
+        default: "h-10 px-5 py-2",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-12 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
       variant: {
         primary: "bg-primary text-primary-foreground hover:bg-primary/90",
         secondary: "bg-surface-muted text-text hover:bg-surface-muted/80",
         ghost: "text-text hover:bg-surface-muted",
         destructive: "bg-alert text-primary-foreground hover:bg-alert/90",
         "danger-ghost": "text-alert hover:bg-alert-soft",
-        // `fixed` positioning is NOT here — the page that renders the FAB controls its placement
+        // `fixed` positioning is NOT here — the page that renders the FAB controls its placement.
+        // Use size="icon" with this variant (no padding) so h-14 w-14 from fab wins.
         fab: "h-14 w-14 rounded-full shadow-fab bg-primary text-primary-foreground hover:bg-primary/90",
-      },
-      size: {
-        default: "h-10 px-5 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-12 rounded-md px-8",
-        icon: "h-10 w-10",
       },
     },
     defaultVariants: { variant: "primary", size: "default" },

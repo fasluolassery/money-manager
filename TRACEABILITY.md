@@ -9,7 +9,7 @@
 | Requirements | 150 (149 Must, 1 Should) |
 | With at least one issue | 150 |
 | With a module | 150 |
-| With at least one test | 24 |
+| With at least one test | 30 |
 | Finished milestones | none yet |
 
 ## Requirements
@@ -22,19 +22,19 @@
 | FR-2.3 | Must | Login: Sign in with Google only. Email and password login is not part of the first version, so no email-sen… | #16, #17 | auth/ (adapter) | not yet |
 | FR-2.4 | Must | A user can only ever see their own data. | #16 | middleware/ | not yet |
 | FR-3.1 | Must | Type: A web app that can be installed on a phone like a native app (PWA). One codebase serves both phone an… | #14 | apps/web | not yet |
-| FR-3.2 | Must | The phone layout must make adding an expense fast with one hand. | #13 | apps/web | not yet |
-| FR-3.3 | Must | The laptop layout can show more detail (tables, summaries) at once. | #13 | apps/web | not yet |
+| FR-3.2 | Must | The phone layout must make adding an expense fast with one hand. | #13 | apps/web | apps/web/src/app/layout/AppShell.test.tsx |
+| FR-3.3 | Must | The laptop layout can show more detail (tables, summaries) at once. | #13 | apps/web | apps/web/src/app/layout/AppShell.test.tsx |
 | FR-3.4 | Must | Primary devices: an Android phone with Chrome, and a laptop. Every feature is checked on these first. | #19, #63 | apps/web | not yet |
 | FR-3.5 | Must | Supported browsers: the last 2 versions of Chrome, Edge, Firefox, Safari and Brave, on desktop and mobile. | #12 | apps/web | apps/web/src/lib/api-client.test.ts<br>apps/web/src/lib/no-inline-scripts.test.ts |
 | FR-3.6 | Must | Installing as an app: supported on Android (Chrome, Edge, Brave) and desktop Chrome/Edge. | #14 | apps/web | not yet |
 | FR-3.7 | Should | On iPhone the app works in Safari; installing it to the home screen is best effort. | #14 | apps/web | not yet |
-| FR-3.8 | Must | Connectivity: The app requires an internet connection. Offline entry is not part of the first version. When… | #13 | apps/web | not yet |
+| FR-3.8 | Must | Connectivity: The app requires an internet connection. Offline entry is not part of the first version. When… | #13 | apps/web | apps/web/src/app/layout/AppShell.test.tsx |
 | FR-4.1 | Must | Method: All transactions are entered manually. Bank imports and SMS reading are not part of the first version. | #20 | transactions | not yet |
 | FR-4.2 | Must | Transaction types: | #20 | transactions | not yet |
 | FR-4.3 | Must | Manual transactions can't use the built-in Lending category; Lending transactions are created only by lendi… | #20 | transactions | not yet |
 | FR-4.4 | Must | When I edit a manual transaction I can switch its type between expense and income; I then have to pick a ca… | #20, #25 | transactions | not yet |
 | FR-4.5 | Must | Fields: | #20 | transactions | not yet |
-| FR-4.6 | Must | An Add button is visible on every screen. | #13, #24 | transactions, apps/web | not yet |
+| FR-4.6 | Must | An Add button is visible on every screen. | #13, #24 | transactions, apps/web | apps/web/src/app/layout/AppShell.test.tsx |
 | FR-4.7 | Must | Opening the form focuses the amount field and shows the number keypad on phones. | #24 | transactions, apps/web | not yet |
 | FR-4.8 | Must | The category picker only shows categories matching the selected type, with the most recently used ones first. | #24 | transactions, apps/web | not yet |
 | FR-4.9 | Must | Amount + one category tap + Save is enough. Saving an expense with defaults takes at most 3 taps after typi… | #24, #28 | transactions, apps/web | not yet |
@@ -149,8 +149,8 @@
 | FR-11.1 | Must | Actions that write more than one record (paying, skipping or undoing a bill cycle, recording or changing a … | #10, #37 | db/ | apps/api/src/db/db.api.test.ts |
 | FR-11.2 | Must | The frontend and the API must be served from the same site. Otherwise browsers treat the session cookie as … | #8 | app.ts, main.ts | apps/api/src/app.test.ts |
 | FR-11.3 | Must | The server must stay always on. A host that sleeps when idle is ruled out, because a slow first load breaks… | #8 | app.ts, main.ts | apps/api/src/app.test.ts |
-| FR-12.1 | Must | Navigation: a bottom tab bar on phones and a sidebar on laptops, with these sections: | #13 | apps/web | not yet |
-| FR-12.2 | Must | The Add button (Rule 4) is a floating button on phones and a button in the top bar on laptops, visible on e… | #13, #24 | apps/web | not yet |
+| FR-12.1 | Must | Navigation: a bottom tab bar on phones and a sidebar on laptops, with these sections: | #13 | apps/web | apps/web/src/app/layout/AppShell.test.tsx |
+| FR-12.2 | Must | The Add button (Rule 4) is a floating button on phones and a button in the top bar on laptops, visible on e… | #13, #24 | apps/web | apps/web/src/app/layout/AppShell.test.tsx |
 | FR-12.3 | Must | Home: | #33, #39, #45, #52 | reports, apps/web | not yet |
 | FR-12.4 | Must | Transactions: the transaction list (Rule 5), grouped by date with a daily total, plus a link to the Trash. | #25 | apps/web | not yet |
 | FR-12.5 | Must | Reports: a month picker, the monthly summary, spent, income and left over, charts and month comparison (Rul… | #32 | apps/web | not yet |
