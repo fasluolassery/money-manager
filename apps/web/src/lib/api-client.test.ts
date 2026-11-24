@@ -1,6 +1,14 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, apiRequest } from "./api-client.js";
+import { ApiError, apiRequest, isStaleRecordError } from "./api-client.js";
+
+describe("isStaleRecordError", () => {
+  it("[FR-9.10] recognises a STALE_RECORD ApiError", () => {
+    expect(isStaleRecordError(new ApiError("STALE_RECORD", "stale"))).toBe(true);
+    expect(isStaleRecordError(new ApiError("NOT_FOUND", "missing"))).toBe(false);
+    expect(isStaleRecordError(new Error("nope"))).toBe(false);
+  });
+});
 
 describe("apiRequest — success", () => {
   afterEach(() => {

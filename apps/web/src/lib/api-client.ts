@@ -20,6 +20,11 @@ export class ApiError extends Error {
   }
 }
 
+/** True when the API rejected a stale edit (DESIGN 4.7, 8.4). */
+export function isStaleRecordError(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.code === "STALE_RECORD";
+}
+
 type Envelope<T> =
   | { success: true; data: T }
   | {

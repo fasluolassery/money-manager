@@ -9,7 +9,7 @@
 | Requirements | 150 (149 Must, 1 Should) |
 | With at least one issue | 150 |
 | With a module | 150 |
-| With at least one test | 37 |
+| With at least one test | 38 |
 | Finished milestones | none yet |
 
 ## Requirements
@@ -115,7 +115,7 @@
 | FR-9.7 | Must | Dates: Transaction, contribution, repayment and due dates are calendar dates (no time of day), in the user'… | #7, #20 | transactions | packages/shared/src/dates.test.ts<br>packages/shared/src/schemas/common.test.ts |
 | FR-9.8 | Must | Timezone: Each user has a timezone (default Asia/Kolkata). The server uses it to decide what "today" is, fo… | #7, #18, #27 | users | packages/shared/src/dates.test.ts<br>packages/shared/src/schemas/common.test.ts |
 | FR-9.9 | Must | Ownership: Every record belongs to exactly one user (Rule 2). | #10 | db/ | apps/api/src/db/db.api.test.ts |
-| FR-9.10 | Must | Editing on two devices: if a record was changed on another device after I opened it, my save or delete is r… | #62 | transactions | not yet |
+| FR-9.10 | Must | Editing on two devices: if a record was changed on another device after I opened it, my save or delete is r… | #62 | transactions | apps/api/src/db/versioned-write.api.test.ts<br>apps/web/src/lib/api-client.test.ts<br>apps/web/src/lib/handle-stale-record.test.tsx<br>packages/shared/src/schemas/common.test.ts |
 | FR-9.11 | Must | Timestamps: Every record has createdAt and updatedAt. | #10 | db/ | apps/api/src/db/db.api.test.ts |
 | FR-9.12 | Must | The app stores exactly these entities; DESIGN 5 defines their fields and storage. | #10 | db/ | apps/api/src/db/db.api.test.ts |
 | FR-9.13 | Must | balance = opening balance + income − expenses, counting only transactions dated on or after the opening bal… | #23 | reports | not yet |
