@@ -1,4 +1,4 @@
-# Money Manager
+# Outgo
 
 A personal finance app (installable web app) for knowing exactly where my money goes: expenses and income, with recurring bills, lending and savings goals as secondary features.
 

@@ -197,7 +197,7 @@
 | D-24 | Friendly, calm design | SPEC.md |
 | D-25 | Visual feedback only | SPEC.md |
 | D-26 | A practical accessibility baseline | SPEC.md |
-| D-27 | A working name until the first deploy | SPEC.md |
+| D-27 | The app is called Outgo | SPEC.md |
 | D-28 | Hosting: one always-on server on a paid managed platform | DESIGN 1.1 |
 | D-29 | Frontend served by the same server | DESIGN 1.2 |
 | D-30 | Auth: Better Auth with Google sign-in | DESIGN 1.3 |

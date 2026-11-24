@@ -13,8 +13,8 @@ export default defineConfig({
       // Service worker registered via src/lib/register-sw.ts, never inline (DESIGN 7.6)
       injectRegister: false,
       manifest: {
-        name: "Money Manager",
-        short_name: "MoneyMgr",
+        name: "Outgo",
+        short_name: "Outgo",
         description: "Know exactly where your money goes.",
         theme_color: "#FAF9FC",
         background_color: "#FAF9FC",

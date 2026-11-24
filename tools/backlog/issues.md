@@ -624,6 +624,7 @@ DESIGN 11: Railway (Hobby, Singapore) and two MongoDB Atlas projects, auto-deplo
 ## Scope
 
 - Atlas: two projects (development and production), each with a free cluster in or near Singapore, a database user with a long random password, and network access open to all IPs (DESIGN 11.2).
+- On the development cluster, confirm that multi-document transactions, `$jsonSchema` validators and TTL indexes work, and record the result against A-05 and Q-04 in SPEC.md.
 - Railway: a project on the Hobby plan, one service in Singapore, connected to the GitHub repo's `main` branch with "wait for CI" enabled.
 - Build command `pnpm build`; start command runs the API.
 - Health check path `/api/health`.
@@ -1662,7 +1663,7 @@ Spec Rule 10 (Backups): the JSON download is the real backup, because the free A
 
 ## Scope
 
-- `GET /me/backup`: a JSON attachment named `money-manager-backup-YYYY-MM-DD.json` with `formatVersion: 1`, `exportedAt`, the profile, categories, transactions (including trashed, with `deletedAt`), goals, bills, bill cycles and lending records, shaped by the export schema (DESIGN 6.6). Limited to 10 downloads per hour per user (DESIGN 7.4).
+- `GET /me/backup`: a JSON attachment named `outgo-backup-YYYY-MM-DD.json` with `formatVersion: 1`, `exportedAt`, the profile, categories, transactions (including trashed, with `deletedAt`), goals, bills, bill cycles and lending records, shaped by the export schema (DESIGN 6.6). Limited to 10 downloads per hour per user (DESIGN 7.4).
 - No auth data (sessions, tokens, Google account details).
 - Sets `lastBackupAt`.
 - **Download backup** in Settings.

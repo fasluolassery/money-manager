@@ -15,7 +15,7 @@ export function Sidebar() {
       aria-label="Main navigation"
       className="flex w-56 flex-col border-r border-border bg-background pt-4 pl-safe"
     >
-      <span className="px-4 pb-6 text-heading font-semibold text-text">Money Manager</span>
+      <span className="px-4 pb-6 text-heading font-semibold text-text">Outgo</span>
       <ul className="flex flex-col gap-1 px-2">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href, item.matchPrefix, pathname);

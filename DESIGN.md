@@ -1,4 +1,4 @@
-# Money Manager — Technical Design
+# Outgo — Technical Design
 
 This document describes **how** the app is built. `SPEC.md` describes **what** it does, and `UI.md` how it looks, feels and moves. When they disagree, the spec wins and the other documents are updated.
 
@@ -933,7 +933,7 @@ apps/web/src/
 ### 8.7 PWA
 
 - `vite-plugin-pwa` generates the manifest, icons and service worker. The service worker is registered from an external script file, never inline (Section 7.6).
-- **Manifest:** `name` "Money Manager", `short_name` "MoneyMgr", `theme_color` and `background_color` `#FAF9FC` (UI.md 4.11).
+- **Manifest:** `name` "Outgo", `short_name` "Outgo", `theme_color` and `background_color` `#FAF9FC` (UI.md 4.11).
 - **Browser bar colour:** a `<meta name="theme-color">` tag that `theme-init.js` sets before first paint and the theme switch updates, so the bar matches the app background in the chosen theme.
 - **Tab titles:** each route sets `document.title` as UI.md 4.11 describes.
 - The service worker caches only the app's own files (HTML, JS, CSS, icons). It **never caches `/api` responses**, so the app never shows stale money data (Spec Rule 3).
@@ -1310,7 +1310,7 @@ Atlas allows one free cluster per project, so development and production use **t
 
 ### 11.2 Production setup
 
-- **Railway**, one service in the **Singapore** region, on the platform's free subdomain (e.g. `money-manager.up.railway.app`).
+- **Railway**, one service in the **Singapore** region, on the platform's free subdomain (e.g. `outgo.up.railway.app`).
 - **Atlas** production cluster in the same or the nearest region, to keep database round trips short.
 - **Build:** `pnpm build` builds `web` and `api`. **Start:** one Node process runs the API, which also serves `web`'s built files (Section 1.2).
 - **Health check:** `GET /api/health` (no auth) returns `200` when the server can reach the database. Railway uses it to decide whether a new deployment is healthy before switching traffic to it.
@@ -1364,12 +1364,12 @@ flowchart LR
 
 | Item                     | Cost                                          |
 | ------------------------ | --------------------------------------------- |
-| Railway Hobby            | around $5/month; check current pricing        |
+| Railway Hobby            | $5/month, including $5 of usage (checked 2026-11-24, Q-03) |
 | MongoDB Atlas (2 clusters) | free                                        |
 | Google sign-in           | free                                          |
 | Domain                   | none; using Railway's subdomain               |
 
-Total: within the ₹500/month budget (Spec Rule 10), as long as Railway's pricing hasn't changed.
+Total: about $5 a month. One always-on Node process with about 0.25 GB of RAM and little CPU uses about $3 of usage, inside the included $5. At ₹85–90 to the dollar, plus an Indian card's foreign-transaction fee, that is about ₹440–470, within the ₹500/month budget (Spec Rule 10) but with little margin. Railway sends an email alert at $5 of usage and has a hard limit of $10, the lowest it allows. The actual monthly cost is checked after the first billing period (#15).
 
 ### 11.7 Monitoring
 

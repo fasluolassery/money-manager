@@ -18,8 +18,8 @@ describe("PWA assets", () => {
     const manifestPath = candidatePaths.find((p) => existsSync(p));
     if (manifestPath === undefined) return;
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
-    expect(manifest.name).toBe("Money Manager");
-    expect(manifest.short_name).toBe("MoneyMgr");
+    expect(manifest.name).toBe("Outgo");
+    expect(manifest.short_name).toBe("Outgo");
     expect(manifest.theme_color).toBe("#FAF9FC");
     expect(manifest.background_color).toBe("#FAF9FC");
     expect(manifest.display).toBe("standalone");

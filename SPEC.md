@@ -1,4 +1,4 @@
-# Money Manager — Spec
+# Outgo — Spec
 
 ## How these documents fit together
 
@@ -39,17 +39,17 @@ Two kinds: **needs a fact** (look it up or try it) and **needs a decision** (I c
 
 | ID | Question | Kind | Needed by | Status |
 | --- | --- | --- | --- | --- |
-| Q-01 | Final app name (Rule 1) | needs a decision | #15 | open |
+| Q-01 | Final app name (Rule 1) | needs a decision | #15 | settled 2026-11-24: Outgo (D-27) |
 | Q-02 | Branch protection on a private repo: GitHub Pro, public repo, or convention only (DESIGN 10.3) | needs a decision | #6 | settled 2026-11-11: the repo becomes public after a pre-publication audit; protection is then enforced (#6) |
-| Q-03 | Railway Hobby's current price and limits | needs a fact | #15 | open |
-| Q-04 | Atlas free tier's current limits: connections, storage, backups, transactions (A-05) | needs a fact | #10, #15 | open |
+| Q-03 | Railway Hobby's current price and limits | needs a fact | #15 | settled 2026-11-24: $5/month including $5 of usage, billed per second above that ($20 per vCPU-month, $10 per GB of RAM per month, $0.05 per GB egress); always-on; Singapore listed; 7-day logs; usage alerts and a hard limit of at least $10. One small API fits inside the included usage (DESIGN 11.6) |
+| Q-04 | Atlas free tier's current limits: connections, storage, backups, transactions (A-05) | needs a fact | #10, #15 | settled 2026-11-24 from the docs: 0.5 GB storage, 500 connections, 100 operations a second, 10 GB in and out per 7 days, one free cluster per project, paused after 30 days with no connections, no backups (private preview only). The docs don't state transactions, `$jsonSchema` validators or TTL indexes; #15 confirms them on the development cluster (A-05) |
 | Q-05 | Which of the Biome rules in DESIGN 10.4 exist in the installed Biome 2 version | needs a fact | #3 | settled 2026-11-11: all exist in Biome 2.6.6; two are in the nursery group (DESIGN 10.4) |
 | Q-06 | Better Auth details: MongoDB adapter with Express 5, the after-sign-up hook, sliding-session settings (A-08) | needs a fact | #16 | open |
 | Q-07 | Whether the issue generator stays in the repo long-term (`tools/backlog/`) | needs a decision | — | settled 2026-11-11: it lives in `tools/backlog/` and runs in CI (D-49) |
 
 ## Rule 1: Purpose
 
-**Name:** Money Manager, short name **MoneyMgr** (for the phone's home screen). This is a working name: the final name is confirmed before the first production deployment (issue #15, Q-01), because after that it also appears on Google's sign-in screen, in installed apps and in the app's web address. The rest of the app identity is in UI.md 4.11.
+**Name:** Outgo, which is also the short name on the phone's home screen (D-27). The name appears on Google's sign-in screen, in installed apps and in the app's web address. The rest of the app identity is in UI.md 4.11.
 
 **Primary goal:** Know exactly where my money goes.
 
@@ -720,10 +720,11 @@ Product decisions, `D-01` to `D-27`. Technical decisions continue from `D-28` in
 - **Why:** the baseline costs little and helps everyone; a formal audit isn't needed for a personal app.
 - **Binds:** every UI issue's definition of done includes the baseline.
 
-### D-27 A working name until the first deploy
-- **Decided:** 2026-11-11. **Chose:** "Money Manager" (short name "MoneyMgr") as a working name, confirmed before issue #15 (Q-01).
-- **Refused:** settling the final name now.
-- **Why:** renaming is free until the name reaches Google's consent screen and installed apps.
+### D-27 The app is called Outgo
+- **Decided:** 2026-11-11; changed 2026-11-24 (Q-01, issue #15). **Chose:** "Outgo", for both the name and the short name. It replaced the working name "Money Manager" (short name "MoneyMgr").
+- **Refused:** keeping "Money Manager" (generic, and the name of existing apps); names already used by expense apps (Spent, Kept, Prism, Ducat and others); names close to large finance brands (Tally).
+- **Why:** "outgo" is the money that goes out, which is what the app tracks; it is short enough for the home screen. A US freight-payments company also uses the name, in a different market; this app is personal and not listed in any app store.
+- **Internal identifiers keep the old name:** the `@money-manager/*` package names, the repository and the database names are not shown to users and are renamed, if ever, in a separate refactor (DESIGN 15.8).
 - **Binds:** UI.md 4.11 lists every place the name appears; a rename updates all of them in one pull request.
 
 ## Risks
