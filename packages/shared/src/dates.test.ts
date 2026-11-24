@@ -4,6 +4,7 @@ import {
   type CalendarDate,
   formatFormDate,
   formatListDate,
+  fromLocalDate,
   isCalendarDate,
   isMonth,
   isTimezone,
@@ -11,6 +12,7 @@ import {
   monthBounds,
   monthOf,
   todayIn,
+  toLocalDate,
 } from "./dates.js";
 
 function date(value: string): CalendarDate {
@@ -112,6 +114,21 @@ describe("months", () => {
         expect(isCalendarDate(last)).toBe(true);
       }),
     );
+  });
+});
+
+describe("local dates", () => {
+  it("[FR-9.7] turn a calendar date into local midnight and back to the same date", () => {
+    fc.assert(
+      fc.property(anyDate, (d) => {
+        expect(fromLocalDate(toLocalDate(d))).toBe(d);
+      }),
+    );
+  });
+
+  it("[FR-9.7] ignore the time of day of a local Date", () => {
+    expect(fromLocalDate(new Date(2026, 10, 24, 23, 59, 59))).toBe("2026-11-24");
+    expect(fromLocalDate(new Date(2026, 0, 5, 0, 0, 0))).toBe("2026-01-05");
   });
 });
 

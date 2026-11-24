@@ -6,6 +6,239 @@
     "description": "Personal finance tracker API. All /api/v1 endpoints require a valid session cookie."
   },
   "paths": {
+    "/api/v1/me": {
+      "get": {
+        "summary": "The signed-in user's name, email and profile settings",
+        "operationId": "getv1_me",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "data"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [true]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "timezone": {
+                          "type": "string",
+                          "description": "IANA timezone, e.g. Asia/Kolkata"
+                        },
+                        "openingBalance": {
+                          "type": "integer",
+                          "minimum": -1000000000,
+                          "maximum": 1000000000
+                        },
+                        "openingBalanceDate": {
+                          "type": "string",
+                          "format": "date",
+                          "description": "YYYY-MM-DD"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "const": "INR"
+                        },
+                        "lastBackupAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "onboardedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "version": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "email",
+                        "timezone",
+                        "openingBalance",
+                        "openingBalanceDate",
+                        "currency",
+                        "lastBackupAt",
+                        "onboardedAt",
+                        "version"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Save the timezone and, optionally, the opening balance and its date; the first save finishes onboarding",
+        "operationId": "patchv1_me",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "data"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [true]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "timezone": {
+                          "type": "string",
+                          "description": "IANA timezone, e.g. Asia/Kolkata"
+                        },
+                        "openingBalance": {
+                          "type": "integer",
+                          "minimum": -1000000000,
+                          "maximum": 1000000000
+                        },
+                        "openingBalanceDate": {
+                          "type": "string",
+                          "format": "date",
+                          "description": "YYYY-MM-DD"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "const": "INR"
+                        },
+                        "lastBackupAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "onboardedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "version": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "email",
+                        "timezone",
+                        "openingBalance",
+                        "openingBalanceDate",
+                        "currency",
+                        "lastBackupAt",
+                        "onboardedAt",
+                        "version"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid timezone, amount or date (VALIDATION_ERROR)"
+          },
+          "401": {
+            "description": "No valid session"
+          },
+          "409": {
+            "description": "The profile changed on another device (STALE_RECORD)"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "timezone": {
+                    "type": "string",
+                    "description": "IANA timezone, e.g. Asia/Kolkata"
+                  },
+                  "openingBalance": {
+                    "type": "integer",
+                    "minimum": -1000000000,
+                    "maximum": 1000000000
+                  },
+                  "openingBalanceDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "YYYY-MM-DD"
+                  }
+                },
+                "required": ["version", "timezone"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "summary": "Health check — 200 when the server can reach the database (DESIGN 11.2)",

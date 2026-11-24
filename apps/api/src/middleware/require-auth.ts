@@ -9,9 +9,16 @@ declare global {
     interface Request {
       /** Set by `loadSession` from a valid session; services receive it as `userId` (DESIGN 4.5). */
       userId?: UserId;
+      /** The signed-in user's name and email, set with `userId` (only `GET /me` returns them). */
+      identity?: { name: string; email: string };
     }
   }
 }
+
+/** What `requireAuth` needs from the users service, so middleware doesn't import a feature. */
+export type ProfileGuard = {
+  ensureProfile: (userId: string) => Promise<void>;
+};
 
 /**
  * Reads the session through the auth adapter and puts the user id on the request.
@@ -20,14 +27,35 @@ declare global {
  */
 export function createLoadSession(authAdapter: AuthAdapter): RequestHandler {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const { userId, setCookies } = await authAdapter.getSession(req.headers);
+    const { userId, identity, setCookies } = await authAdapter.getSession(req.headers);
     if (setCookies.length > 0) res.append("Set-Cookie", setCookies);
     if (userId !== null) req.userId = userId;
+    if (identity !== null) req.identity = identity;
     next();
   };
 }
 
-/** `401 UNAUTHENTICATED` unless `loadSession` found a user (DESIGN 7.4, FR-10.7). */
-export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
-  next(req.userId === undefined ? new UnauthenticatedError() : undefined);
+/**
+ * `401 UNAUTHENTICATED` unless `loadSession` found a user (DESIGN 7.4, FR-10.7). For a
+ * signed-in user it also calls `ensureProfile`, so a failed after-sign-up hook can never
+ * leave anyone without a profile (DESIGN 7.2, FR-13.1).
+ */
+export function createRequireAuth(profiles: ProfileGuard): RequestHandler {
+  return async (req: Request, _res: Response, next: NextFunction) => {
+    if (req.userId === undefined) {
+      next(new UnauthenticatedError());
+      return;
+    }
+    await profiles.ensureProfile(req.userId);
+    next();
+  };
+}
+
+/** The signed-in user a route works for; only valid behind `requireAuth`. */
+export function getSessionUser(req: Request): {
+  userId: UserId;
+  identity: { name: string; email: string };
+} {
+  if (req.userId === undefined || req.identity === undefined) throw new UnauthenticatedError();
+  return { userId: req.userId, identity: req.identity };
 }

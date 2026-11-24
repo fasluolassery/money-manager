@@ -59,9 +59,14 @@ export const openingBalanceSchema = wholePaiseSchema()
   .max(MAX_AMOUNT_PAISE, { error: M.openingBalanceTooHigh })
   .brand<"Paise">();
 
-export const calendarDateSchema = z.custom<CalendarDate>(isCalendarDate, { error: M.date });
+// `.meta` describes these custom checks in the OpenAPI document (DESIGN 6.8).
+export const calendarDateSchema = z
+  .custom<CalendarDate>(isCalendarDate, { error: M.date })
+  .meta({ type: "string", format: "date", description: "YYYY-MM-DD" });
 export const monthSchema = z.custom<Month>(isMonth, { error: M.month });
-export const timezoneSchema = z.custom<string>(isTimezone, { error: M.timezone });
+export const timezoneSchema = z
+  .custom<string>(isTimezone, { error: M.timezone })
+  .meta({ type: "string", description: "IANA timezone, e.g. Asia/Kolkata" });
 
 /** Money-event dates can't be after today in the user's timezone (FR-9.3). */
 export const dateNotInFutureSchema = (today: CalendarDate) =>

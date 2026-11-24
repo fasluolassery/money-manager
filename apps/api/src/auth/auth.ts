@@ -23,10 +23,12 @@ export type AuthDeps = {
   logger: pino.Logger;
   db: Db;
   mongoClient: MongoClient;
+  /** Runs after Better Auth creates a user; first-sign-in setup lives here (DESIGN 7.2). */
+  onUserCreated?: (userId: string) => Promise<void>;
 };
 
 /** Better Auth's settings (D-30, DESIGN 7). Tests build their instance from these too. */
-export function buildAuthOptions({ config, logger, db, mongoClient }: AuthDeps) {
+export function buildAuthOptions({ config, logger, db, mongoClient, onUserCreated }: AuthDeps) {
   return {
     baseURL: config.APP_URL,
     secret: config.BETTER_AUTH_SECRET,
@@ -56,6 +58,20 @@ export function buildAuthOptions({ config, logger, db, mongoClient }: AuthDeps) 
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
       ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER] },
     },
+    databaseHooks: {
+      user: {
+        create: {
+          // A failed setup must not fail the sign-in: `requireAuth` repeats it (DESIGN 7.2).
+          after: async (user: { id: string }) => {
+            try {
+              await onUserCreated?.(user.id);
+            } catch (error) {
+              logger.error({ error, userId: user.id }, "First sign-in setup failed");
+            }
+          },
+        },
+      },
+    },
     // Only the message: Better Auth's extra arguments can hold emails or tokens (DESIGN 9.4).
     logger: {
       level: "warn",
@@ -66,8 +82,21 @@ export function buildAuthOptions({ config, logger, db, mongoClient }: AuthDeps) 
   } satisfies BetterAuthOptions;
 }
 
-export function createAuth(deps: AuthDeps) {
-  return betterAuth(buildAuthOptions(deps));
+export type CreateAuthDeps = Omit<AuthDeps, "onUserCreated"> & {
+  usersService: { ensureProfile: (userId: string) => Promise<void> };
+};
+
+// Named dependencies, not a rest spread: the container's cradle must only resolve what is used.
+export function createAuth({ config, logger, db, mongoClient, usersService }: CreateAuthDeps) {
+  return betterAuth(
+    buildAuthOptions({
+      config,
+      logger,
+      db,
+      mongoClient,
+      onUserCreated: (userId) => usersService.ensureProfile(userId),
+    }),
+  );
 }
 
 export type Auth = ReturnType<typeof createAuth>;

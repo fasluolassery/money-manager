@@ -12,6 +12,8 @@ export type AuthCore = Pick<Auth, "handler"> & {
 export type SessionLookup = {
   /** The signed-in user, or null when there is no valid session. */
   userId: UserId | null;
+  /** Their name and email, the only Better Auth data the app returns (`GET /me`, DESIGN 6.6). */
+  identity: { name: string; email: string } | null;
   /** `Set-Cookie` values to forward: a refreshed or cleared session cookie. */
   setCookies: string[];
 };
@@ -38,11 +40,13 @@ export function createAuthAdapter({ auth }: { auth: AuthCore }): AuthAdapter {
         });
         return {
           userId: response === null ? null : userIdSchema.parse(response.user.id),
+          identity:
+            response === null ? null : { name: response.user.name, email: response.user.email },
           setCookies: responseHeaders.getSetCookie(),
         };
       } catch (error) {
         if (error instanceof APIError && error.status === "UNAUTHORIZED") {
-          return { userId: null, setCookies: [] };
+          return { userId: null, identity: null, setCookies: [] };
         }
         throw error;
       }

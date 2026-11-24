@@ -5,6 +5,9 @@ export type CalendarDate = string & z.$brand<"CalendarDate">;
 /** A calendar month, "YYYY-MM". */
 export type Month = string & z.$brand<"Month">;
 
+/** The timezone every new profile starts with (Spec Rule 13). */
+export const DEFAULT_TIMEZONE = "Asia/Kolkata";
+
 const CALENDAR_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MONTH = /^(\d{4})-(\d{2})$/;
 const MONTH_NAMES = [
@@ -69,6 +72,18 @@ export function todayIn(timezone: string, now: Date): CalendarDate {
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((p) => p.type === type)?.value ?? "";
   return `${part("year")}-${part("month")}-${part("day")}` as CalendarDate;
+}
+
+/** The calendar date a local-time `Date` falls on, for pickers that hand back a `Date`. */
+export function fromLocalDate(date: Date): CalendarDate {
+  const year = String(date.getFullYear()).padStart(4, "0");
+  return `${year}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}` as CalendarDate;
+}
+
+/** Local midnight on a calendar date, for pickers that take a `Date`. */
+export function toLocalDate(date: CalendarDate): Date {
+  const [year = 0, month = 1, day = 1] = date.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 
 export function monthOf(date: CalendarDate): Month {

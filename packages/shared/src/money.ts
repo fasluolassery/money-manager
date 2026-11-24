@@ -6,9 +6,14 @@ export type Paise = number & z.$brand<"Paise">;
 /** ₹1,00,00,000 (one crore), the largest amount allowed (Spec Rule 4). */
 export const MAX_AMOUNT_PAISE = 1_000_000_000;
 
+/** The only currency the app handles (Spec Rule 9). */
+export const CURRENCY = "INR";
+
 const PAISE_PER_RUPEE = 100;
 const MINUS = "\u2212";
 const RUPEES_INPUT = /^(\d+)(?:\.(\d{1,2}))?$/;
+const LEADING_MINUS = /^[-\u2212]/;
+const TYPED_RUPEES = /^(-?)(\d*)(\.\d*)?$/;
 const indianGrouping = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 
 /**
@@ -21,6 +26,37 @@ export function parseRupees(input: string): Paise | null {
   const [, rupees = "", fraction = ""] = match;
   const paise = Number(rupees) * PAISE_PER_RUPEE + Number(fraction.padEnd(2, "0"));
   return paise <= MAX_AMOUNT_PAISE ? (paise as Paise) : null;
+}
+
+/**
+ * Like `parseRupees`, but accepts a leading "-" or "−" for amounts that may be negative
+ * (the opening balance, Spec Rule 9): "-1250.50" → -125050. Returns null beyond ±₹1,00,00,000.
+ */
+export function parseSignedRupees(input: string): Paise | null {
+  const trimmed = input.trim();
+  const negative = LEADING_MINUS.test(trimmed);
+  const magnitude = parseRupees(negative ? trimmed.slice(1) : trimmed);
+  if (magnitude === null) return null;
+  return (negative && magnitude !== 0 ? -magnitude : magnitude) as Paise;
+}
+
+/**
+ * Re-groups text typed into a money field, keeping what was typed after the digits:
+ * "1234567." → "12,34,567."; "-1250.5" → "-1,250.5". Text that isn't a partial amount is returned as is.
+ */
+export function groupRupeesInput(typed: string): string {
+  const match = TYPED_RUPEES.exec(typed);
+  if (!match) return typed;
+  const [, sign = "", digits = "", fraction = ""] = match;
+  const grouped = digits === "" ? "" : indianGrouping.format(Number(digits));
+  return `${sign}${grouped}${fraction}`;
+}
+
+/** The text a money field shows for an amount: 12550 → "125.50"; -125000 → "-1,250" (no ₹ sign). */
+export function formatRupeesInput(paise: Paise): string {
+  const { rupees, remainder } = splitPaise(paise);
+  const fraction = remainder ? `.${String(remainder).padStart(2, "0")}` : "";
+  return `${paise < 0 ? "-" : ""}${indianGrouping.format(rupees)}${fraction}`;
 }
 
 function splitPaise(paise: number) {
