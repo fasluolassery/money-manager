@@ -106,7 +106,7 @@ function buildDocument(): object {
   return {
     openapi: "3.1.0",
     info: {
-      title: "Money Manager API",
+      title: "Outgo API",
       version: "0.1.0",
       description:
         "Personal finance tracker API. All /api/v1 endpoints require a valid session cookie.",

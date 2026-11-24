@@ -4,7 +4,7 @@ import { APP_NAME } from "./index.js";
 
 describe("APP_NAME", () => {
   it("is the working name from SPEC Rule 1", () => {
-    expect(APP_NAME).toBe("Money Manager");
+    expect(APP_NAME).toBe("Outgo");
   });
 });
 

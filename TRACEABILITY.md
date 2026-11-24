@@ -18,7 +18,7 @@
 | --- | --- | --- | --- | --- | --- |
 | FR-1.1 | Must | The app must make it easy to record every expense and see clearly how much I spent in each category. | #34 | reports | not yet |
 | FR-2.1 | Must | Every piece of data (transactions, categories, goals, bills, lending records) belongs to a user. | #10 | db/ | apps/api/src/db/db.api.test.ts |
-| FR-2.2 | Must | Devices: I use the app on multiple devices (e.g. phone and laptop). My data must stay in sync across them. | #15, #28 | Deployment (Section 11) | not yet |
+| FR-2.2 | Must | Devices: I use the app on multiple devices (e.g. phone and laptop). My data must stay in sync across them. | #15, #115, #28 | Deployment (Section 11) | not yet |
 | FR-2.3 | Must | Login: Sign in with Google only. Email and password login is not part of the first version, so no email-sen… | #16, #17 | auth/ (adapter) | not yet |
 | FR-2.4 | Must | A user can only ever see their own data. | #16 | middleware/ | not yet |
 | FR-3.1 | Must | Type: A web app that can be installed on a phone like a native app (PWA). One codebase serves both phone an… | #14 | apps/web | apps/web/src/lib/pwa.test.ts |
@@ -134,8 +134,8 @@
 | FR-9.26 | Must | From the Trash, I can restore a transaction or delete it permanently. | #21 | transactions | not yet |
 | FR-9.27 | Must | Transactions in the Trash for more than 30 days are deleted permanently. | #21 | transactions | not yet |
 | FR-9.28 | Must | Goals, bills and lending records have no Trash. Deleting them is permanent and always asks for confirmation. | #36, #42, #48 | bills, lending, goals | not yet |
-| FR-10.1 | Must | Storage: All data is stored in a cloud database, so it syncs across my devices (Rule 2). | #15 | Deployment (Section 11) | not yet |
-| FR-10.2 | Must | Hosting cost: The app server runs on a paid managed platform, at most ₹500/month. Everything else (database… | #15 | Deployment (Section 11) | not yet |
+| FR-10.1 | Must | Storage: All data is stored in a cloud database, so it syncs across my devices (Rule 2). | #15, #115 | Deployment (Section 11) | not yet |
+| FR-10.2 | Must | Hosting cost: The app server runs on a paid managed platform, at most ₹500/month. Everything else (database… | #15, #115 | Deployment (Section 11) | not yet |
 | FR-10.3 | Must | The app has a Download backup button that downloads all my data as one JSON file. | #51 | users | not yet |
 | FR-10.4 | Must | The file includes a format version number and the export date, so a restore feature can be added later. | #51 | users | not yet |
 | FR-10.5 | Must | If I haven't downloaded a backup in 30 days, the Home screen shows a reminder. | #52 | users | not yet |
@@ -197,7 +197,7 @@
 | D-24 | Friendly, calm design | SPEC.md |
 | D-25 | Visual feedback only | SPEC.md |
 | D-26 | A practical accessibility baseline | SPEC.md |
-| D-27 | A working name until the first deploy | SPEC.md |
+| D-27 | The app is called Outgo | SPEC.md |
 | D-28 | Hosting: one always-on server on a paid managed platform | DESIGN 1.1 |
 | D-29 | Frontend served by the same server | DESIGN 1.2 |
 | D-30 | Auth: Better Auth with Google sign-in | DESIGN 1.3 |

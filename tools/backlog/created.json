@@ -74,5 +74,6 @@
   "size-limits": 83,
   "split-backlog-script": 90,
   "cursor-rules": 97,
-  "commit-msg-hook": 98
+  "commit-msg-hook": 98,
+  "deploy-railway": 115
 }

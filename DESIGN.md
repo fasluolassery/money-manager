@@ -1,4 +1,4 @@
-# Money Manager — Technical Design
+# Outgo — Technical Design
 
 This document describes **how** the app is built. `SPEC.md` describes **what** it does, and `UI.md` how it looks, feels and moves. When they disagree, the spec wins and the other documents are updated.
 
@@ -8,7 +8,7 @@ Technical decisions, `D-28` onward; product decisions `D-01`–`D-27` are in SPE
 
 ### 1.1 Hosting: one always-on server on a paid managed platform
 
-- **ID:** D-28. **Decided:** 2026-11-10.
+- **ID:** D-28. **Decided:** 2026-11-10; go-live timing noted 2026-11-24 (Section 11.9, SPEC Q-08).
 - **Chosen:** a single Node.js server on Railway's Hobby plan, within ₹500/month (details in Section 11).
 - **Why:**
   - It stays always on, so there are no slow first loads (Spec Rule 4, the 5-second rule).
@@ -19,7 +19,7 @@ Technical decisions, `D-28` onward; product decisions `D-01`–`D-27` are in SPE
   - *A raw VPS:* cheaper, but adds Docker, a reverse proxy, TLS certificates and server maintenance.
   - *Free hosts that sleep when idle:* break the 5-second rule.
 - **Region:** the server and the database run in the same region, as close to India as the platform allows.
-- **Binds:** the server is a plain long-running Node process with no platform-specific code, so it can move hosts (SPEC Risks); `GET /api/health` exists for the platform (Section 11.2).
+- **Binds:** the server is a plain long-running Node process with no platform-specific code, so it can move hosts (SPEC Risks); `GET /api/health` exists for the platform (Section 11.2). Hobby remains the production host; a month without Hobby budget does **not** change this choice — go-live waits on issue `deploy-railway` while login work continues (Section 11.9).
 
 ### 1.2 Frontend served by the same server
 
@@ -933,7 +933,7 @@ apps/web/src/
 ### 8.7 PWA
 
 - `vite-plugin-pwa` generates the manifest, icons and service worker. The service worker is registered from an external script file, never inline (Section 7.6).
-- **Manifest:** `name` "Money Manager", `short_name` "MoneyMgr", `theme_color` and `background_color` `#FAF9FC` (UI.md 4.11).
+- **Manifest:** `name` "Outgo", `short_name` "Outgo", `theme_color` and `background_color` `#FAF9FC` (UI.md 4.11).
 - **Browser bar colour:** a `<meta name="theme-color">` tag that `theme-init.js` sets before first paint and the theme switch updates, so the bar matches the app background in the chosen theme.
 - **Tab titles:** each route sets `document.title` as UI.md 4.11 describes.
 - The service worker caches only the app's own files (HTML, JS, CSS, icons). It **never caches `/api` responses**, so the app never shows stale money data (Spec Rule 3).
@@ -1310,10 +1310,11 @@ Atlas allows one free cluster per project, so development and production use **t
 
 ### 11.2 Production setup
 
-- **Railway**, one service in the **Singapore** region, on the platform's free subdomain (e.g. `money-manager.up.railway.app`).
+- **Railway**, one service in the **Singapore** region, on the platform's free subdomain (e.g. `outgo.up.railway.app`).
 - **Atlas** production cluster in the same or the nearest region, to keep database round trips short.
 - **Build:** `pnpm build` builds `web` and `api`. **Start:** one Node process runs the API, which also serves `web`'s built files (Section 1.2).
 - **Health check:** `GET /api/health` (no auth) returns `200` when the server can reach the database. Railway uses it to decide whether a new deployment is healthy before switching traffic to it.
+- **Railway's settings live in its dashboard**, and the README's Deployment section lists every one. Railway's config file (`railway.json`) is deprecated and new services can't use it; its replacement needs an extra dependency, which one service with five settings doesn't justify (Section 10.10).
 
 **Atlas network access:** Railway's outgoing IP addresses are not fixed on the Hobby plan, so Atlas has to allow connections from any IP. The database is then protected by its username and a long random password only. If the setup changes later, revisit this first.
 
@@ -1364,12 +1365,12 @@ flowchart LR
 
 | Item                     | Cost                                          |
 | ------------------------ | --------------------------------------------- |
-| Railway Hobby            | around $5/month; check current pricing        |
+| Railway Hobby            | $5/month, including $5 of usage (checked 2026-11-24, Q-03) |
 | MongoDB Atlas (2 clusters) | free                                        |
 | Google sign-in           | free                                          |
 | Domain                   | none; using Railway's subdomain               |
 
-Total: within the ₹500/month budget (Spec Rule 10), as long as Railway's pricing hasn't changed.
+Total: about $5 a month. One always-on Node process with about 0.25 GB of RAM and little CPU uses about $3 of usage, inside the included $5. At ₹85–90 to the dollar, plus an Indian card's foreign-transaction fee, that is about ₹440–470, within the ₹500/month budget (Spec Rule 10) but with little margin. Railway sends an email alert at $5 of usage and has a hard limit of $10, the lowest it allows. The actual monthly cost is checked after the first billing period (#15).
 
 ### 11.7 Monitoring
 
@@ -1382,6 +1383,16 @@ Total: within the ₹500/month budget (Spec Rule 10), as long as Railway's prici
 - `pnpm seed:dev` loads realistic sample data into the **development** database: categories, a few months of transactions, and later bills, lending records and goals as each feature arrives.
 - It includes one fixed month with hand-calculated expected totals, used to check the reports (Spec Rule 15, milestone 3).
 - The script refuses to run when `NODE_ENV=production`, or when the database name doesn't end with `-dev`. The development database is named `money-manager-dev`.
+
+### 11.9 Deferred Hobby go-live
+
+When Railway Hobby is not affordable for a stretch (SPEC Q-08), **do not** switch to a free host that sleeps (that would break Spec Rule 4 and contradict D-28). Instead:
+
+- Keep Atlas development and production clusters as in Section 11.1.
+- Run the production build locally: `pnpm build && pnpm start` (same process Railway will run).
+- For phone checks and Google redirect experiments, expose that process with a tunnel (e.g. Cloudflare Tunnel) or LAN HTTPS, and set `APP_URL` to that origin.
+- Auth and the rest of milestone 1 proceed against Atlas; they are **not** blocked on Hobby.
+- The paid cutover (Wait for CI, public Railway URL, rollback trial, cost note) is issue `deploy-railway`, flagged `post-signoff` so it does not block milestone 1 sign-off.
 
 ## 12. Performance budget
 

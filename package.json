@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "pnpm -r --parallel --if-present run dev",
     "build": "pnpm -r --if-present run build",
+    "start": "node --env-file-if-exists=apps/api/.env apps/api/dist/main.js",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

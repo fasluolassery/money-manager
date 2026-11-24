@@ -40,7 +40,8 @@ function parseEntry(block) {
   };
 }
 
-// A milestone's sign-off issue depends on every other issue in that milestone.
+// A milestone's sign-off issue depends on every other issue in that milestone,
+// except issues flagged `post-signoff` (follow-ups that must not block the milestone).
 export function readBacklog(path) {
   const issues = readFileSync(path, "utf8")
     .split(/^@@@ issue\s*$/m)
@@ -48,7 +49,12 @@ export function readBacklog(path) {
     .map(parseEntry);
   for (const signoff of issues.filter((x) => x.key.endsWith("-signoff"))) {
     const sameMilestone = issues
-      .filter((x) => x.milestone === signoff.milestone && x.key !== signoff.key)
+      .filter(
+        (x) =>
+          x.milestone === signoff.milestone &&
+          x.key !== signoff.key &&
+          !x.flags.includes("post-signoff"),
+      )
       .map((x) => x.key);
     signoff.deps = [...new Set([...signoff.deps, ...sameMilestone])];
   }

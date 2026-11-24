@@ -1,4 +1,4 @@
-# Money Manager — UI and UX
+# Outgo — UI and UX
 
 This document describes how the app **looks, feels and behaves** for the person using it. `SPEC.md` defines what the app does and `DESIGN.md` how it's built; when this document conflicts with the spec, the spec wins and this document is updated.
 
@@ -355,7 +355,7 @@ Bill, goal and lending details share one layout:
 
 ```text
 ┌──────────────┬──────────────────────────────────────────────────┐
-│ Money Manager│  Hi Save                            [＋ Add]      │
+│ Outgo        │  Hi Save                            [＋ Add]      │
 │              │                                                  │
 │ ⌂ Home       │  ┌──────────────────────┐ ┌──────────────────────┐│
 │ ☰ Txns       │  │ Balance ₹42,300      │ │ Bills due            ││
@@ -377,7 +377,7 @@ This is the wide layout (`lg` and up, Section 4.8): a sidebar instead of tabs, t
 ┌────────────────────────────────────┐   ┌────────────────────────────────────┐
 │                                    │   │ Hi Save                            │
 │            [app icon]              │   │ Let's set up your starting point.  │
-│          Money Manager             │   │                                    │
+│              Outgo                 │   │                                    │
 │                                    │   │ Opening balance                    │
 │   Know exactly where your          │   │ ┌────────────────────────────────┐ │
 │   money goes.                      │   │ │ ₹ 0                            │ │
@@ -655,11 +655,11 @@ The active section uses `primary` for its icon and label; the others use `text-m
 
 | Item | Value |
 | --- | --- |
-| Name | **Money Manager** (a working name; Spec Rule 1) |
-| Short name | **MoneyMgr**, under the icon on a phone's home screen |
+| Name | **Outgo** (Spec Rule 1, D-27) |
+| Short name | **Outgo**, under the icon on a phone's home screen |
 | Tagline | "Know exactly where your money goes." (Section 9.3) |
 | App icon | Section 4.7 |
-| Browser tab title | the page first, then the app: `Reports · Money Manager`, `Electricity · Money Manager` for a detail screen; Home is just `Money Manager` |
+| Browser tab title | the page first, then the app: `Reports · Outgo`, `Electricity · Outgo` for a detail screen; Home is just `Outgo` |
 | Browser and status bar colour | matches the app background: `#FAF9FC` in light, `#17171C` in dark (Section 4.1). It follows the theme chosen in Settings, not only the device's setting |
 | Splash screen (installed app) | the app icon on the light background colour, generated from the manifest; nothing extra |
 | Version | shown at the bottom of Settings as "Version 0.3.0", from the release version (DESIGN 10.7) |

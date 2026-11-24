@@ -610,7 +610,7 @@ Spec Rule 3 and DESIGN 8.7: installable on phones, no offline data, never cache 
 
 @@@ issue
 key: deploy
-title: Deploy the walking skeleton to production
+title: Prepare production deploy (Atlas, start command, docs)
 milestone: m1
 labels: type: infra | area: deploy | size: M
 deps: db, pwa, protection
@@ -619,60 +619,94 @@ decisions: D-28, D-46, D-27
 
 ## Context
 
-DESIGN 11: Railway (Hobby, Singapore) and two MongoDB Atlas projects, auto-deploying from `main` only after CI passes. Deploying a near-empty app now means deployment problems surface while there's almost nothing to debug.
+DESIGN 11: two MongoDB Atlas projects, a production start command, and deploy docs. Paid Railway Hobby go-live is deferred when budget blocks it (DESIGN 11.9, {{deploy-railway}}); login work continues on Atlas with a local production build (and an optional tunnel for the phone).
 
 ## Scope
 
 - Atlas: two projects (development and production), each with a free cluster in or near Singapore, a database user with a long random password, and network access open to all IPs (DESIGN 11.2).
-- Railway: a project on the Hobby plan, one service in Singapore, connected to the GitHub repo's `main` branch with "wait for CI" enabled.
-- Build command `pnpm build`; start command runs the API.
-- Health check path `/api/health`.
-- Railway email notifications for failed deploys and crashes (DESIGN 11.7).
-- Production environment variables set in Railway; `.env.example` complete.
-- README: deployment, environment variables and rollback steps.
+- On the development cluster, confirm that multi-document transactions, `$jsonSchema` validators and TTL indexes work, and record the result against A-05 and Q-04 in SPEC.md.
+- Build command `pnpm build`; start command `pnpm start` / `node apps/api/dist/main.js` runs the API and serves the web app.
+- Health check path `/api/health` works against the development Atlas cluster from a local production start.
+- `.env.example` complete for variables that exist before auth (DESIGN 11.4); auth and rate-limit variables arrive in {{auth-server}}.
+- README: Atlas setup, local production run, Railway setup and rollback steps (for {{deploy-railway}}), and the interim tunnel path (DESIGN 11.9).
 
 ## Acceptance criteria
 
-- [ ] **Before deploying:** the final app name is confirmed (Spec Rule 1). If it changes, SPEC Rule 1, UI.md 4.11, the manifest and every other use are updated in the same pull request.
-- [ ] Merging to `main` deploys automatically, but only after the `ci` check passes.
-- [ ] The Railway URL serves the app shell over HTTPS.
-- [ ] `/api/health` returns 200 in production.
-- [ ] Rollback steps are documented and tried once (redeploy the previous deployment).
-- [ ] Actual monthly cost is checked against the ₹500 budget and noted in DESIGN 11.6.
+- [ ] The final app name is confirmed (Spec Rule 1 / D-27). If it changed, SPEC Rule 1, UI.md 4.11, the manifest and every other user-facing use are updated in the same pull request.
+- [ ] Two Atlas projects/clusters exist (dev and prod); network access and DB users are set as in DESIGN 11.2.
+- [ ] A-05 is confirmed on the development cluster (transactions, `$jsonSchema`, TTL) and recorded in SPEC.md.
+- [ ] `pnpm build && pnpm start` serves the app shell; `/api/health` returns 200 against the development Atlas URI.
+- [ ] README documents Atlas, local production start, Railway cutover/rollback, and the interim phone-access path.
+- [ ] Live Railway Hobby cutover is tracked in {{deploy-railway}}, not in this issue.
 
 ## Out of scope
 
 - A custom domain (Spec Rule 17 / DESIGN 11.6).
+- Paying for or connecting Railway ({{deploy-railway}}).
+
+@@@ issue
+key: deploy-railway
+title: Cut over to Railway Hobby when budget allows
+milestone: m1
+labels: type: infra | area: deploy | size: S
+deps: deploy
+flags: post-signoff
+implements: FR-2.2, FR-10.1, FR-10.2
+decisions: D-28, D-46
+
+## Context
+
+DESIGN 11.2–11.7 and 11.9: the always-on production host is Railway Hobby (D-28). This issue is the paid cutover. It is flagged `post-signoff` so milestone 1 login can finish without a Hobby subscription this month.
+
+## Scope
+
+- Railway: Hobby plan, one service in Singapore, connected to `main` with "wait for CI" enabled.
+- Build `pnpm build`; start `node apps/api/dist/main.js`; health check `/api/health`.
+- Production variables in Railway; email notifications and spending alerts (DESIGN 11.6–11.7).
+- Confirm the actual monthly cost against the ₹500 budget and note it in DESIGN 11.6.
+
+## Acceptance criteria
+
+- [ ] Merging to `main` deploys automatically, but only after the `ci` check passes.
+- [ ] The Railway URL serves the app shell over HTTPS.
+- [ ] `/api/health` returns 200 in production.
+- [ ] Rollback steps are tried once (redeploy the previous deployment).
+- [ ] Actual monthly cost is checked against the ₹500 budget and noted in DESIGN 11.6.
+- [ ] Google OAuth production callback URL is registered (if {{auth-server}} already shipped).
+
+## Out of scope
+
+- A custom domain (Spec Rule 17 / DESIGN 11.6).
+- Changing host away from Railway (would change D-28 first).
 
 @@@ issue
 key: auth-server
 title: Add Better Auth with Google sign-in on the server
 milestone: m1
 labels: type: feature | area: auth | area: api | size: L
-deps: container, deploy
+deps: container
 implements: FR-2.3, FR-2.4, FR-10.7, FR-10.8, FR-10.10
 decisions: D-03, D-30, D-41, D-47, D-48
 
 ## Context
 
-Spec Rules 2 and 10, DESIGN 1.3 and 7: Google-only sign-in through Better Auth, sessions in MongoDB with sliding 30-day expiry, and every `/api/v1` route protected.
+Spec Rules 2 and 10, DESIGN 1.3 and 7: Google-only sign-in through Better Auth, sessions in MongoDB with sliding 30-day expiry, and every `/api/v1` route protected. Not blocked on Railway; production OAuth callback is added when {{deploy-railway}} lands (DESIGN 11.9).
 
 ## Scope
 
-- Google Cloud: OAuth client with `email` and `profile` scopes; local and production callback URLs; consent screen in **Testing** status with my account as a test user, showing the app name, my email as the support contact and the app icon as the logo (DESIGN 7.5).
+- Google Cloud: OAuth client with `email` and `profile` scopes; **local** callback URL now; production callback when {{deploy-railway}} provides the public origin; consent screen in **Testing** status with my account as a test user, showing the app name, my email as the support contact and the app icon as the logo (DESIGN 7.5).
 - Better Auth mounted at `/api/auth/*` with the MongoDB adapter and the Google provider.
 - Sessions: 30-day expiry, extended at most once a day, no cookie caching. Cookies `httpOnly`, `Secure` in production, `SameSite=Lax`. Trusted origin = `APP_URL`.
 - `requireAuth` middleware on `/api/v1`: puts the user id on the request, or returns `401 UNAUTHENTICATED`.
 - Origin check on `POST`, `PATCH` and `DELETE`: a missing or foreign `Origin` is rejected with `403 FORBIDDEN` (`ForbiddenError`, DESIGN 6.2, 9.2).
 - Auth adapter (`auth/`): app code calls Better Auth only through it, and it translates Better Auth failures into `UnauthenticatedError` or a logged `500` (DESIGN 9.6).
 - Rate limits with the defaults from DESIGN 7.4: Better Auth's limiter on `/api/auth/*` (30 per 5 minutes per IP); `express-rate-limit` on `/api/v1` (300 per 5 minutes per user, or per IP when signed out), returning `429 RATE_LIMITED` in the envelope. A small helper lets a route add a tighter per-user limit on top (used by {{backup}} and {{delete-account}}, DESIGN 7.4).
-- Web auth client: any failure from `/api/auth/*` shows a catalogue message, never Better Auth's text (DESIGN 9.6).
 - Config: `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 - Test helper: create a user with a valid session cookie, for API tests (used by every isolation test from now on).
 
 ## Acceptance criteria
 
-- [ ] Signing in with Google locally and in production creates a user and a session in MongoDB.
+- [ ] Signing in with Google locally creates a user and a session in MongoDB.
 - [ ] A Google account that isn't a test user can't sign in.
 - [ ] Any `/api/v1` request without a valid session returns `401` in the envelope.
 - [ ] A `POST` with a foreign `Origin` returns `403`.
@@ -682,8 +716,9 @@ Spec Rules 2 and 10, DESIGN 1.3 and 7: Google-only sign-in through Better Auth, 
 
 ## Out of scope
 
-- Sign-in screen and route guards ({{auth-web}}).
+- Sign-in screen, route guards and the web auth client ({{auth-web}}).
 - Profile creation ({{onboarding}}).
+- Production OAuth callback and live Railway URL ({{deploy-railway}}).
 
 @@@ issue
 key: auth-web
@@ -767,19 +802,19 @@ decisions: D-01
 
 ## Context
 
-Spec Rule 15, milestone 1: "Done when: I can sign in on my phone and my laptop and see an empty Home screen."
+Spec Rule 15, milestone 1: "Done when: I can sign in on my phone and my laptop and see an empty Home screen." Until {{deploy-railway}} lands, phone access may use a local production build reached over the LAN or a tunnel (DESIGN 11.9).
 
 ## Scope
 
 - Home shows a greeting and an empty state ("No transactions yet").
-- Verify the full flow in production on a phone (installed PWA) and a laptop.
+- Verify the full flow on a phone (installed PWA) and a laptop — on Railway if {{deploy-railway}} is done, otherwise via the interim path in DESIGN 11.9.
 - Write down anything learned and update SPEC/DESIGN.
 - Tag `v0.1.0` and publish a GitHub release with notes.
 
 ## Acceptance criteria
 
-- [ ] Signed in on phone and laptop in production; both show the empty Home screen.
-- [ ] Every other milestone 1 issue is closed.
+- [ ] Signed in on phone and laptop; both show the empty Home screen (Railway or interim tunnel/LAN path).
+- [ ] Every other milestone 1 issue is closed (except `post-signoff` issues such as {{deploy-railway}}).
 - [ ] `v0.1.0` release published.
 
 @@@ issue
@@ -1662,7 +1697,7 @@ Spec Rule 10 (Backups): the JSON download is the real backup, because the free A
 
 ## Scope
 
-- `GET /me/backup`: a JSON attachment named `money-manager-backup-YYYY-MM-DD.json` with `formatVersion: 1`, `exportedAt`, the profile, categories, transactions (including trashed, with `deletedAt`), goals, bills, bill cycles and lending records, shaped by the export schema (DESIGN 6.6). Limited to 10 downloads per hour per user (DESIGN 7.4).
+- `GET /me/backup`: a JSON attachment named `outgo-backup-YYYY-MM-DD.json` with `formatVersion: 1`, `exportedAt`, the profile, categories, transactions (including trashed, with `deletedAt`), goals, bills, bill cycles and lending records, shaped by the export schema (DESIGN 6.6). Limited to 10 downloads per hour per user (DESIGN 7.4).
 - No auth data (sessions, tokens, Google account details).
 - Sets `lastBackupAt`.
 - **Download backup** in Settings.

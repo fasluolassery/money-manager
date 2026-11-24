@@ -1,4 +1,4 @@
-# Money Manager
+# Outgo
 
 A personal finance app (installable web app) for knowing exactly where my money goes: expenses and income, with recurring bills, lending and savings goals as secondary features.
 
@@ -50,6 +50,7 @@ Run from the repository root. Each runs across every workspace that defines it.
 | `pnpm lint` | check formatting and lint rules across the repo (Biome) |
 | `pnpm format` | fix formatting and safe lint fixes across the repo |
 | `pnpm build` | build all workspaces |
+| `pnpm start` | run the built app: the API serving the built web app (after `pnpm build`); reads `apps/api/.env` if it exists |
 | `pnpm dev` | start every workspace's development server (from issues #8 and #12) |
 | `pnpm test` | run all tests (Vitest; each workspace is a project) |
 | `pnpm test:coverage` | run tests with coverage; fails below 90% lines or branches on `*.domain.ts` files |
@@ -58,6 +59,77 @@ Run from the repository root. Each runs across every workspace that defines it.
 | `node tools/docs/check.mjs` | the same checks, and regenerate `TRACEABILITY.md` |
 | `pnpm backlog:verify` | check every GitHub issue matches `tools/backlog/issues.md` (CI runs this; needs `gh` signed in) |
 | `pnpm pr:check <number>` | check a pull request's verification record against its issue (CI runs this on every pull request; needs `gh` signed in) |
+
+## Running the production build locally
+
+```bash
+cp apps/api/.env.example apps/api/.env   # then fill in MONGODB_URI (the development cluster)
+pnpm build
+pnpm start                               # one Node process: the API plus the built web app
+```
+
+`pnpm start` loads `apps/api/.env` if it exists (variables already set in the shell win) and serves the app at `http://localhost:3000` (or `PORT`). `/api/health` returns `200` when the database is reachable. Railway has no `.env` file; it runs `node apps/api/dist/main.js` with its own variables.
+
+## Deployment
+
+Production **target** is Railway (Hobby plan, Singapore) with MongoDB Atlas ([DESIGN 11](DESIGN.md#11-deployment-and-environments)). Paid Hobby go-live can wait on budget ([DESIGN 11.9](DESIGN.md#119-deferred-hobby-go-live), SPEC Q-08); until then use a local production build (and a tunnel for the phone). Merging to `main` will deploy automatically once Railway is connected, but only after the `ci` check passes.
+
+### Interim: phone access without Railway
+
+1. `pnpm build && pnpm start` (serves the app on `PORT`, default 3000).
+2. Point a tunnel (e.g. Cloudflare Tunnel) or LAN HTTPS at that port.
+3. Set `APP_URL` in `apps/api/.env` to that public origin (needed for Origin checks and, later, Google OAuth).
+
+### One-time setup: MongoDB Atlas
+
+Atlas allows one free cluster per project, so create **two projects**: one for development, one for production ([DESIGN 11.1](DESIGN.md#111-environments)). In each:
+
+1. Create a **free** cluster in Singapore (AWS `ap-southeast-1`), or the nearest region Atlas offers for free clusters.
+2. Add a database user with a long random password, for example from `openssl rand -hex 24` (hex needs no escaping in a connection string).
+3. Under Network Access, allow `0.0.0.0/0`. Railway's outgoing addresses aren't fixed on the Hobby plan ([DESIGN 11.2](DESIGN.md#112-production-setup)).
+4. Copy the connection string. The development one goes in `apps/api/.env`; the production one goes only into Railway's variables.
+
+The database name comes from `NODE_ENV` (`money-manager` in production, `money-manager-dev` locally), so the connection string doesn't name one.
+
+### One-time setup: Railway
+
+Create a project on the Hobby plan with one service from this GitHub repository. Railway's settings live in its dashboard, not in a file ([DESIGN 11.2](DESIGN.md#112-production-setup)); these are all of them:
+
+| Setting | Value |
+| --- | --- |
+| Source | this repository, branch `main` |
+| Wait for CI | on, so a commit whose `ci` check fails is never deployed |
+| Region | Southeast Asia (Singapore) |
+| Builder | Railpack (the default); it reads Node 24 and pnpm 10 from `package.json` |
+| Build command | `pnpm build` |
+| Start command | `node apps/api/dist/main.js` (Node directly, so it receives Railway's shutdown signal) |
+| Healthcheck path | `/api/health` |
+| Restart policy | on failure |
+| Public networking | generate a Railway domain, `outgo.up.railway.app` if it's free |
+
+**Variables** (the full list is in [DESIGN 11.4](DESIGN.md#114-configuration-and-secrets) and [`apps/api/.env.example`](apps/api/.env.example)):
+
+| Variable | Value |
+| --- | --- |
+| `NODE_ENV` | `production` |
+| `APP_URL` | the Railway domain with `https://`, e.g. `https://outgo.up.railway.app` |
+| `MONGODB_URI` | the production cluster's connection string |
+| `LOG_LEVEL` | `info` |
+| `MONGOMS_DISABLE_POSTINSTALL` | `1`; skips downloading the test-only MongoDB binary during the build |
+
+Railway sets `PORT` itself.
+
+**Notifications and spending** ([DESIGN 11.6–11.7](DESIGN.md#116-cost)): turn on email notifications for failed deploys and crashed services, and on the workspace's Usage page set an email alert at $5 and a hard limit at $10.
+
+### Deploying
+
+Merge a pull request to `main`. CI runs on `main`; when the `ci` check passes, Railway builds, starts the new version, and switches traffic to it once `/api/health` returns `200`. If the health check fails, the previous version keeps running.
+
+### Rolling back
+
+1. In Railway, open the service's **Deployments**, find the last good deployment, and choose **Redeploy**.
+2. Check that `https://<domain>/api/health` returns `200` and the app opens.
+3. Revert the bad change on `main` through a pull request, so the next deploy doesn't bring it back.
 
 ## Changing the docs or an issue
 
