@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Server } from "node:http";
 import { join } from "node:path";
 import type { AwilixContainer } from "awilix";
-import express, { type NextFunction, type Request, type Response } from "express";
+import express, { type NextFunction, type Request, type Response, Router } from "express";
 import helmet from "helmet";
 import type pino from "pino";
 import { pinoHttp } from "pino-http";
@@ -10,7 +10,11 @@ import { z } from "zod";
 import type { Config } from "./config.js";
 import type { AppCradle } from "./container.js";
 import { NotFoundError } from "./errors.js";
+import { clientIpHeader } from "./middleware/client-ip.js";
 import { errorHandler } from "./middleware/error-handler.js";
+import { createOriginCheck } from "./middleware/origin-check.js";
+import { API_RATE_LIMIT_WINDOW_MS, createRateLimit } from "./middleware/rate-limit.js";
+import { createLoadSession, requireAuth } from "./middleware/require-auth.js";
 import { createUsersRoutes } from "./modules/users/users.routes.js";
 import { registerRoute } from "./route-registry.js";
 
@@ -122,6 +126,30 @@ export function gracefulShutdown(
   });
 }
 
+/**
+ * Better Auth's endpoints. Mounted before `express.json()`, which would consume the
+ * body Better Auth reads itself (Q-06). Its own limiter counts per client IP.
+ */
+function mountAuth(app: express.Application, container: AwilixContainer<AppCradle>): void {
+  app.use("/api/auth", clientIpHeader);
+  app.all("/api/auth/*splat", container.cradle.authAdapter.handler);
+}
+
+/**
+ * `/api/v1`: Origin check, then the session (so the limiter can count per user),
+ * then the rate limit, then `requireAuth`, so signed-out requests are limited
+ * per IP before they are refused (DESIGN 7.4).
+ */
+function createApiV1Router(config: Config, container: AwilixContainer<AppCradle>): Router {
+  const router = Router();
+  router.use(createOriginCheck(config.APP_URL));
+  router.use(createLoadSession(container.cradle.authAdapter));
+  router.use(createRateLimit({ windowMs: API_RATE_LIMIT_WINDOW_MS, limit: config.RATE_LIMIT_API }));
+  router.use(requireAuth);
+  router.use(createUsersRoutes(container));
+  return router;
+}
+
 export function createApp(
   config: Config,
   logger: pino.Logger,
@@ -161,12 +189,14 @@ export function createApp(
     next();
   });
 
-  app.use(express.json({ limit: JSON_BODY_LIMIT }));
-
   app.use("/api", (_req: Request, res: Response, next: NextFunction) => {
     res.setHeader("Cache-Control", "no-store");
     next();
   });
+
+  if (options.container !== undefined) mountAuth(app, options.container);
+
+  app.use(express.json({ limit: JSON_BODY_LIMIT }));
 
   app.get("/api/health", async (_req: Request, res: Response) => {
     try {
@@ -178,7 +208,7 @@ export function createApp(
   });
 
   if (options.container !== undefined) {
-    app.use("/api/v1", createUsersRoutes(options.container));
+    app.use("/api/v1", createApiV1Router(config, options.container));
   }
 
   options.registerApiRoutes?.(app);

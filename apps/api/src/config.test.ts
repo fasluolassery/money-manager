@@ -29,24 +29,27 @@ const VALID_ENV = {
   MONGODB_URI: "mongodb://localhost:27017",
   NODE_ENV: "test",
   LOG_LEVEL: "silent",
+  BETTER_AUTH_SECRET: "a".repeat(32),
+  GOOGLE_CLIENT_ID: "client-id",
+  GOOGLE_CLIENT_SECRET: "client-secret",
 };
 
+let exitSpy: ReturnType<typeof vi.spyOn>;
+let stderrSpy: ReturnType<typeof vi.spyOn>;
+
+beforeEach(() => {
+  exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+    throw new Error("process.exit called");
+  });
+  stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+});
+
+afterEach(() => {
+  exitSpy.mockRestore();
+  stderrSpy.mockRestore();
+});
+
 describe("loadConfig", () => {
-  let exitSpy: ReturnType<typeof vi.spyOn>;
-  let stderrSpy: ReturnType<typeof vi.spyOn>;
-
-  beforeEach(() => {
-    exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("process.exit called");
-    });
-    stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-  });
-
-  afterEach(() => {
-    exitSpy.mockRestore();
-    stderrSpy.mockRestore();
-  });
-
   it("[FR-10.6] parses valid environment variables", () => {
     withEnv(VALID_ENV, () => {
       const config = loadConfig();
@@ -91,6 +94,33 @@ describe("loadConfig", () => {
       expect(config.NODE_ENV).toBe("development");
       expect(config.LOG_LEVEL).toBe("info");
       expect(config.PORT).toBe(3000);
+    });
+  });
+});
+
+describe("loadConfig: auth and rate limits", () => {
+  it("[FR-10.10] defaults the rate limits to 300 per user and 30 per IP", () => {
+    withEnv({ ...VALID_ENV, RATE_LIMIT_API: undefined, RATE_LIMIT_AUTH: undefined }, () => {
+      const config = loadConfig();
+      expect(config.RATE_LIMIT_API).toBe(300);
+      expect(config.RATE_LIMIT_AUTH).toBe(30);
+    });
+  });
+
+  it("[FR-2.3] exits when the Google client or Better Auth secret is missing", () => {
+    for (const name of ["BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]) {
+      stderrSpy.mockClear();
+      withEnv({ ...VALID_ENV, [name]: undefined }, () => {
+        expect(() => loadConfig()).toThrow("process.exit called");
+        expect(String(stderrSpy.mock.calls[0]?.[0] ?? "")).toContain(name);
+      });
+    }
+  });
+
+  it("[FR-10.8] exits when BETTER_AUTH_SECRET is shorter than 32 characters", () => {
+    withEnv({ ...VALID_ENV, BETTER_AUTH_SECRET: "too-short" }, () => {
+      expect(() => loadConfig()).toThrow("process.exit called");
+      expect(String(stderrSpy.mock.calls[0]?.[0] ?? "")).toContain("BETTER_AUTH_SECRET");
     });
   });
 });

@@ -9,7 +9,7 @@
 | Requirements | 150 (149 Must, 1 Should) |
 | With at least one issue | 150 |
 | With a module | 150 |
-| With at least one test | 32 |
+| With at least one test | 37 |
 | Finished milestones | none yet |
 
 ## Requirements
@@ -19,8 +19,8 @@
 | FR-1.1 | Must | The app must make it easy to record every expense and see clearly how much I spent in each category. | #34 | reports | not yet |
 | FR-2.1 | Must | Every piece of data (transactions, categories, goals, bills, lending records) belongs to a user. | #10 | db/ | apps/api/src/db/db.api.test.ts |
 | FR-2.2 | Must | Devices: I use the app on multiple devices (e.g. phone and laptop). My data must stay in sync across them. | #15, #115, #28 | Deployment (Section 11) | not yet |
-| FR-2.3 | Must | Login: Sign in with Google only. Email and password login is not part of the first version, so no email-sen… | #16, #17 | auth/ (adapter) | not yet |
-| FR-2.4 | Must | A user can only ever see their own data. | #16 | middleware/ | not yet |
+| FR-2.3 | Must | Login: Sign in with Google only. Email and password login is not part of the first version, so no email-sen… | #16, #17 | auth/ (adapter) | apps/api/src/config.test.ts |
+| FR-2.4 | Must | A user can only ever see their own data. | #16 | middleware/ | apps/api/src/auth/auth.api.test.ts |
 | FR-3.1 | Must | Type: A web app that can be installed on a phone like a native app (PWA). One codebase serves both phone an… | #14 | apps/web | apps/web/src/lib/pwa.test.ts |
 | FR-3.2 | Must | The phone layout must make adding an expense fast with one hand. | #13 | apps/web | apps/web/src/app/layout/AppShell.test.tsx |
 | FR-3.3 | Must | The laptop layout can show more detail (tables, summaries) at once. | #13 | apps/web | apps/web/src/app/layout/AppShell.test.tsx |
@@ -140,10 +140,10 @@
 | FR-10.4 | Must | The file includes a format version number and the export date, so a restore feature can be added later. | #51 | users | not yet |
 | FR-10.5 | Must | If I haven't downloaded a backup in 30 days, the Home screen shows a reminder. | #52 | users | not yet |
 | FR-10.6 | Must | All traffic uses HTTPS. | #8 | app.ts, main.ts | apps/api/src/app.test.ts<br>apps/api/src/config.test.ts |
-| FR-10.7 | Must | Access rules are enforced on the server: a user can only read or change their own data, whatever the client… | #16 | middleware/ | not yet |
-| FR-10.8 | Must | Sessions are stored in httpOnly, Secure, SameSite cookies, never in localStorage. A session expires after 3… | #16 | auth/ (adapter) | not yet |
+| FR-10.7 | Must | Access rules are enforced on the server: a user can only read or change their own data, whatever the client… | #16 | middleware/ | apps/api/src/auth/auth.api.test.ts |
+| FR-10.8 | Must | Sessions are stored in httpOnly, Secure, SameSite cookies, never in localStorage. A session expires after 3… | #16 | auth/ (adapter) | apps/api/src/auth/auth.api.test.ts<br>apps/api/src/config.test.ts |
 | FR-10.9 | Must | I can log out of all devices, which ends every session. | #53 | auth/ (adapter) | not yet |
-| FR-10.10 | Must | The API is rate limited per user and per IP address, with tighter limits on expensive or dangerous actions … | #16 | middleware/ | not yet |
+| FR-10.10 | Must | The API is rate limited per user and per IP address, with tighter limits on expensive or dangerous actions … | #16 | middleware/ | apps/api/src/auth/auth.api.test.ts<br>apps/api/src/config.test.ts |
 | FR-10.11 | Must | No third-party analytics or tracking. | #8 | app.ts, main.ts | apps/api/src/app.test.ts |
 | FR-10.12 | Must | Account deletion: I can delete my account. This permanently deletes the account and all its data, after I c… | #54 | users | not yet |
 | FR-11.1 | Must | Actions that write more than one record (paying, skipping or undoing a bill cycle, recording or changing a … | #10, #37 | db/ | apps/api/src/db/db.api.test.ts |

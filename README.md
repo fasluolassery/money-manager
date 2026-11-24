@@ -91,6 +91,18 @@ Atlas allows one free cluster per project, so create **two projects**: one for d
 
 The database name comes from `NODE_ENV` (`money-manager` in production, `money-manager-dev` locally), so the connection string doesn't name one.
 
+### One-time setup: Google sign-in
+
+In Google Cloud ([DESIGN 7.5](DESIGN.md#75-google-setup)):
+
+1. Create a project and configure the OAuth consent screen: app name **Outgo**, your email as the support contact, the app icon as the logo, scopes `openid`, `email` and `profile` only, publishing status **Testing**.
+2. Add every Google account that may sign in as a **test user**. Other accounts can't sign in while the app is in Testing.
+3. Create an OAuth client (Web application) with these authorised redirect URIs:
+   - `http://localhost:5173/api/auth/callback/google` (`pnpm dev`, through the Vite server)
+   - `http://localhost:3000/api/auth/callback/google` (`pnpm start`)
+   - the production one, `https://<domain>/api/auth/callback/google`, once the Railway domain exists (#115)
+4. Put the client id and secret in `apps/api/.env` as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, with a `BETTER_AUTH_SECRET` from `openssl rand -hex 32`.
+
 ### One-time setup: Railway
 
 Create a project on the Hobby plan with one service from this GitHub repository. Railway's settings live in its dashboard, not in a file ([DESIGN 11.2](DESIGN.md#112-production-setup)); these are all of them:
@@ -115,6 +127,8 @@ Create a project on the Hobby plan with one service from this GitHub repository.
 | `APP_URL` | the Railway domain with `https://`, e.g. `https://outgo.up.railway.app` |
 | `MONGODB_URI` | the production cluster's connection string |
 | `LOG_LEVEL` | `info` |
+| `BETTER_AUTH_SECRET` | a new random value for production, at least 32 characters (`openssl rand -hex 32`) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | from the Google OAuth client below |
 | `MONGOMS_DISABLE_POSTINSTALL` | `1`; skips downloading the test-only MongoDB binary during the build |
 
 Railway sets `PORT` itself.
@@ -150,6 +164,8 @@ The latest stable major of each tool and library, chosen when the project starte
 | Vitest | 5 |
 | fast-check | 4 |
 | Zod | 4 |
+| Better Auth | 1 |
+| express-rate-limit | 8 |
 
 ## Repository layout
 

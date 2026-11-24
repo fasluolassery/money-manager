@@ -5,14 +5,9 @@ import type { Config } from "../config.js";
 import type { AppCradle } from "../container.js";
 import { createUsersRepository, type UsersRepository } from "../modules/users/users.repository.js";
 import { createUsersService } from "../modules/users/users.service.js";
+import { TEST_CONFIG } from "./test-config.js";
 
-const DEFAULT_CONFIG: Config = {
-  NODE_ENV: "test",
-  PORT: 3000,
-  APP_URL: "http://localhost:3000",
-  LOG_LEVEL: "silent",
-  MONGODB_URI: "mongodb://localhost:27017",
-};
+const DEFAULT_CONFIG: Config = TEST_CONFIG;
 
 export type TestContainerOverrides = {
   config?: Config;

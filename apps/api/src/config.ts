@@ -6,6 +6,11 @@ const configSchema = z.object({
   APP_URL: z.string().url(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   MONGODB_URI: z.string().min(1),
+  BETTER_AUTH_SECRET: z.string().min(32),
+  GOOGLE_CLIENT_ID: z.string().min(1),
+  GOOGLE_CLIENT_SECRET: z.string().min(1),
+  RATE_LIMIT_API: z.coerce.number().int().positive().default(300),
+  RATE_LIMIT_AUTH: z.coerce.number().int().positive().default(30),
 });
 
 export type Config = z.infer<typeof configSchema>;

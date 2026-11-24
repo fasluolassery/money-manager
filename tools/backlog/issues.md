@@ -694,7 +694,7 @@ Spec Rules 2 and 10, DESIGN 1.3 and 7: Google-only sign-in through Better Auth, 
 
 ## Scope
 
-- Google Cloud: OAuth client with `email` and `profile` scopes; **local** callback URL now; production callback when {{deploy-railway}} provides the public origin; consent screen in **Testing** status with my account as a test user, showing the app name, my email as the support contact and the app icon as the logo (DESIGN 7.5).
+- Google Cloud: OAuth client with the basic `openid`, `email` and `profile` scopes; **local** callback URL now; production callback when {{deploy-railway}} provides the public origin; consent screen in **Testing** status with my account as a test user, showing the app name, my email as the support contact and the app icon as the logo (DESIGN 7.5).
 - Better Auth mounted at `/api/auth/*` (Express 5 pattern `/api/auth/*splat`, before `express.json()`) with the MongoDB adapter (`@better-auth/mongo-adapter`, given the `MongoClient` so its writes use transactions) and the Google provider (Q-06).
 - Sessions: 30-day expiry (`session.expiresIn`), extended at most once a day (`session.updateAge`), no cookie caching (`session.cookieCache` stays off). Cookies `httpOnly`, `Secure` in production, `SameSite=Lax`. `baseURL` and the only trusted origin = `APP_URL`.
 - No after-sign-up hook yet: {{onboarding}} adds `databaseHooks.user.create.after` calling `ensureProfile` (DESIGN 7.2).
