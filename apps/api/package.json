@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -b tsconfig.build.json",
     "typecheck": "tsc -b tsconfig.build.json && tsc -p tsconfig.json",
-    "dev": "tsx watch src/main.ts",
+    "dev": "tsx watch --env-file-if-exists=.env src/main.ts",
     "test:api": "vitest run --config vitest.api.config.ts",
     "gen:openapi": "tsx --tsconfig tsconfig.json src/gen-openapi.ts && pnpm exec biome format --write ../../docs/openapi.json"
   },

@@ -51,7 +51,7 @@ Run from the repository root. Each runs across every workspace that defines it.
 | `pnpm format` | fix formatting and safe lint fixes across the repo |
 | `pnpm build` | build all workspaces |
 | `pnpm start` | run the built app: the API serving the built web app (after `pnpm build`); reads `apps/api/.env` if it exists |
-| `pnpm dev` | start every workspace's development server (from issues #8 and #12) |
+| `pnpm dev` | start every workspace's development server (from issues #8 and #12); the API reads `apps/api/.env` if it exists, and variables already set in the shell win |
 | `pnpm test` | run all tests (Vitest; each workspace is a project) |
 | `pnpm test:coverage` | run tests with coverage; fails below 90% lines or branches on `*.domain.ts` files |
 | `pnpm test:api` | run API integration tests (`*.api.test.ts`) against an in-memory MongoDB replica set |
