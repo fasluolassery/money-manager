@@ -4,6 +4,7 @@
  */
 export const queryKeys = {
   health: () => ["health"] as const,
+  session: () => ["session"] as const,
   me: () => ["me"] as const,
   home: () => ["home"] as const,
   payees: () => ["payees"] as const,

@@ -19,7 +19,7 @@
 | FR-1.1 | Must | The app must make it easy to record every expense and see clearly how much I spent in each category. | #34 | reports | not yet |
 | FR-2.1 | Must | Every piece of data (transactions, categories, goals, bills, lending records) belongs to a user. | #10 | db/ | apps/api/src/db/db.api.test.ts |
 | FR-2.2 | Must | Devices: I use the app on multiple devices (e.g. phone and laptop). My data must stay in sync across them. | #15, #115, #28 | Deployment (Section 11) | not yet |
-| FR-2.3 | Must | Login: Sign in with Google only. Email and password login is not part of the first version, so no email-sen… | #16, #17 | auth/ (adapter) | apps/api/src/config.test.ts |
+| FR-2.3 | Must | Login: Sign in with Google only. Email and password login is not part of the first version, so no email-sen… | #16, #17 | auth/ (adapter) | apps/api/src/config.test.ts<br>apps/web/src/app/RequireAuth.test.tsx<br>apps/web/src/lib/auth-return-to.test.ts<br>apps/web/src/pages/SignInPage.test.tsx |
 | FR-2.4 | Must | A user can only ever see their own data. | #16 | middleware/ | apps/api/src/auth/auth.api.test.ts |
 | FR-3.1 | Must | Type: A web app that can be installed on a phone like a native app (PWA). One codebase serves both phone an… | #14 | apps/web | apps/web/src/lib/pwa.test.ts |
 | FR-3.2 | Must | The phone layout must make adding an expense fast with one hand. | #13 | apps/web | apps/web/src/app/layout/AppShell.test.tsx |
