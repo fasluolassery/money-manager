@@ -695,12 +695,13 @@ Spec Rules 2 and 10, DESIGN 1.3 and 7: Google-only sign-in through Better Auth, 
 ## Scope
 
 - Google Cloud: OAuth client with `email` and `profile` scopes; **local** callback URL now; production callback when {{deploy-railway}} provides the public origin; consent screen in **Testing** status with my account as a test user, showing the app name, my email as the support contact and the app icon as the logo (DESIGN 7.5).
-- Better Auth mounted at `/api/auth/*` with the MongoDB adapter and the Google provider.
-- Sessions: 30-day expiry, extended at most once a day, no cookie caching. Cookies `httpOnly`, `Secure` in production, `SameSite=Lax`. Trusted origin = `APP_URL`.
+- Better Auth mounted at `/api/auth/*` (Express 5 pattern `/api/auth/*splat`, before `express.json()`) with the MongoDB adapter (`@better-auth/mongo-adapter`, given the `MongoClient` so its writes use transactions) and the Google provider (Q-06).
+- Sessions: 30-day expiry (`session.expiresIn`), extended at most once a day (`session.updateAge`), no cookie caching (`session.cookieCache` stays off). Cookies `httpOnly`, `Secure` in production, `SameSite=Lax`. `baseURL` and the only trusted origin = `APP_URL`.
+- No after-sign-up hook yet: {{onboarding}} adds `databaseHooks.user.create.after` calling `ensureProfile` (DESIGN 7.2).
 - `requireAuth` middleware on `/api/v1`: puts the user id on the request, or returns `401 UNAUTHENTICATED`.
 - Origin check on `POST`, `PATCH` and `DELETE`: a missing or foreign `Origin` is rejected with `403 FORBIDDEN` (`ForbiddenError`, DESIGN 6.2, 9.2).
 - Auth adapter (`auth/`): app code calls Better Auth only through it, and it translates Better Auth failures into `UnauthenticatedError` or a logged `500` (DESIGN 9.6).
-- Rate limits with the defaults from DESIGN 7.4: Better Auth's limiter on `/api/auth/*` (30 per 5 minutes per IP); `express-rate-limit` on `/api/v1` (300 per 5 minutes per user, or per IP when signed out), returning `429 RATE_LIMITED` in the envelope. A small helper lets a route add a tighter per-user limit on top (used by {{backup}} and {{delete-account}}, DESIGN 7.4).
+- Rate limits with the defaults from DESIGN 7.4: Better Auth's limiter on `/api/auth/*` (30 per 5 minutes per IP); `express-rate-limit` on `/api/v1` (300 per 5 minutes per user, or per IP when signed out), returning `429 RATE_LIMITED` in the envelope. Better Auth's limiter is turned on in every environment and keyed by the client IP Express derives with `trust proxy` 1, not by a raw `X-Forwarded-For` header a client could set (DESIGN 7.4, Q-06). A small helper lets a route add a tighter per-user limit on top (used by {{backup}} and {{delete-account}}, DESIGN 7.4).
 - Config: `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 - Test helper: create a user with a valid session cookie, for API tests (used by every isolation test from now on).
 
