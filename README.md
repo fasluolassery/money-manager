@@ -50,6 +50,7 @@ Run from the repository root. Each runs across every workspace that defines it.
 | `pnpm lint` | check formatting and lint rules across the repo (Biome) |
 | `pnpm format` | fix formatting and safe lint fixes across the repo |
 | `pnpm build` | build all workspaces |
+| `pnpm start` | run the built app: the API serving the built web app (after `pnpm build`) |
 | `pnpm dev` | start every workspace's development server (from issues #8 and #12) |
 | `pnpm test` | run all tests (Vitest; each workspace is a project) |
 | `pnpm test:coverage` | run tests with coverage; fails below 90% lines or branches on `*.domain.ts` files |
@@ -58,6 +59,71 @@ Run from the repository root. Each runs across every workspace that defines it.
 | `node tools/docs/check.mjs` | the same checks, and regenerate `TRACEABILITY.md` |
 | `pnpm backlog:verify` | check every GitHub issue matches `tools/backlog/issues.md` (CI runs this; needs `gh` signed in) |
 | `pnpm pr:check <number>` | check a pull request's verification record against its issue (CI runs this on every pull request; needs `gh` signed in) |
+
+## Running the production build locally
+
+```bash
+cp apps/api/.env.example apps/api/.env   # then fill in MONGODB_URI (the development cluster)
+pnpm build
+pnpm start                               # one Node process: the API plus the built web app
+```
+
+`pnpm start` serves the app at `http://localhost:3000` (or `PORT`). `/api/health` returns `200` when the database is reachable.
+
+## Deployment
+
+Production runs on Railway (Hobby plan, Singapore) with MongoDB Atlas ([DESIGN 11](DESIGN.md#11-deployment-and-environments)). Merging to `main` deploys automatically, but only after the `ci` check passes.
+
+### One-time setup: MongoDB Atlas
+
+Atlas allows one free cluster per project, so create **two projects**: one for development, one for production ([DESIGN 11.1](DESIGN.md#111-environments)). In each:
+
+1. Create a **free** cluster in Singapore (AWS `ap-southeast-1`), or the nearest region Atlas offers for free clusters.
+2. Add a database user with a long random password, for example from `openssl rand -hex 24` (hex needs no escaping in a connection string).
+3. Under Network Access, allow `0.0.0.0/0`. Railway's outgoing addresses aren't fixed on the Hobby plan ([DESIGN 11.2](DESIGN.md#112-production-setup)).
+4. Copy the connection string. The development one goes in `apps/api/.env`; the production one goes only into Railway's variables.
+
+The database name comes from `NODE_ENV` (`money-manager` in production, `money-manager-dev` locally), so the connection string doesn't name one.
+
+### One-time setup: Railway
+
+Create a project on the Hobby plan with one service from this GitHub repository. Railway's settings live in its dashboard, not in a file ([DESIGN 11.2](DESIGN.md#112-production-setup)); these are all of them:
+
+| Setting | Value |
+| --- | --- |
+| Source | this repository, branch `main` |
+| Wait for CI | on, so a commit whose `ci` check fails is never deployed |
+| Region | Southeast Asia (Singapore) |
+| Builder | Railpack (the default); it reads Node 24 and pnpm 10 from `package.json` |
+| Build command | `pnpm build` |
+| Start command | `node apps/api/dist/main.js` (Node directly, so it receives Railway's shutdown signal) |
+| Healthcheck path | `/api/health` |
+| Restart policy | on failure |
+| Public networking | generate a Railway domain, `outgo.up.railway.app` if it's free |
+
+**Variables** (the full list is in [DESIGN 11.4](DESIGN.md#114-configuration-and-secrets) and [`apps/api/.env.example`](apps/api/.env.example)):
+
+| Variable | Value |
+| --- | --- |
+| `NODE_ENV` | `production` |
+| `APP_URL` | the Railway domain with `https://`, e.g. `https://outgo.up.railway.app` |
+| `MONGODB_URI` | the production cluster's connection string |
+| `LOG_LEVEL` | `info` |
+| `MONGOMS_DISABLE_POSTINSTALL` | `1`; skips downloading the test-only MongoDB binary during the build |
+
+Railway sets `PORT` itself.
+
+**Notifications and spending** ([DESIGN 11.6–11.7](DESIGN.md#116-cost)): turn on email notifications for failed deploys and crashed services, and on the workspace's Usage page set an email alert at $5 and a hard limit at $10.
+
+### Deploying
+
+Merge a pull request to `main`. CI runs on `main`; when the `ci` check passes, Railway builds, starts the new version, and switches traffic to it once `/api/health` returns `200`. If the health check fails, the previous version keeps running.
+
+### Rolling back
+
+1. In Railway, open the service's **Deployments**, find the last good deployment, and choose **Redeploy**.
+2. Check that `https://<domain>/api/health` returns `200` and the app opens.
+3. Revert the bad change on `main` through a pull request, so the next deploy doesn't bring it back.
 
 ## Changing the docs or an issue
 

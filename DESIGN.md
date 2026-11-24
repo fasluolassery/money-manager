@@ -1314,6 +1314,7 @@ Atlas allows one free cluster per project, so development and production use **t
 - **Atlas** production cluster in the same or the nearest region, to keep database round trips short.
 - **Build:** `pnpm build` builds `web` and `api`. **Start:** one Node process runs the API, which also serves `web`'s built files (Section 1.2).
 - **Health check:** `GET /api/health` (no auth) returns `200` when the server can reach the database. Railway uses it to decide whether a new deployment is healthy before switching traffic to it.
+- **Railway's settings live in its dashboard**, and the README's Deployment section lists every one. Railway's config file (`railway.json`) is deprecated and new services can't use it; its replacement needs an extra dependency, which one service with five settings doesn't justify (Section 10.10).
 
 **Atlas network access:** Railway's outgoing IP addresses are not fixed on the Hobby plan, so Atlas has to allow connections from any IP. The database is then protected by its username and a long random password only. If the setup changes later, revisit this first.
 
