@@ -14,6 +14,7 @@ import {
   dateNotInPastSchema,
   goalIdSchema,
   goalNameSchema,
+  INITIAL_RECORD_VERSION,
   idSchema,
   lendingRecordIdSchema,
   VALIDATION_MESSAGES as M,
@@ -27,6 +28,7 @@ import {
   toId,
   transactionIdSchema,
   userIdSchema,
+  versionSchema,
 } from "./common.js";
 
 function today(value: string): CalendarDate {
@@ -173,6 +175,17 @@ describe("ids", () => {
   it("[D-37] toId converts a MongoDB ObjectId-like object to a branded Id", () => {
     const hex = "6553f1c2a4b5c6d7e8f90123";
     expect(toId({ toHexString: () => hex })).toBe(hex);
+  });
+});
+
+describe("version", () => {
+  it("[FR-9.10] is a whole number of at least 1; new records start at 1", () => {
+    expect(INITIAL_RECORD_VERSION).toBe(1);
+    expect(versionSchema.parse(1)).toBe(1);
+    expect(versionSchema.parse(42)).toBe(42);
+    expect(messagesOf(versionSchema, 0)).toEqual([M.invalid]);
+    expect(messagesOf(versionSchema, 1.5)).toEqual([M.invalid]);
+    expect(messagesOf(versionSchema, "1")).toEqual([M.invalid]);
   });
 });
 

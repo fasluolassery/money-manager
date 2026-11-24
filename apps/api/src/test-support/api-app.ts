@@ -27,10 +27,14 @@ export type ApiTestContext = {
   close: () => Promise<void>;
 };
 
+export type ApiTestOptions = Omit<CreateAppOptions, "pingDb" | "registerApiRoutes"> & {
+  pingDb?: () => Promise<void>;
+  /** Receives the connected db so probes can close over real collections. */
+  registerApiRoutes?: (app: Application, db: DbHandle) => void;
+};
+
 // Fresh database per call against the shared in-memory replica set (DESIGN 10.8).
-export async function createApiTestContext(
-  options: Omit<CreateAppOptions, "pingDb"> & { pingDb?: () => Promise<void> } = {},
-): Promise<ApiTestContext> {
+export async function createApiTestContext(options: ApiTestOptions = {}): Promise<ApiTestContext> {
   const uri = await getMemoryMongoUri();
   const dbName = `t_${randomUUID().replaceAll("-", "")}`;
   const db = await connectDb(uri, dbName);
@@ -39,7 +43,13 @@ export async function createApiTestContext(
   const config: Config = { ...API_TEST_CONFIG, MONGODB_URI: uri };
   const app = createApp(config, pino({ level: "silent" }), webDistPath, {
     pingDb: options.pingDb ?? (() => db.ping()),
-    registerApiRoutes: options.registerApiRoutes,
+    container: options.container,
+    registerApiRoutes:
+      options.registerApiRoutes !== undefined
+        ? (app) => {
+            options.registerApiRoutes?.(app, db);
+          }
+        : undefined,
   });
   return {
     app,

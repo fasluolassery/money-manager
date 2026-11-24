@@ -115,3 +115,15 @@ export type Id = z.infer<typeof idSchema>;
 export function toId(objectId: { toHexString(): string } | string): Id {
   return (typeof objectId === "string" ? objectId : objectId.toHexString()) as Id;
 }
+
+/**
+ * Record version for optimistic concurrency (DESIGN 4.7).
+ * Required on every PATCH, DELETE and mutating POST body.
+ */
+export const versionSchema = z
+  .number({ error: M.invalid })
+  .int({ error: M.invalid })
+  .min(1, { error: M.invalid });
+
+/** New documents start at version 1 (DESIGN 4.7). */
+export const INITIAL_RECORD_VERSION = 1;
