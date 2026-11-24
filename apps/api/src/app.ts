@@ -14,7 +14,7 @@ import { clientIpHeader } from "./middleware/client-ip.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { createOriginCheck } from "./middleware/origin-check.js";
 import { API_RATE_LIMIT_WINDOW_MS, createRateLimit } from "./middleware/rate-limit.js";
-import { createLoadSession, requireAuth } from "./middleware/require-auth.js";
+import { createLoadSession, createRequireAuth } from "./middleware/require-auth.js";
 import { createUsersRoutes } from "./modules/users/users.routes.js";
 import { registerRoute } from "./route-registry.js";
 
@@ -138,14 +138,15 @@ function mountAuth(app: express.Application, container: AwilixContainer<AppCradl
 /**
  * `/api/v1`: Origin check, then the session (so the limiter can count per user),
  * then the rate limit, then `requireAuth`, so signed-out requests are limited
- * per IP before they are refused (DESIGN 7.4).
+ * per IP before they are refused (DESIGN 7.4). `requireAuth` also makes sure the
+ * signed-in user has a profile (DESIGN 7.2).
  */
 function createApiV1Router(config: Config, container: AwilixContainer<AppCradle>): Router {
   const router = Router();
   router.use(createOriginCheck(config.APP_URL));
   router.use(createLoadSession(container.cradle.authAdapter));
   router.use(createRateLimit({ windowMs: API_RATE_LIMIT_WINDOW_MS, limit: config.RATE_LIMIT_API }));
-  router.use(requireAuth);
+  router.use(createRequireAuth(container.cradle.usersService));
   router.use(createUsersRoutes(container));
   return router;
 }

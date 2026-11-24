@@ -3,10 +3,13 @@ import { describe, expect, it } from "vitest";
 import {
   formatRupees,
   formatRupeesCompact,
+  formatRupeesInput,
   formatSignedRupees,
+  groupRupeesInput,
   MAX_AMOUNT_PAISE,
   type Paise,
   parseRupees,
+  parseSignedRupees,
 } from "./money.js";
 
 const paise = (value: number) => value as Paise;
@@ -41,6 +44,51 @@ describe("parseRupees", () => {
           expect(parseRupees(`${r}.${digits}`)).toBe(Number(`${r}${digits}`));
         },
       ),
+    );
+  });
+});
+
+describe("parseSignedRupees", () => {
+  it("[FR-9.2] accepts a negative amount typed with - or −, down to −₹1,00,00,000", () => {
+    expect(parseSignedRupees("-1250.50")).toBe(-125050);
+    expect(parseSignedRupees("\u22122000")).toBe(-200000);
+    expect(parseSignedRupees("-10000000")).toBe(-MAX_AMOUNT_PAISE);
+    expect(parseSignedRupees("125.5")).toBe(12550);
+  });
+
+  it("[FR-9.2] rejects what parseRupees rejects, and anything below −₹1,00,00,000", () => {
+    for (const input of ["", "-", "--5", "abc", "-1.234", "-10000000.01", "10000000.01"])
+      expect(parseSignedRupees(input), input).toBeNull();
+  });
+
+  it("[FR-9.2] reads -0 as plain zero", () => {
+    expect(Object.is(parseSignedRupees("-0"), 0)).toBe(true);
+  });
+});
+
+describe("money field text", () => {
+  it("[FR-14.1] groups what is typed the Indian way and keeps a trailing dot or fraction", () => {
+    expect(groupRupeesInput("1234567")).toBe("12,34,567");
+    expect(groupRupeesInput("1234567.")).toBe("12,34,567.");
+    expect(groupRupeesInput("-1250.5")).toBe("-1,250.5");
+    expect(groupRupeesInput("")).toBe("");
+    expect(groupRupeesInput("-")).toBe("-");
+    expect(groupRupeesInput("12a")).toBe("12a");
+  });
+
+  it("[FR-14.1] shows an amount as editable text: paise only when non-zero, no ₹", () => {
+    expect(formatRupeesInput(paise(12550))).toBe("125.50");
+    expect(formatRupeesInput(paise(125000))).toBe("1,250");
+    expect(formatRupeesInput(paise(-125050))).toBe("-1,250.50");
+    expect(formatRupeesInput(paise(0))).toBe("0");
+  });
+
+  it("[FR-9.1] reads back exactly the paise it showed, for any valid amount", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: -MAX_AMOUNT_PAISE, max: MAX_AMOUNT_PAISE }), (value) => {
+        const text = formatRupeesInput(paise(value)).replaceAll(",", "");
+        expect(parseSignedRupees(text)).toBe(value);
+      }),
     );
   });
 });

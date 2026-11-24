@@ -17,7 +17,8 @@ const REPO_ROOT = dirname(dirname(dirname(dirname(fileURLToPath(import.meta.url)
 const OUT_PATH = join(REPO_ROOT, "docs", "openapi.json");
 
 function schemaToJsonSchema(schema: z.ZodType): object {
-  return z.toJSONSchema(schema, { target: "openapi-3.1" });
+  // Custom checks (dates, timezones) can't be derived; their `.meta()` describes them instead.
+  return z.toJSONSchema(schema, { target: "openapi-3.1", unrepresentable: "any" });
 }
 
 function buildOperation(entry: RouteEntry): object {

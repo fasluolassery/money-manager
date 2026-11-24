@@ -7,7 +7,8 @@ import { RequireAuth } from "./RequireAuth.js";
  * All leaf routes are lazy-loaded (DESIGN 8.10).
  * AppShell and ErrorBoundaryPage are eager — they're needed on every route.
  * PlanLayout is lazy so the Tabs primitive stays out of the initial bundle.
- * Signed-out users hit `/sign-in` via `RequireAuth` (DESIGN 8.3); welcome gating is #18.
+ * `RequireAuth` sends signed-out users to `/sign-in` and users who haven't finished the welcome
+ * screen to `/welcome` (DESIGN 8.3); `/welcome` is inside it but outside the app shell.
  */
 export const router = createBrowserRouter([
   {
@@ -18,16 +19,16 @@ export const router = createBrowserRouter([
     },
   },
   {
-    path: "/welcome",
-    lazy: async () => {
-      const { default: Component } = await import("../pages/WelcomePage.js");
-      return { Component };
-    },
-  },
-  {
     element: <RequireAuth />,
     errorElement: <ErrorBoundaryPage />,
     children: [
+      {
+        path: "/welcome",
+        lazy: async () => {
+          const { default: Component } = await import("../pages/WelcomePage.js");
+          return { Component };
+        },
+      },
       {
         element: <AppShell />,
         children: [

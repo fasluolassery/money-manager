@@ -9,7 +9,7 @@
 | Requirements | 150 (149 Must, 1 Should) |
 | With at least one issue | 150 |
 | With a module | 150 |
-| With at least one test | 38 |
+| With at least one test | 47 |
 | Finished milestones | none yet |
 
 ## Requirements
@@ -44,11 +44,11 @@
 | FR-4.13 | Must | Payee autocomplete: The payee field suggests payees I've used before. | #26 | transactions | not yet |
 | FR-4.14 | Must | Failed saves: If saving fails (e.g. the network drops), the form keeps everything I typed, shows an error a… | #20, #24 | transactions | not yet |
 | FR-5.1 | Must | Transactions: add, edit and delete income and expenses (see Rule 4). | #20, #25 | transactions | not yet |
-| FR-5.2 | Must | Every category is either an expense or an income category (except the built-in Lending category, see Rule 8). | #22 | categories | not yet |
+| FR-5.2 | Must | Every category is either an expense or an income category (except the built-in Lending category, see Rule 8). | #22 | categories | apps/api/src/modules/categories/categories.collection.api.test.ts |
 | FR-5.3 | Must | Every category has an emoji icon, which I can change. | #22, #59 | categories | apps/web/src/components/emoji-picker/emoji-picker.test.ts |
-| FR-5.4 | Must | New users start with a default set: | #18 | categories | not yet |
+| FR-5.4 | Must | New users start with a default set: | #18 | categories | apps/api/src/modules/categories/categories.domain.test.ts<br>apps/api/src/modules/users/users.ensure-profile.api.test.ts |
 | FR-5.5 | Must | I can add, rename and delete categories. | #22, #27 | categories | not yet |
-| FR-5.6 | Must | Category names are unique per user, ignoring upper/lower case. | #22 | categories | not yet |
+| FR-5.6 | Must | Category names are unique per user, ignoring upper/lower case. | #22 | categories | apps/api/src/modules/categories/categories.collection.api.test.ts<br>apps/api/src/modules/categories/categories.domain.test.ts |
 | FR-5.7 | Must | A category's type cannot be changed once it has transactions. | #22 | categories | not yet |
 | FR-5.8 | Must | Deleting a category that has transactions or bills requires choosing another category of the same type to m… | #22, #36 | categories | not yet |
 | FR-5.9 | Must | all views work on calendar months (Rule 14). | #30 | reports | not yet |
@@ -98,7 +98,7 @@
 | FR-8.6 | Must | When the remaining amount reaches zero, the record is marked settled. If editing a repayment brings it back… | #41, #43 | lending | not yet |
 | FR-8.7 | Must | A record with a due date that is past and not settled shows as "overdue". | #41, #45 | lending | not yet |
 | FR-8.8 | Must | Effect on income and expenses: Every money movement creates a transaction in a built-in Lending category, d… | #41, #42 | lending | not yet |
-| FR-8.9 | Must | The Lending category cannot be renamed or deleted. | #18, #22 | categories | not yet |
+| FR-8.9 | Must | The Lending category cannot be renamed or deleted. | #18, #22 | categories | apps/api/src/modules/categories/categories.domain.test.ts |
 | FR-8.10 | Must | Editing a record or repayment updates its linked transaction. | #42, #43 | lending | not yet |
 | FR-8.11 | Must | The original amount cannot be lowered below the total already repaid. | #41, #42 | lending | not yet |
 | FR-8.12 | Must | The direction (lent or borrowed) can be changed only while the record has no repayments. | #42 | lending | not yet |
@@ -106,14 +106,14 @@
 | FR-8.14 | Must | Deleting a record permanently deletes it, its repayments and all their transactions, after confirmation. | #42 | lending | not yet |
 | FR-8.15 | Must | In spending views: The monthly summary, spent, income and left over, charts and month comparison include Le… | #31, #32 | reports | not yet |
 | FR-8.16 | Must | View: A single list of records, filterable by direction and by open or settled. A per-person summary is not… | #42, #44 | lending | not yet |
-| FR-9.1 | Must | Money is stored as an integer number of the smallest unit (paise), never as a floating-point number. ₹125.5… | #7, #20 | transactions | packages/shared/src/money.test.ts |
-| FR-9.2 | Must | Amounts: every amount (transactions, bills, goal targets, contributions, lending records, repayments) follo… | #7 | packages/shared | packages/shared/src/money.test.ts<br>packages/shared/src/schemas/common.test.ts |
-| FR-9.3 | Must | Dates of money events (transactions, contributions, lending records, repayments, the opening balance date) … | #7, #20 | transactions | packages/shared/src/schemas/common.test.ts |
+| FR-9.1 | Must | Money is stored as an integer number of the smallest unit (paise), never as a floating-point number. ₹125.5… | #7, #20 | transactions | apps/web/src/components/MoneyInput.test.tsx<br>packages/shared/src/money.test.ts |
+| FR-9.2 | Must | Amounts: every amount (transactions, bills, goal targets, contributions, lending records, repayments) follo… | #7 | packages/shared | apps/api/src/modules/users/users.collection.api.test.ts<br>apps/api/src/modules/users/users.patch.api.test.ts<br>apps/web/src/components/MoneyInput.test.tsx<br>apps/web/src/pages/WelcomePage.test.tsx<br>packages/shared/src/money.test.ts<br>packages/shared/src/schemas/common.test.ts<br>packages/shared/src/schemas/me.test.ts |
+| FR-9.3 | Must | Dates of money events (transactions, contributions, lending records, repayments, the opening balance date) … | #7, #20 | transactions | apps/api/src/modules/users/users.patch.api.test.ts<br>apps/web/src/pages/WelcomePage.test.tsx<br>packages/shared/src/schemas/common.test.ts |
 | FR-9.4 | Must | Due dates and deadlines can be in the future, with these limits: | #7, #36, #42, #48 | packages/shared | packages/shared/src/schemas/common.test.ts |
 | FR-9.5 | Must | Text limits: | #7 | packages/shared, **Normalize input once**, at the boundary: trim text and apply Unicode **NFC** normalization before any check or comparison (SPEC FR-9.5), so "Café" typed two ways is one name. | packages/shared/src/schemas/common.test.ts |
 | FR-9.6 | Must | Currency: Every amount is stored with a currency code. The first version only supports INR. Contributions, … | #20 | transactions | not yet |
 | FR-9.7 | Must | Dates: Transaction, contribution, repayment and due dates are calendar dates (no time of day), in the user'… | #7, #20 | transactions | packages/shared/src/dates.test.ts<br>packages/shared/src/schemas/common.test.ts |
-| FR-9.8 | Must | Timezone: Each user has a timezone (default Asia/Kolkata). The server uses it to decide what "today" is, fo… | #7, #18, #27 | users | packages/shared/src/dates.test.ts<br>packages/shared/src/schemas/common.test.ts |
+| FR-9.8 | Must | Timezone: Each user has a timezone (default Asia/Kolkata). The server uses it to decide what "today" is, fo… | #7, #18, #27 | users | apps/api/src/modules/categories/categories.collection.api.test.ts<br>apps/api/src/modules/users/users.api.test.ts<br>apps/api/src/modules/users/users.collection.api.test.ts<br>apps/api/src/modules/users/users.patch.api.test.ts<br>apps/web/src/pages/WelcomePage.test.tsx<br>packages/shared/src/dates.test.ts<br>packages/shared/src/schemas/common.test.ts<br>packages/shared/src/schemas/me.test.ts |
 | FR-9.9 | Must | Ownership: Every record belongs to exactly one user (Rule 2). | #10 | db/ | apps/api/src/db/db.api.test.ts |
 | FR-9.10 | Must | Editing on two devices: if a record was changed on another device after I opened it, my save or delete is r… | #62 | transactions | apps/api/src/db/versioned-write.api.test.ts<br>apps/web/src/lib/api-client.test.ts<br>apps/web/src/lib/handle-stale-record.test.tsx<br>packages/shared/src/schemas/common.test.ts |
 | FR-9.11 | Must | Timestamps: Every record has createdAt and updatedAt. | #10 | db/ | apps/api/src/db/db.api.test.ts |
@@ -136,11 +136,11 @@
 | FR-9.28 | Must | Goals, bills and lending records have no Trash. Deleting them is permanent and always asks for confirmation. | #36, #42, #48 | bills, lending, goals | not yet |
 | FR-10.1 | Must | Storage: All data is stored in a cloud database, so it syncs across my devices (Rule 2). | #15, #115 | Deployment (Section 11) | not yet |
 | FR-10.2 | Must | Hosting cost: The app server runs on a paid managed platform, at most ₹500/month. Everything else (database… | #15, #115 | Deployment (Section 11) | not yet |
-| FR-10.3 | Must | The app has a Download backup button that downloads all my data as one JSON file. | #51 | users | not yet |
+| FR-10.3 | Must | The app has a Download backup button that downloads all my data as one JSON file. | #51 | users | apps/api/src/modules/users/users.api.test.ts |
 | FR-10.4 | Must | The file includes a format version number and the export date, so a restore feature can be added later. | #51 | users | not yet |
 | FR-10.5 | Must | If I haven't downloaded a backup in 30 days, the Home screen shows a reminder. | #52 | users | not yet |
 | FR-10.6 | Must | All traffic uses HTTPS. | #8 | app.ts, main.ts | apps/api/src/app.test.ts<br>apps/api/src/config.test.ts |
-| FR-10.7 | Must | Access rules are enforced on the server: a user can only read or change their own data, whatever the client… | #16 | middleware/ | apps/api/src/auth/auth.api.test.ts |
+| FR-10.7 | Must | Access rules are enforced on the server: a user can only read or change their own data, whatever the client… | #16 | middleware/ | apps/api/src/auth/auth.api.test.ts<br>apps/api/src/modules/users/users.api.test.ts |
 | FR-10.8 | Must | Sessions are stored in httpOnly, Secure, SameSite cookies, never in localStorage. A session expires after 3… | #16 | auth/ (adapter) | apps/api/src/auth/auth.api.test.ts<br>apps/api/src/config.test.ts |
 | FR-10.9 | Must | I can log out of all devices, which ends every session. | #53 | auth/ (adapter) | not yet |
 | FR-10.10 | Must | The API is rate limited per user and per IP address, with tighter limits on expensive or dangerous actions … | #16 | middleware/ | apps/api/src/auth/auth.api.test.ts<br>apps/api/src/config.test.ts |
@@ -156,11 +156,11 @@
 | FR-12.5 | Must | Reports: a month picker, the monthly summary, spent, income and left over, charts and month comparison (Rul… | #32 | apps/web | not yet |
 | FR-12.6 | Must | Plan: the bills (Rule 7), goals (Rule 6) and lending (Rule 8) lists, each with its own add button. | #38, #44, #49 | apps/web | not yet |
 | FR-12.7 | Must | Settings: categories, opening balance and date, timezone, theme (follow device, light or dark; remembered p… | #27 | apps/web | not yet |
-| FR-13.1 | Must | On first sign-in, my account is created with the default categories (Rule 5), the built-in Lending category… | #18 | users | not yet |
-| FR-13.2 | Must | The welcome screen shows the timezone detected from my device (I can change it) and asks for an opening bal… | #18 | users | not yet |
-| FR-13.3 | Must | Continue saves all three. Skip saves only the timezone; I can set the opening balance later in Settings. | #18 | users | not yet |
-| FR-13.4 | Must | I land on the Home screen. The welcome screen never appears again. | #18 | users | not yet |
-| FR-14.1 | Must | Money is shown with the ₹ symbol and Indian digit grouping: ₹1,00,000. Paise are shown only when non-zero: … | #7, #58 | packages/shared | apps/web/src/components/Amount.test.tsx<br>packages/shared/src/money.test.ts |
+| FR-13.1 | Must | On first sign-in, my account is created with the default categories (Rule 5), the built-in Lending category… | #18 | users | apps/api/src/modules/users/users.collection.api.test.ts<br>apps/api/src/modules/users/users.domain.test.ts<br>apps/api/src/modules/users/users.ensure-profile.api.test.ts |
+| FR-13.2 | Must | The welcome screen shows the timezone detected from my device (I can change it) and asks for an opening bal… | #18 | users | apps/api/src/modules/users/users.api.test.ts<br>apps/api/src/modules/users/users.domain.test.ts<br>apps/api/src/modules/users/users.patch.api.test.ts<br>apps/web/src/features/users/components/TimezonePicker.test.tsx<br>apps/web/src/pages/WelcomePage.test.tsx<br>packages/shared/src/schemas/me.test.ts |
+| FR-13.3 | Must | Continue saves all three. Skip saves only the timezone; I can set the opening balance later in Settings. | #18 | users | apps/api/src/modules/users/users.domain.test.ts<br>apps/api/src/modules/users/users.patch.api.test.ts<br>apps/web/src/pages/WelcomePage.test.tsx<br>packages/shared/src/schemas/me.test.ts |
+| FR-13.4 | Must | I land on the Home screen. The welcome screen never appears again. | #18 | users | apps/api/src/modules/users/users.domain.test.ts<br>apps/api/src/modules/users/users.patch.api.test.ts<br>apps/web/src/app/RequireAuth.test.tsx |
+| FR-14.1 | Must | Money is shown with the ₹ symbol and Indian digit grouping: ₹1,00,000. Paise are shown only when non-zero: … | #7, #58 | packages/shared | apps/web/src/components/Amount.test.tsx<br>apps/web/src/components/MoneyInput.test.tsx<br>packages/shared/src/money.test.ts |
 | FR-14.2 | Must | Negative figures (only the balance, the opening balance and "left over" can be negative) are shown with a m… | #7, #58 | packages/shared | apps/web/src/components/Amount.test.tsx<br>packages/shared/src/money.test.ts |
 | FR-14.3 | Must | Signs: income amounts get a + (in the income colour). "Left over" is a difference, so it gets + when positi… | #7, #58 | packages/shared | apps/web/src/components/Amount.test.tsx<br>packages/shared/src/money.test.ts |
 | FR-14.4 | Must | Dates are shown as 10 Nov 2026 in lists and 10/11/2026 (DD/MM/YYYY) in forms. | #7 | packages/shared | packages/shared/src/dates.test.ts |
