@@ -11,9 +11,12 @@
     "gen:openapi": "tsx --tsconfig tsconfig.json src/gen-openapi.ts && pnpm exec biome format --write ../../docs/openapi.json"
   },
   "dependencies": {
+    "@better-auth/mongo-adapter": "^1.7.27",
     "@money-manager/shared": "workspace:*",
     "awilix": "^12.1.1",
+    "better-auth": "^1.7.27",
     "express": "^5.0.0",
+    "express-rate-limit": "^8.7.5",
     "helmet": "^8.0.0",
     "mongodb": "^6.22.0",
     "pino": "^9.0.0",

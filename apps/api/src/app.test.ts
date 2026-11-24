@@ -6,14 +6,9 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createApp, gracefulShutdown } from "./app.js";
 import type { Config } from "./config.js";
+import { TEST_CONFIG as SHARED_TEST_CONFIG } from "./test-support/test-config.js";
 
-const TEST_CONFIG: Config = {
-  NODE_ENV: "development",
-  PORT: 3000,
-  APP_URL: "http://localhost:3000",
-  LOG_LEVEL: "silent",
-  MONGODB_URI: "mongodb://localhost:27017",
-};
+const TEST_CONFIG: Config = { ...SHARED_TEST_CONFIG, NODE_ENV: "development" };
 
 const SILENT_LOGGER = pino({ level: "silent" });
 const OK_PING = { pingDb: async () => undefined };

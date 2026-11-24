@@ -9,14 +9,9 @@ import type { Config } from "../config.js";
 import { connectDb, type DbHandle } from "../db/client.js";
 import { ensureIndexes } from "../db/indexes.js";
 import { getMemoryMongoUri } from "./mongo-memory.js";
+import { TEST_CONFIG } from "./test-config.js";
 
-export const API_TEST_CONFIG: Config = {
-  NODE_ENV: "test",
-  PORT: 3000,
-  APP_URL: "http://localhost:3000",
-  LOG_LEVEL: "silent",
-  MONGODB_URI: "mongodb://localhost:27017",
-};
+export const API_TEST_CONFIG: Config = TEST_CONFIG;
 
 export function createTempWebDist(): string {
   const webDistPath = mkdtempSync(join(tmpdir(), "api-db-dist-"));

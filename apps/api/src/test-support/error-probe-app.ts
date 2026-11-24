@@ -20,14 +20,9 @@ import {
 } from "../errors.js";
 import { validate } from "../middleware/validate.js";
 import { createRespond } from "../respond.js";
+import { TEST_CONFIG } from "./test-config.js";
 
-export const ERROR_TEST_CONFIG: Config = {
-  NODE_ENV: "test",
-  PORT: 3000,
-  APP_URL: "http://localhost:3000",
-  LOG_LEVEL: "silent",
-  MONGODB_URI: "mongodb://localhost:27017",
-};
+export const ERROR_TEST_CONFIG: Config = TEST_CONFIG;
 
 export const nameBodySchema = z
   .object({

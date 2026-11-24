@@ -795,14 +795,14 @@ Better Auth handles every step of the OAuth exchange. The app only adds the firs
 
 - **`requireAuth` middleware** on every `/api/v1` route: reads the session through Better Auth, puts the user id on the request, and returns `401 UNAUTHENTICATED` if there is none. Services receive this id as `userId` (Section 4.5).
 - **Cross-site request protection:** `SameSite=Lax` stops the browser sending the cookie with requests from other sites. In addition, every `POST`, `PATCH` and `DELETE` must have an `Origin` header matching the app's own origin, or it gets `403 FORBIDDEN`.
-- **Behind Railway's proxy:** Express runs with `trust proxy` set to `1`, so it sees the real client IP (for rate limits and logs) and knows the original request was HTTPS (for `Secure` cookies). It trusts exactly one proxy hop, so a client can't fake its IP with its own `X-Forwarded-For` header.
+- **Behind Railway's proxy:** Express runs with `trust proxy` set to `1`, so it sees the real client IP (for rate limits and logs) and knows the original request was HTTPS (for `Secure` cookies). It trusts exactly one proxy hop, so a client can't fake its IP with its own `X-Forwarded-For` header. Better Auth's limiter would read `X-Forwarded-For` itself, so the server overwrites one internal header with `req.ip` before `/api/auth/*` and Better Auth reads only that header (Q-06).
 - **No CORS:** the app and the API share one origin (Section 1.2), so no CORS middleware is installed; cross-origin requests get no permissive headers.
 - **Rate limits:** Better Auth's built-in limiter on `/api/auth/*`; `express-rate-limit` on `/api/v1`, keyed by user id when signed in and by IP address otherwise. Defaults, adjustable in config: **300 requests per 5 minutes per user** on `/api/v1`, and **30 per 5 minutes per IP** on `/api/auth/*`. Expensive or dangerous endpoints have tighter limits on top, per user: **`GET /me/backup` 10 per hour** and **`DELETE /me` 3 per hour** (FR-10.10, Section 15.6).
 
 ### 7.5 Google setup
 
 - One Google Cloud OAuth client, with the production and local callback URLs registered.
-- Only the basic `email` and `profile` scopes are requested.
+- Only the basic sign-in scopes are requested: `openid`, `email` and `profile` (Better Auth adds `openid`; all three are Google's non-sensitive scopes).
 - The client id, client secret and Better Auth's signing secret are environment variables (Section 11), never committed.
 - **Publishing status: Testing.** Only Google accounts listed as test users can sign in (me, and family later). This needs no privacy policy or Google verification, and keeps strangers out. Moving to Production is a decision for later.
 - **Consent screen:** the app name (UI.md 4.11), my email as the support contact, and the app icon as the logo. In Testing mode none of this is reviewed by Google. If the app is ever published to Production, a logo means Google must verify the brand first; that's part of the later publishing decision (Spec Rule 17).
