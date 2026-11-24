@@ -50,7 +50,7 @@ Run from the repository root. Each runs across every workspace that defines it.
 | `pnpm lint` | check formatting and lint rules across the repo (Biome) |
 | `pnpm format` | fix formatting and safe lint fixes across the repo |
 | `pnpm build` | build all workspaces |
-| `pnpm start` | run the built app: the API serving the built web app (after `pnpm build`) |
+| `pnpm start` | run the built app: the API serving the built web app (after `pnpm build`); reads `apps/api/.env` if it exists |
 | `pnpm dev` | start every workspace's development server (from issues #8 and #12) |
 | `pnpm test` | run all tests (Vitest; each workspace is a project) |
 | `pnpm test:coverage` | run tests with coverage; fails below 90% lines or branches on `*.domain.ts` files |
@@ -68,7 +68,7 @@ pnpm build
 pnpm start                               # one Node process: the API plus the built web app
 ```
 
-`pnpm start` serves the app at `http://localhost:3000` (or `PORT`). `/api/health` returns `200` when the database is reachable.
+`pnpm start` loads `apps/api/.env` if it exists (variables already set in the shell win) and serves the app at `http://localhost:3000` (or `PORT`). `/api/health` returns `200` when the database is reachable. Railway has no `.env` file; it runs `node apps/api/dist/main.js` with its own variables.
 
 ## Deployment
 
