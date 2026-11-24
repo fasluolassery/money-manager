@@ -2386,3 +2386,56 @@ DESIGN 15.1 limits a file to about 300 lines. `tools/backlog/create-issues.mjs` 
 - [ ] Every file in `tools/backlog/` is under 300 lines and every function under 50.
 - [ ] `--dry`, `--dry --order` and the preview give byte-identical output to before the split, and a validation error gives the same message.
 - [ ] `--verify` reports every issue matching GitHub exactly.
+
+@@@ issue
+key: agents-signoff-note
+title: Note the post-signoff exception in AGENTS.md
+milestone: m1
+labels: type: docs | area: ci | size: S
+deps: deploy
+flags: nocode
+implements: none
+decisions: D-49
+
+## Context
+
+{{deploy}} added the `post-signoff` flag: a milestone's sign-off issue depends on every other issue in that milestone except those flagged `post-signoff` (DESIGN 11.9, `tools/backlog/backlog.mjs`). AGENTS.md still says the sign-off depends on every issue in its milestone, so an agent following it would add {{deploy-railway}} to the sign-off's dependencies.
+
+## Scope
+
+- AGENTS.md, Workflow: the sentence about sign-off dependencies names the `post-signoff` exception.
+
+## Acceptance criteria
+
+- [ ] AGENTS.md says a milestone's sign-off depends on every issue in its milestone except those flagged `post-signoff`.
+
+## Out of scope
+
+- Changing how the backlog script treats the flag.
+
+@@@ issue
+key: dev-env-file
+title: Load apps/api/.env in pnpm dev
+milestone: m1
+labels: type: bug | area: api | size: S
+deps: deploy
+implements: none
+decisions: none
+
+## Context
+
+DESIGN 11.4 says local values live in `apps/api/.env`. {{deploy}} made `pnpm start` load that file with Node's `--env-file-if-exists`, but the API's `dev` script (`tsx watch src/main.ts`) still loads nothing, so `pnpm dev` exits with missing `APP_URL` and `MONGODB_URI` unless they are exported in the shell.
+
+## Scope
+
+- The API's `dev` script loads `apps/api/.env` when it exists; variables already set in the shell still win.
+- README's command table says so.
+
+## Acceptance criteria
+
+- [ ] With `apps/api/.env` filled in and nothing exported, `pnpm dev` starts the API and `/api/health` returns 200 through the Vite dev server.
+- [ ] Without `apps/api/.env`, `pnpm dev` still starts when the variables are exported in the shell.
+
+## Out of scope
+
+- Loading `.env` files anywhere other than local development and `pnpm start`.
