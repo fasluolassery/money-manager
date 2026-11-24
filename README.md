@@ -72,7 +72,13 @@ pnpm start                               # one Node process: the API plus the bu
 
 ## Deployment
 
-Production runs on Railway (Hobby plan, Singapore) with MongoDB Atlas ([DESIGN 11](DESIGN.md#11-deployment-and-environments)). Merging to `main` deploys automatically, but only after the `ci` check passes.
+Production **target** is Railway (Hobby plan, Singapore) with MongoDB Atlas ([DESIGN 11](DESIGN.md#11-deployment-and-environments)). Paid Hobby go-live can wait on budget ([DESIGN 11.9](DESIGN.md#119-deferred-hobby-go-live), SPEC Q-08); until then use a local production build (and a tunnel for the phone). Merging to `main` will deploy automatically once Railway is connected, but only after the `ci` check passes.
+
+### Interim: phone access without Railway
+
+1. `pnpm build && pnpm start` (serves the app on `PORT`, default 3000).
+2. Point a tunnel (e.g. Cloudflare Tunnel) or LAN HTTPS at that port.
+3. Set `APP_URL` in `apps/api/.env` to that public origin (needed for Origin checks and, later, Google OAuth).
 
 ### One-time setup: MongoDB Atlas
 

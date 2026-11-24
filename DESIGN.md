@@ -8,7 +8,7 @@ Technical decisions, `D-28` onward; product decisions `D-01`–`D-27` are in SPE
 
 ### 1.1 Hosting: one always-on server on a paid managed platform
 
-- **ID:** D-28. **Decided:** 2026-11-10.
+- **ID:** D-28. **Decided:** 2026-11-10; go-live timing noted 2026-11-24 (Section 11.9, SPEC Q-08).
 - **Chosen:** a single Node.js server on Railway's Hobby plan, within ₹500/month (details in Section 11).
 - **Why:**
   - It stays always on, so there are no slow first loads (Spec Rule 4, the 5-second rule).
@@ -19,7 +19,7 @@ Technical decisions, `D-28` onward; product decisions `D-01`–`D-27` are in SPE
   - *A raw VPS:* cheaper, but adds Docker, a reverse proxy, TLS certificates and server maintenance.
   - *Free hosts that sleep when idle:* break the 5-second rule.
 - **Region:** the server and the database run in the same region, as close to India as the platform allows.
-- **Binds:** the server is a plain long-running Node process with no platform-specific code, so it can move hosts (SPEC Risks); `GET /api/health` exists for the platform (Section 11.2).
+- **Binds:** the server is a plain long-running Node process with no platform-specific code, so it can move hosts (SPEC Risks); `GET /api/health` exists for the platform (Section 11.2). Hobby remains the production host; a month without Hobby budget does **not** change this choice — go-live waits on issue `deploy-railway` while login work continues (Section 11.9).
 
 ### 1.2 Frontend served by the same server
 
@@ -1383,6 +1383,16 @@ Total: about $5 a month. One always-on Node process with about 0.25 GB of RAM an
 - `pnpm seed:dev` loads realistic sample data into the **development** database: categories, a few months of transactions, and later bills, lending records and goals as each feature arrives.
 - It includes one fixed month with hand-calculated expected totals, used to check the reports (Spec Rule 15, milestone 3).
 - The script refuses to run when `NODE_ENV=production`, or when the database name doesn't end with `-dev`. The development database is named `money-manager-dev`.
+
+### 11.9 Deferred Hobby go-live
+
+When Railway Hobby is not affordable for a stretch (SPEC Q-08), **do not** switch to a free host that sleeps (that would break Spec Rule 4 and contradict D-28). Instead:
+
+- Keep Atlas development and production clusters as in Section 11.1.
+- Run the production build locally: `pnpm build && pnpm start` (same process Railway will run).
+- For phone checks and Google redirect experiments, expose that process with a tunnel (e.g. Cloudflare Tunnel) or LAN HTTPS, and set `APP_URL` to that origin.
+- Auth and the rest of milestone 1 proceed against Atlas; they are **not** blocked on Hobby.
+- The paid cutover (Wait for CI, public Railway URL, rollback trial, cost note) is issue `deploy-railway`, flagged `post-signoff` so it does not block milestone 1 sign-off.
 
 ## 12. Performance budget
 

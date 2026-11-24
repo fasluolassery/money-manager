@@ -26,8 +26,8 @@ If any of these turns out to be wrong, planning stops and the listed rules are r
 | A-02 | All money is in Indian rupees, and users live in India (timezone usually `Asia/Kolkata`). | D-16, Rule 14 |
 | A-03 | My main phone is Android with Chrome; my laptop uses a current desktop browser. | Rule 3, DESIGN 8.9 |
 | A-04 | I have an internet connection whenever I log an expense. | D-05 (offline), Rule 3 |
-| A-05 | MongoDB Atlas's free tier supports multi-document transactions, `$jsonSchema` validators and TTL indexes, and stays free. | D-31, DESIGN 5 |
-| A-06 | Railway's Hobby plan keeps one always-on server within ₹500 a month. | D-28, Rule 10 |
+| A-05 | MongoDB Atlas's free tier supports multi-document transactions, `$jsonSchema` validators and TTL indexes, and stays free. Confirmed 2026-11-24 on the development cluster (issue #15). | D-31, DESIGN 5 |
+| A-06 | Railway's Hobby plan keeps one always-on server within ₹500 a month. Hobby go-live may wait on budget; until then the production build runs locally (DESIGN 11.9). | D-28, Rule 10 |
 | A-07 | Google sign-in in Testing mode is acceptable for personal and family use. | D-03, D-48 |
 | A-08 | Better Auth's MongoDB adapter, Google provider and session settings work with Express 5 as documented. | D-30, DESIGN 7 |
 | A-09 | Entering expenses by hand, in under 5 seconds each, is something I'll keep doing every day. | Rule 1, Rule 4 |
@@ -42,10 +42,11 @@ Two kinds: **needs a fact** (look it up or try it) and **needs a decision** (I c
 | Q-01 | Final app name (Rule 1) | needs a decision | #15 | settled 2026-11-24: Outgo (D-27) |
 | Q-02 | Branch protection on a private repo: GitHub Pro, public repo, or convention only (DESIGN 10.3) | needs a decision | #6 | settled 2026-11-11: the repo becomes public after a pre-publication audit; protection is then enforced (#6) |
 | Q-03 | Railway Hobby's current price and limits | needs a fact | #15 | settled 2026-11-24: $5/month including $5 of usage, billed per second above that ($20 per vCPU-month, $10 per GB of RAM per month, $0.05 per GB egress); always-on; Singapore listed; 7-day logs; usage alerts and a hard limit of at least $10. One small API fits inside the included usage (DESIGN 11.6) |
-| Q-04 | Atlas free tier's current limits: connections, storage, backups, transactions (A-05) | needs a fact | #10, #15 | settled 2026-11-24 from the docs: 0.5 GB storage, 500 connections, 100 operations a second, 10 GB in and out per 7 days, one free cluster per project, paused after 30 days with no connections, no backups (private preview only). The docs don't state transactions, `$jsonSchema` validators or TTL indexes; #15 confirms them on the development cluster (A-05) |
+| Q-04 | Atlas free tier's current limits: connections, storage, backups, transactions (A-05) | needs a fact | #10, #15 | settled 2026-11-24 from the docs: 0.5 GB storage, 500 connections, 100 operations a second, 10 GB in and out per 7 days, one free cluster per project, paused after 30 days with no connections, no backups (private preview only). Confirmed on the development cluster the same day: multi-document transactions, `$jsonSchema` validators and TTL indexes all work (A-05) |
 | Q-05 | Which of the Biome rules in DESIGN 10.4 exist in the installed Biome 2 version | needs a fact | #3 | settled 2026-11-11: all exist in Biome 2.6.6; two are in the nursery group (DESIGN 10.4) |
 | Q-06 | Better Auth details: MongoDB adapter with Express 5, the after-sign-up hook, sliding-session settings (A-08) | needs a fact | #16 | open |
 | Q-07 | Whether the issue generator stays in the repo long-term (`tools/backlog/`) | needs a decision | — | settled 2026-11-11: it lives in `tools/backlog/` and runs in CI (D-49) |
+| Q-08 | When Railway Hobby go-live is affordable again | needs a fact | deploy-railway | open: deferred 2026-11-24; login work continues without it (DESIGN 11.9) |
 
 ## Rule 1: Purpose
 
@@ -488,7 +489,7 @@ The Express server also serves the built frontend, so the app and the API share 
 
 Each milestone is finished only when its "done when" check passes and its tests (Rule 16) pass.
 
-1. **Setup and login:** project setup, Google sign-in, signup flow (Rule 13), deployed to production.
+1. **Setup and login:** project setup, Google sign-in, signup flow (Rule 13), production deploy prepared (Atlas + start command + docs). Paid Railway Hobby cutover (D-28) may follow when budget allows (DESIGN 11.9, Q-08); until then phone/laptop checks use a local production build (LAN or tunnel).
    - Done when: I can sign in on my phone and my laptop and see an empty Home screen.
 2. **Transactions and categories:** add, edit, delete, Trash, categories, overall balance.
    - Done when: I can add an expense on my phone in under 5 seconds, and it appears on my laptop.
